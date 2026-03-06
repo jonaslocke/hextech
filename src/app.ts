@@ -1,4 +1,3 @@
-// src/app.ts
 import express from "express";
 import { matchRoutes } from "./interfaces/http/match.routes";
 import { errorMiddleware } from "./interfaces/http/error.middleware";
