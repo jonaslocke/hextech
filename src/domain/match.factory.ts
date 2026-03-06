@@ -11,8 +11,10 @@ export class MatchFactory {
   static create(params: CreateMatchParams): Match {
     const { format, players } = params;
 
-    if (!format) {
-      throw new ValidationError("Match format is required.");
+    const validFormats: MatchFormat[] = ["best-of-1", "best-of-3"];
+
+    if (!format || !validFormats.includes(format)) {
+      throw new ValidationError("Match format is invalid.");
     }
 
     if (!Array.isArray(players) || players.length !== 2) {
