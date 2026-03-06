@@ -24,6 +24,22 @@ test("POST /api/matches creates a match with defined format and participants", a
   assert.deepEqual(response.body.data.score, { p1: 0, p2: 0 });
 });
 
+test("POST /api/matches initializes games list and score tracking", async () => {
+  const response = await request(app)
+    .post("/api/matches")
+    .send({
+      format: "best-of-3",
+      players: [
+        { id: "p1", displayName: "Alice" },
+        { id: "p2", displayName: "Bob" },
+      ],
+    });
+
+  assert.equal(response.status, 201);
+  assert.deepEqual(response.body.data.games, []);
+  assert.deepEqual(response.body.data.score, { p1: 0, p2: 0 });
+});
+
 test("POST /api/matches rejects invalid format", async () => {
   const response = await request(app)
     .post("/api/matches")

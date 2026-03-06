@@ -42,6 +42,7 @@ export class MatchFactory {
       format,
       status: "waiting",
       players: [playerA, playerB],
+      games: [],
       score: {
         [playerA.id]: 0,
         [playerB.id]: 0,

@@ -15,6 +15,7 @@ export interface Match {
   format: MatchFormat;
   status: MatchStatus;
   players: [PlayerRef, PlayerRef];
+  games: string[];
   score: MatchScore;
   createdAt: string;
   updatedAt: string;
