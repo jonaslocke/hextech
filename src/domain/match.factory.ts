@@ -91,6 +91,7 @@ export class MatchFactory {
       battlefieldsUsedByPlayer,
       createdAt: now,
       updatedAt: now,
+      currentGameNumber: 1,
       currentGameId: null,
       winnerPlayerId: null,
     };

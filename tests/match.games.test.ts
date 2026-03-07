@@ -127,6 +127,11 @@ describe("Match games", () => {
     assert.equal(response.status, 201);
     assert.deepEqual(response.body.data.games, ["game_001"]);
     assert.deepEqual(response.body.data.score, { p1: 1, p2: 0 });
+    assert.equal(response.body.data.currentGameNumber, 2);
+    assert.deepEqual(response.body.data.battlefieldsUsedByPlayer, {
+      p1: ["Fortified Position", "Grove of the God-Willow"],
+      p2: ["Grove of the God-Willow", "The Dreaming Tree"],
+    });
   });
 
   test("POST /api/matches/:id/games finishes best-of-1 after one win", async () => {
@@ -141,6 +146,7 @@ describe("Match games", () => {
 
     assert.equal(response.status, 201);
     assert.equal(response.body.data.status, "finished");
+    assert.equal(response.body.data.currentGameNumber, 1);
   });
 
   test("POST /api/matches/:id/games keeps best-of-3 running after one win", async () => {
@@ -159,6 +165,7 @@ describe("Match games", () => {
 
     assert.equal(response.status, 201);
     assert.notEqual(response.body.data.status, "finished");
+    assert.equal(response.body.data.currentGameNumber, 2);
   });
 
   test("POST /api/matches/:id/games finishes best-of-3 after two wins", async () => {
@@ -186,6 +193,7 @@ describe("Match games", () => {
 
     assert.equal(second.status, 201);
     assert.equal(second.body.data.status, "finished");
+    assert.equal(second.body.data.currentGameNumber, 2);
   });
 
   test("POST /api/matches/:id/games assigns currentGameId when next game starts", async () => {
@@ -205,6 +213,7 @@ describe("Match games", () => {
     assert.equal(response.status, 201);
     assert.ok(response.body.data.currentGameId);
     assert.notEqual(response.body.data.currentGameId, "game_001");
+    assert.equal(response.body.data.currentGameNumber, 2);
   });
 
   test("POST /api/matches/:id/games rejects unknown match id", async () => {

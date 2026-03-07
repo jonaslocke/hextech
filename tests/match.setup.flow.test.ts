@@ -136,5 +136,6 @@ describe("Match setup flow (beginning -> ready)", () => {
     assert.equal(startingPlayerHappy.status, 201);
     assert.equal(startingPlayerHappy.body.data.startingPlayerId, "p1");
     assert.equal(startingPlayerHappy.body.data.status, "ready");
+    assert.equal(startingPlayerHappy.body.data.currentGameNumber, 1);
   });
 });

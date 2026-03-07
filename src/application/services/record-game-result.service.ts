@@ -18,6 +18,27 @@ export class RecordGameResultService {
     }
   }
 
+  private getMaxGames(format: Match["format"]): number {
+    switch (format) {
+      case "best-of-1":
+        return 1;
+      case "best-of-3":
+        return 3;
+      default:
+        return 1;
+    }
+  }
+
+  private resolveCurrentGameNumber(match: Match): number {
+    const fromMatch = match.currentGameNumber;
+
+    if (Number.isInteger(fromMatch) && (fromMatch as number) > 0) {
+      return fromMatch as number;
+    }
+
+    return match.games.length + 1;
+  }
+
   async execute(input: RecordGameResultRequestDto): Promise<Match> {
     const { matchId, gameId, winnerPlayerId, nextGameSelectedBattlefieldsByPlayer } =
       input;
@@ -60,6 +81,13 @@ export class RecordGameResultService {
       throw new ValidationError("Winner must be one of the match players.");
     }
 
+    const maxGames = this.getMaxGames(match.format);
+    const currentGameNumber = this.resolveCurrentGameNumber(match);
+
+    if (currentGameNumber > maxGames) {
+      throw new ValidationError("Current game number exceeds match format limits.");
+    }
+
     const updatedScore = {
       ...match.score,
       [winnerPlayerId]: (match.score[winnerPlayerId] ?? 0) + 1,
@@ -68,13 +96,38 @@ export class RecordGameResultService {
     const requiredWins = this.getRequiredWins(match.format);
     const winnerScore = updatedScore[winnerPlayerId] ?? 0;
     const isMatchFinished = winnerScore >= requiredWins;
+    const nextGameNumber = isMatchFinished ? currentGameNumber : currentGameNumber + 1;
+
+    if (!isMatchFinished && nextGameNumber > maxGames) {
+      throw new ValidationError("Cannot start another game in this match.");
+    }
 
     const nextGameId = isMatchFinished
       ? null
       : `game_${randomUUID()}`;
 
     let resolvedSelectedBattlefieldsByPlayer = match.selectedBattlefieldsByPlayer;
-    let resolvedBattlefieldsUsedByPlayer = match.battlefieldsUsedByPlayer ?? {};
+    const playerIds = match.players.map((player) => player.id);
+    let resolvedBattlefieldsUsedByPlayer = { ...(match.battlefieldsUsedByPlayer ?? {}) };
+
+    // Keep battlefield history consistent even for legacy records without usage history.
+    for (const playerId of playerIds) {
+      const used = resolvedBattlefieldsUsedByPlayer[playerId] ?? [];
+      const currentSelection = match.selectedBattlefieldsByPlayer[playerId];
+
+      if (
+        currentSelection &&
+        !used.some(
+          (battlefield) =>
+            battlefield.toLowerCase() === currentSelection.toLowerCase(),
+        )
+      ) {
+        resolvedBattlefieldsUsedByPlayer[playerId] = [...used, currentSelection];
+        continue;
+      }
+
+      resolvedBattlefieldsUsedByPlayer[playerId] = used;
+    }
 
     if (!isMatchFinished && match.format === "best-of-3") {
       if (!nextGameSelectedBattlefieldsByPlayer) {
@@ -83,7 +136,6 @@ export class RecordGameResultService {
         );
       }
 
-      const playerIds = match.players.map((player) => player.id);
       const nextSelections: Record<string, string> = {};
       const nextUsed: Record<string, string[]> = { ...resolvedBattlefieldsUsedByPlayer };
 
@@ -124,6 +176,7 @@ export class RecordGameResultService {
       score: updatedScore,
       status: isMatchFinished ? "finished" : "in_progress",
       winnerPlayerId: isMatchFinished ? winnerPlayerId : null,
+      currentGameNumber: nextGameNumber,
       currentGameId: nextGameId,
       selectedBattlefieldsByPlayer: resolvedSelectedBattlefieldsByPlayer,
       battlefieldsUsedByPlayer: resolvedBattlefieldsUsedByPlayer,

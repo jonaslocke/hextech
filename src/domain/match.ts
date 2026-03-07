@@ -26,6 +26,7 @@ export interface Match {
   battlefieldsUsedByPlayer: Record<string, string[]>;
   createdAt: string;
   updatedAt: string;
+  currentGameNumber: number;
   currentGameId: string | null;
   winnerPlayerId: string | null;
 }

@@ -71,6 +71,7 @@ describe("Match creation", () => {
     assert.equal(response.body.data.status, "setup_pending");
     assert.equal(response.body.data.players.length, 2);
     assert.deepEqual(response.body.data.score, { p1: 0, p2: 0 });
+    assert.equal(response.body.data.currentGameNumber, 1);
     assert.equal(response.body.data.startingPlayerId, null);
     assert.ok(["p1", "p2"].includes(response.body.data.startingPlayerChooserId));
   });

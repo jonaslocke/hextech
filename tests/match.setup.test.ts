@@ -119,6 +119,7 @@ describe("Match setup", () => {
 
     assert.equal(match.format, "best-of-3");
     assert.equal(match.status, "setup_pending");
+    assert.equal(match.currentGameNumber, 1);
     assert.equal(match.startingPlayerId, null);
     assert.ok(["p1", "p2"].includes(match.startingPlayerChooserId));
     assert.deepEqual(match.selectedBattlefieldsByPlayer, {});
