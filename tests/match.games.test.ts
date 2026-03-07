@@ -71,7 +71,7 @@ Sideboard:
   return response.body.data;
 }
 
-test("POST /api/matches/:id/games records a game and updates score", async () => {
+test("US-1.1.2 records a game and updates score", async () => {
   const match = await createMatch();
 
   const response = await request(app)
@@ -188,6 +188,38 @@ test("POST /api/matches/:id/games rejects winner not in match", async () => {
     .send({
       gameId: "game_001",
       winnerPlayerId: "p3",
+    });
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
+});
+
+test("POST /api/matches/:id/games rejects missing next game battlefields for best-of-3", async () => {
+  const match = await createMatch("best-of-3");
+
+  const response = await request(app)
+    .post(`/api/matches/${match.id}/games`)
+    .send({
+      gameId: "game_001",
+      winnerPlayerId: "p1",
+    });
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
+});
+
+test("POST /api/matches/:id/games rejects reusing a battlefield in best-of-3", async () => {
+  const match = await createMatch("best-of-3");
+
+  const response = await request(app)
+    .post(`/api/matches/${match.id}/games`)
+    .send({
+      gameId: "game_001",
+      winnerPlayerId: "p1",
+      nextGameSelectedBattlefieldsByPlayer: {
+        p1: "Fortified Position",
+        p2: "The Dreaming Tree",
+      },
     });
 
   assert.equal(response.status, 400);
