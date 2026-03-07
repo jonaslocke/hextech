@@ -6,6 +6,49 @@ import { createApp } from "../src/app.js";
 const app = createApp();
 
 async function createMatch(format: "best-of-1" | "best-of-3" = "best-of-3") {
+  const deckList = `Legend:
+1 Ahri, Nine-Tailed Fox
+
+Champion:
+1 Ahri, Inquisitive
+
+MainDeck:
+3 Defy
+3 En Garde
+3 Stalwart Poro
+3 Discipline
+3 Stupefy
+3 Ravenbloom Student
+3 Sprite Mother
+3 Thousand-Tailed Watcher
+2 Charm
+2 Clockwork Keeper
+2 Rune Prison
+2 Tasty Faefolk
+2 Retreat
+1 Find Your Center
+1 Wind Wall
+2 Sona, Harmonious
+1 Ahri, Alluring
+
+Battlefields:
+1 Fortified Position
+1 Grove of the God-Willow
+1 The Dreaming Tree
+
+Runes:
+7 Calm Rune
+5 Mind Rune
+
+Sideboard:
+1 Rune Prison
+1 Wind Wall
+1 Blitzcrank, Impassive
+1 Riptide Rex
+1 Retreat
+1 Singularity
+1 Unchecked Power
+1 Fox-Fire`;
   const response = await request(app)
     .post("/api/matches")
     .send({
@@ -14,6 +57,14 @@ async function createMatch(format: "best-of-1" | "best-of-3" = "best-of-3") {
         { id: "p1", displayName: "Alice" },
         { id: "p2", displayName: "Bob" },
       ],
+      decksByPlayer: {
+        p1: deckList,
+        p2: deckList,
+      },
+      selectedBattlefieldsByPlayer:
+        format === "best-of-3"
+          ? { p1: "Fortified Position", p2: "Grove of the God-Willow" }
+          : undefined,
     });
 
   assert.equal(response.status, 201);
@@ -28,6 +79,10 @@ test("POST /api/matches/:id/games records a game and updates score", async () =>
     .send({
       gameId: "game_001",
       winnerPlayerId: "p1",
+      nextGameSelectedBattlefieldsByPlayer: {
+        p1: "Grove of the God-Willow",
+        p2: "The Dreaming Tree",
+      },
     });
 
   assert.equal(response.status, 201);
@@ -57,6 +112,10 @@ test("POST /api/matches/:id/games keeps best-of-3 running after one win", async 
     .send({
       gameId: "game_001",
       winnerPlayerId: "p1",
+      nextGameSelectedBattlefieldsByPlayer: {
+        p1: "Grove of the God-Willow",
+        p2: "The Dreaming Tree",
+      },
     });
 
   assert.equal(response.status, 201);
@@ -71,6 +130,10 @@ test("POST /api/matches/:id/games finishes best-of-3 after two wins", async () =
     .send({
       gameId: "game_001",
       winnerPlayerId: "p1",
+      nextGameSelectedBattlefieldsByPlayer: {
+        p1: "Grove of the God-Willow",
+        p2: "The Dreaming Tree",
+      },
     });
 
   assert.equal(first.status, 201);
@@ -94,6 +157,10 @@ test("POST /api/matches/:id/games assigns currentGameId when next game starts", 
     .send({
       gameId: "game_001",
       winnerPlayerId: "p1",
+      nextGameSelectedBattlefieldsByPlayer: {
+        p1: "Grove of the God-Willow",
+        p2: "The Dreaming Tree",
+      },
     });
 
   assert.equal(response.status, 201);

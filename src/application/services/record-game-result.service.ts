@@ -19,7 +19,8 @@ export class RecordGameResultService {
   }
 
   async execute(input: RecordGameResultRequestDto): Promise<Match> {
-    const { matchId, gameId, winnerPlayerId } = input;
+    const { matchId, gameId, winnerPlayerId, nextGameSelectedBattlefieldsByPlayer } =
+      input;
 
     if (!matchId) {
       throw new ValidationError("Match id is required.");
@@ -68,6 +69,51 @@ export class RecordGameResultService {
       ? null
       : `game_${randomUUID()}`;
 
+    let resolvedSelectedBattlefieldsByPlayer = match.selectedBattlefieldsByPlayer;
+    let resolvedBattlefieldsUsedByPlayer = match.battlefieldsUsedByPlayer ?? {};
+
+    if (!isMatchFinished && match.format === "best-of-3") {
+      if (!nextGameSelectedBattlefieldsByPlayer) {
+        throw new ValidationError(
+          "Next game battlefields are required for best-of-3.",
+        );
+      }
+
+      const playerIds = match.players.map((player) => player.id);
+      const nextSelections: Record<string, string> = {};
+      const nextUsed: Record<string, string[]> = { ...resolvedBattlefieldsUsedByPlayer };
+
+      for (const playerId of playerIds) {
+        const selection = nextGameSelectedBattlefieldsByPlayer[playerId];
+        const pool = match.battlefieldsByPlayer[playerId] ?? [];
+        const used = nextUsed[playerId] ?? [];
+
+        if (!selection) {
+          throw new ValidationError(
+            "Each player must select a battlefield for the next game.",
+          );
+        }
+
+        if (!pool.includes(selection)) {
+          throw new ValidationError(
+            "Selected battlefield must be one of the provided battlefields.",
+          );
+        }
+
+        if (used.some((battlefield) => battlefield.toLowerCase() === selection.toLowerCase())) {
+          throw new ValidationError(
+            "Battlefield has already been selected in this match.",
+          );
+        }
+
+        nextSelections[playerId] = selection;
+        nextUsed[playerId] = [...used, selection];
+      }
+
+      resolvedSelectedBattlefieldsByPlayer = nextSelections;
+      resolvedBattlefieldsUsedByPlayer = nextUsed;
+    }
+
     const updatedMatch: Match = {
       ...match,
       games: [...match.games, gameId],
@@ -75,6 +121,8 @@ export class RecordGameResultService {
       status: isMatchFinished ? "finished" : "in_progress",
       winnerPlayerId: isMatchFinished ? winnerPlayerId : null,
       currentGameId: nextGameId,
+      selectedBattlefieldsByPlayer: resolvedSelectedBattlefieldsByPlayer,
+      battlefieldsUsedByPlayer: resolvedBattlefieldsUsedByPlayer,
       updatedAt: new Date().toISOString(),
     };
 

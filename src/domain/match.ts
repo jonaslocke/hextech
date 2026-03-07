@@ -17,6 +17,11 @@ export interface Match {
   players: [PlayerRef, PlayerRef];
   games: string[];
   score: MatchScore;
+  startingPlayerId: string;
+  decksByPlayer: Record<string, string>;
+  battlefieldsByPlayer: Record<string, string[]>;
+  selectedBattlefieldsByPlayer: Record<string, string>;
+  battlefieldsUsedByPlayer: Record<string, string[]>;
   createdAt: string;
   updatedAt: string;
   currentGameId: string | null;

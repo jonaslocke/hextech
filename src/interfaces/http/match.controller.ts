@@ -31,6 +31,8 @@ export class MatchController {
         matchId: matchId ?? "",
         gameId: req.body?.gameId,
         winnerPlayerId: req.body?.winnerPlayerId,
+        nextGameSelectedBattlefieldsByPlayer:
+          req.body?.nextGameSelectedBattlefieldsByPlayer,
       });
 
       return res.status(201).json({

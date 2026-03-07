@@ -6,4 +6,6 @@ export interface CreateMatchRequestDto {
     id: string;
     displayName: string;
   }>;
+  decksByPlayer: Record<string, string>;
+  selectedBattlefieldsByPlayer?: Record<string, string>;
 }

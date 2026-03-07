@@ -10,6 +10,10 @@ export class CreateMatchService {
     const match = MatchFactory.create({
       format: input.format,
       players: input.players,
+      decksByPlayer: input.decksByPlayer,
+      ...(input.selectedBattlefieldsByPlayer
+        ? { selectedBattlefieldsByPlayer: input.selectedBattlefieldsByPlayer }
+        : {}),
     });
 
     await this.matchRepository.save(match);
