@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Match, MatchFormat, PlayerRef } from "./match";
+import { DeckValidator } from "./deck.validator";
 import { ValidationError } from "../shared/errors";
 
 interface CreateMatchParams {
@@ -10,67 +11,6 @@ interface CreateMatchParams {
 }
 
 export class MatchFactory {
-  private static extractBattlefields(deckList: string): string[] {
-    const lines = deckList.split(/\r?\n/);
-    const battlefields: string[] = [];
-    let inBattlefieldsSection = false;
-
-    for (const rawLine of lines) {
-      const line = rawLine.trim();
-
-      if (!line) {
-        if (inBattlefieldsSection) {
-          break;
-        }
-        continue;
-      }
-
-      if (/^[A-Za-z].*:\s*$/.test(line)) {
-        if (line.toLowerCase() === "battlefields:") {
-          inBattlefieldsSection = true;
-          continue;
-        }
-
-        if (inBattlefieldsSection) {
-          break;
-        }
-      }
-
-      if (!inBattlefieldsSection) {
-        continue;
-      }
-
-      const name = line.replace(/^\d+\s+/, "").trim();
-
-      if (name) {
-        battlefields.push(name);
-      }
-    }
-
-    return battlefields;
-  }
-
-  private static validateBattlefields(battlefields: string[]): string[] {
-    if (battlefields.length !== 3) {
-      throw new ValidationError("Each player must provide exactly 3 battlefields.");
-    }
-
-    const normalized = battlefields.map((battlefield) => battlefield.trim());
-    const seen = new Set<string>();
-
-    for (const battlefield of normalized) {
-      const key = battlefield.toLowerCase();
-
-      if (seen.has(key)) {
-        throw new ValidationError("Battlefield roster must not include duplicates.");
-      }
-
-      seen.add(key);
-    }
-
-    return normalized;
-  }
-
   static create(params: CreateMatchParams): Match {
     const { format, players, decksByPlayer, selectedBattlefieldsByPlayer } = params;
 
@@ -108,20 +48,10 @@ export class MatchFactory {
 
     for (const playerId of playerIds) {
       const deckList = decksByPlayer[playerId];
+      const validatedDeck = DeckValidator.validate(deckList);
 
-      if (typeof deckList !== "string" || deckList.trim().length === 0) {
-        throw new ValidationError("Each player must provide a deck list.");
-      }
-
-      const battlefields = MatchFactory.extractBattlefields(deckList);
-
-      if (battlefields.length === 0) {
-        throw new ValidationError("Deck list must include a Battlefields section.");
-      }
-
-      normalizedDecksByPlayer[playerId] = deckList.trim();
-      normalizedBattlefieldsByPlayer[playerId] =
-        MatchFactory.validateBattlefields(battlefields);
+      normalizedDecksByPlayer[playerId] = validatedDeck.raw;
+      normalizedBattlefieldsByPlayer[playerId] = validatedDeck.battlefields;
     }
 
     const resolvedBattlefieldsByPlayer: Record<string, string> = {};
