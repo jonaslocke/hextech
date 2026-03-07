@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { describe, test } from "node:test";
 import { MatchFactory } from "../src/domain/match.factory.js";
 import { InMemoryMatchRepository } from "../src/infrastructure/repositories/in-memory-match.repository.js";
 
-test("Match repository persists games list and score updates", async () => {
-  const deckList = `Legend:
+describe("Match tracking", () => {
+  test("Match repository persists games list and score updates", async () => {
+    const deckList = `Legend:
 1 Ahri, Nine-Tailed Fox
 
 Champion:
@@ -47,34 +48,35 @@ Sideboard:
 1 Singularity
 1 Unchecked Power
 1 Fox-Fire`;
-  const match = MatchFactory.create({
-    format: "best-of-3",
-    players: [
-      { id: "p1", displayName: "Alice" },
-      { id: "p2", displayName: "Bob" },
-    ],
-    decksByPlayer: {
-      p1: deckList,
-      p2: deckList,
-    },
-    selectedBattlefieldsByPlayer: {
-      p1: "Fortified Position",
-      p2: "Grove of the God-Willow",
-    },
+    const match = MatchFactory.create({
+      format: "best-of-3",
+      players: [
+        { id: "p1", displayName: "Alice" },
+        { id: "p2", displayName: "Bob" },
+      ],
+      decksByPlayer: {
+        p1: deckList,
+        p2: deckList,
+      },
+      selectedBattlefieldsByPlayer: {
+        p1: "Fortified Position",
+        p2: "Grove of the God-Willow",
+      },
+    });
+
+    const [playerA, playerB] = match.players;
+
+    match.games.push("game_001");
+    match.score[playerA.id] = 1;
+    match.score[playerB.id] = 0;
+
+    const repository = new InMemoryMatchRepository();
+    await repository.save(match);
+
+    const stored = await repository.findById(match.id);
+
+    assert.ok(stored);
+    assert.deepEqual(stored?.games, ["game_001"]);
+    assert.deepEqual(stored?.score, { [playerA.id]: 1, [playerB.id]: 0 });
   });
-
-  const [playerA, playerB] = match.players;
-
-  match.games.push("game_001");
-  match.score[playerA.id] = 1;
-  match.score[playerB.id] = 0;
-
-  const repository = new InMemoryMatchRepository();
-  await repository.save(match);
-
-  const stored = await repository.findById(match.id);
-
-  assert.ok(stored);
-  assert.deepEqual(stored?.games, ["game_001"]);
-  assert.deepEqual(stored?.score, { [playerA.id]: 1, [playerB.id]: 0 });
 });

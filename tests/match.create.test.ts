@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { describe, test } from "node:test";
 import request from "supertest";
 import { createApp } from "../src/app.js";
 
@@ -49,81 +49,83 @@ Sideboard:
 1 Unchecked Power
 1 Fox-Fire`;
 
-test("US-1.1.1 creates a match with defined format and participants", async () => {
-  const response = await request(app)
-    .post("/api/matches")
-    .send({
-      format: "best-of-1",
-      players: [
-        { id: "p1", displayName: "Alice" },
-        { id: "p2", displayName: "Bob" },
-      ],
-      decksByPlayer: {
-        p1: deckList,
-        p2: deckList,
-      },
-    });
+describe("Match creation", () => {
+  test("US-1.1.1 creates a match with defined format and participants", async () => {
+    const response = await request(app)
+      .post("/api/matches")
+      .send({
+        format: "best-of-1",
+        players: [
+          { id: "p1", displayName: "Alice" },
+          { id: "p2", displayName: "Bob" },
+        ],
+        decksByPlayer: {
+          p1: deckList,
+          p2: deckList,
+        },
+      });
 
-  assert.equal(response.status, 201);
-  assert.ok(response.body?.data?.id);
-  assert.equal(response.body.data.format, "best-of-1");
-  assert.equal(response.body.data.status, "ready");
-  assert.equal(response.body.data.players.length, 2);
-  assert.deepEqual(response.body.data.score, { p1: 0, p2: 0 });
-  assert.ok(["p1", "p2"].includes(response.body.data.startingPlayerId));
-});
+    assert.equal(response.status, 201);
+    assert.ok(response.body?.data?.id);
+    assert.equal(response.body.data.format, "best-of-1");
+    assert.equal(response.body.data.status, "ready");
+    assert.equal(response.body.data.players.length, 2);
+    assert.deepEqual(response.body.data.score, { p1: 0, p2: 0 });
+    assert.ok(["p1", "p2"].includes(response.body.data.startingPlayerId));
+  });
 
-test("US-1.1.2 initializes games list and score tracking", async () => {
-  const response = await request(app)
-    .post("/api/matches")
-    .send({
-      format: "best-of-3",
-      players: [
-        { id: "p1", displayName: "Alice" },
-        { id: "p2", displayName: "Bob" },
-      ],
-      decksByPlayer: {
-        p1: deckList,
-        p2: deckList,
-      },
-      selectedBattlefieldsByPlayer: {
-        p1: "Fortified Position",
-        p2: "Grove of the God-Willow",
-      },
-    });
+  test("US-1.1.2 initializes games list and score tracking", async () => {
+    const response = await request(app)
+      .post("/api/matches")
+      .send({
+        format: "best-of-3",
+        players: [
+          { id: "p1", displayName: "Alice" },
+          { id: "p2", displayName: "Bob" },
+        ],
+        decksByPlayer: {
+          p1: deckList,
+          p2: deckList,
+        },
+        selectedBattlefieldsByPlayer: {
+          p1: "Fortified Position",
+          p2: "Grove of the God-Willow",
+        },
+      });
 
-  assert.equal(response.status, 201);
-  assert.deepEqual(response.body.data.games, []);
-  assert.deepEqual(response.body.data.score, { p1: 0, p2: 0 });
-});
+    assert.equal(response.status, 201);
+    assert.deepEqual(response.body.data.games, []);
+    assert.deepEqual(response.body.data.score, { p1: 0, p2: 0 });
+  });
 
-test("POST /api/matches rejects invalid format", async () => {
-  const response = await request(app)
-    .post("/api/matches")
-    .send({
-      format: "best-of-5",
-      players: [
-        { id: "p1", displayName: "Alice" },
-        { id: "p2", displayName: "Bob" },
-      ],
-      decksByPlayer: {
-        p1: deckList,
-        p2: deckList,
-      },
-    });
+  test("POST /api/matches rejects invalid format", async () => {
+    const response = await request(app)
+      .post("/api/matches")
+      .send({
+        format: "best-of-5",
+        players: [
+          { id: "p1", displayName: "Alice" },
+          { id: "p2", displayName: "Bob" },
+        ],
+        decksByPlayer: {
+          p1: deckList,
+          p2: deckList,
+        },
+      });
 
-  assert.equal(response.status, 400);
-  assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
-});
+    assert.equal(response.status, 400);
+    assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
+  });
 
-test("POST /api/matches rejects missing or incorrect player count", async () => {
-  const response = await request(app)
-    .post("/api/matches")
-    .send({
-      format: "best-of-1",
-      players: [{ id: "p1", displayName: "Alice" }],
-    });
+  test("POST /api/matches rejects missing or incorrect player count", async () => {
+    const response = await request(app)
+      .post("/api/matches")
+      .send({
+        format: "best-of-1",
+        players: [{ id: "p1", displayName: "Alice" }],
+      });
 
-  assert.equal(response.status, 400);
-  assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
+    assert.equal(response.status, 400);
+    assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
+  });
 });

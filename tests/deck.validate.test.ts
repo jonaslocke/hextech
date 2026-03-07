@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { describe, test } from "node:test";
 import request from "supertest";
 import { createApp } from "../src/app.js";
 
@@ -88,44 +88,45 @@ Sideboard:
 1 Unchecked Power
 1 Fox-Fire`;
 
-test("POST /api/decks/validate returns valid result for a legal deck", async () => {
-  const response = await request(app)
-    .post("/api/decks/validate")
-    .send({ deckList });
+describe("Deck validation", () => {
+  test("POST /api/decks/validate returns valid result for a legal deck", async () => {
+    const response = await request(app)
+      .post("/api/decks/validate")
+      .send({ deckList });
 
-  assert.equal(response.status, 200);
-  assert.equal(response.body.data.isValid, true);
-  assert.deepEqual(response.body.data.reasons, []);
-  assert.deepEqual(response.body.data.battlefields, [
-    "Fortified Position",
-    "Grove of the God-Willow",
-    "The Dreaming Tree",
-  ]);
-});
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, true);
+    assert.deepEqual(response.body.data.reasons, []);
+    assert.deepEqual(response.body.data.battlefields, [
+      "Fortified Position",
+      "Grove of the God-Willow",
+      "The Dreaming Tree",
+    ]);
+  });
 
-test("POST /api/decks/validate returns reasons for invalid deck", async () => {
-  const response = await request(app)
-    .post("/api/decks/validate")
-    .send({ deckList: deckWithoutBattlefields });
+  test("POST /api/decks/validate returns reasons for invalid deck", async () => {
+    const response = await request(app)
+      .post("/api/decks/validate")
+      .send({ deckList: deckWithoutBattlefields });
 
-  assert.equal(response.status, 200);
-  assert.equal(response.body.data.isValid, false);
-  assert.ok(response.body.data.reasons.length > 0);
-});
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(response.body.data.reasons.length > 0);
+  });
 
-test("POST /api/decks/validate handles missing deck list", async () => {
-  const response = await request(app).post("/api/decks/validate").send({});
+  test("POST /api/decks/validate handles missing deck list", async () => {
+    const response = await request(app).post("/api/decks/validate").send({});
 
-  assert.equal(response.status, 200);
-  assert.equal(response.body.data.isValid, false);
-  assert.ok(response.body.data.reasons.length > 0);
-});
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(response.body.data.reasons.length > 0);
+  });
 
-test("POST /api/decks/validate rejects battlefields without names", async () => {
-  const response = await request(app)
-    .post("/api/decks/validate")
-    .send({
-      deckList: `Legend:
+  test("POST /api/decks/validate rejects battlefields without names", async () => {
+    const response = await request(app)
+      .post("/api/decks/validate")
+      .send({
+        deckList: `Legend:
 1 Ahri, Nine-Tailed Fox
 
 Champion:
@@ -168,9 +169,10 @@ Sideboard:
 1 Singularity
 1 Unchecked Power
 1 Fox-Fire`,
-    });
+      });
 
-  assert.equal(response.status, 200);
-  assert.equal(response.body.data.isValid, false);
-  assert.ok(response.body.data.reasons.length > 0);
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(response.body.data.reasons.length > 0);
+  });
 });

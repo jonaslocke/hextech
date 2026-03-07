@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { describe, test } from "node:test";
 import request from "supertest";
 import { createApp } from "../src/app.js";
 
@@ -71,157 +71,159 @@ Sideboard:
   return response.body.data;
 }
 
-test("US-1.1.2 records a game and updates score", async () => {
-  const match = await createMatch();
+describe("Match games", () => {
+  test("US-1.1.2 records a game and updates score", async () => {
+    const match = await createMatch();
 
-  const response = await request(app)
-    .post(`/api/matches/${match.id}/games`)
-    .send({
-      gameId: "game_001",
-      winnerPlayerId: "p1",
-      nextGameSelectedBattlefieldsByPlayer: {
-        p1: "Grove of the God-Willow",
-        p2: "The Dreaming Tree",
-      },
-    });
+    const response = await request(app)
+      .post(`/api/matches/${match.id}/games`)
+      .send({
+        gameId: "game_001",
+        winnerPlayerId: "p1",
+        nextGameSelectedBattlefieldsByPlayer: {
+          p1: "Grove of the God-Willow",
+          p2: "The Dreaming Tree",
+        },
+      });
 
-  assert.equal(response.status, 201);
-  assert.deepEqual(response.body.data.games, ["game_001"]);
-  assert.deepEqual(response.body.data.score, { p1: 1, p2: 0 });
-});
+    assert.equal(response.status, 201);
+    assert.deepEqual(response.body.data.games, ["game_001"]);
+    assert.deepEqual(response.body.data.score, { p1: 1, p2: 0 });
+  });
 
-test("POST /api/matches/:id/games finishes best-of-1 after one win", async () => {
-  const match = await createMatch("best-of-1");
+  test("POST /api/matches/:id/games finishes best-of-1 after one win", async () => {
+    const match = await createMatch("best-of-1");
 
-  const response = await request(app)
-    .post(`/api/matches/${match.id}/games`)
-    .send({
-      gameId: "game_001",
-      winnerPlayerId: "p1",
-    });
+    const response = await request(app)
+      .post(`/api/matches/${match.id}/games`)
+      .send({
+        gameId: "game_001",
+        winnerPlayerId: "p1",
+      });
 
-  assert.equal(response.status, 201);
-  assert.equal(response.body.data.status, "finished");
-});
+    assert.equal(response.status, 201);
+    assert.equal(response.body.data.status, "finished");
+  });
 
-test("POST /api/matches/:id/games keeps best-of-3 running after one win", async () => {
-  const match = await createMatch("best-of-3");
+  test("POST /api/matches/:id/games keeps best-of-3 running after one win", async () => {
+    const match = await createMatch("best-of-3");
 
-  const response = await request(app)
-    .post(`/api/matches/${match.id}/games`)
-    .send({
-      gameId: "game_001",
-      winnerPlayerId: "p1",
-      nextGameSelectedBattlefieldsByPlayer: {
-        p1: "Grove of the God-Willow",
-        p2: "The Dreaming Tree",
-      },
-    });
+    const response = await request(app)
+      .post(`/api/matches/${match.id}/games`)
+      .send({
+        gameId: "game_001",
+        winnerPlayerId: "p1",
+        nextGameSelectedBattlefieldsByPlayer: {
+          p1: "Grove of the God-Willow",
+          p2: "The Dreaming Tree",
+        },
+      });
 
-  assert.equal(response.status, 201);
-  assert.notEqual(response.body.data.status, "finished");
-});
+    assert.equal(response.status, 201);
+    assert.notEqual(response.body.data.status, "finished");
+  });
 
-test("POST /api/matches/:id/games finishes best-of-3 after two wins", async () => {
-  const match = await createMatch("best-of-3");
+  test("POST /api/matches/:id/games finishes best-of-3 after two wins", async () => {
+    const match = await createMatch("best-of-3");
 
-  const first = await request(app)
-    .post(`/api/matches/${match.id}/games`)
-    .send({
-      gameId: "game_001",
-      winnerPlayerId: "p1",
-      nextGameSelectedBattlefieldsByPlayer: {
-        p1: "Grove of the God-Willow",
-        p2: "The Dreaming Tree",
-      },
-    });
+    const first = await request(app)
+      .post(`/api/matches/${match.id}/games`)
+      .send({
+        gameId: "game_001",
+        winnerPlayerId: "p1",
+        nextGameSelectedBattlefieldsByPlayer: {
+          p1: "Grove of the God-Willow",
+          p2: "The Dreaming Tree",
+        },
+      });
 
-  assert.equal(first.status, 201);
+    assert.equal(first.status, 201);
 
-  const second = await request(app)
-    .post(`/api/matches/${match.id}/games`)
-    .send({
-      gameId: "game_002",
-      winnerPlayerId: "p1",
-    });
+    const second = await request(app)
+      .post(`/api/matches/${match.id}/games`)
+      .send({
+        gameId: "game_002",
+        winnerPlayerId: "p1",
+      });
 
-  assert.equal(second.status, 201);
-  assert.equal(second.body.data.status, "finished");
-});
+    assert.equal(second.status, 201);
+    assert.equal(second.body.data.status, "finished");
+  });
 
-test("POST /api/matches/:id/games assigns currentGameId when next game starts", async () => {
-  const match = await createMatch("best-of-3");
+  test("POST /api/matches/:id/games assigns currentGameId when next game starts", async () => {
+    const match = await createMatch("best-of-3");
 
-  const response = await request(app)
-    .post(`/api/matches/${match.id}/games`)
-    .send({
-      gameId: "game_001",
-      winnerPlayerId: "p1",
-      nextGameSelectedBattlefieldsByPlayer: {
-        p1: "Grove of the God-Willow",
-        p2: "The Dreaming Tree",
-      },
-    });
+    const response = await request(app)
+      .post(`/api/matches/${match.id}/games`)
+      .send({
+        gameId: "game_001",
+        winnerPlayerId: "p1",
+        nextGameSelectedBattlefieldsByPlayer: {
+          p1: "Grove of the God-Willow",
+          p2: "The Dreaming Tree",
+        },
+      });
 
-  assert.equal(response.status, 201);
-  assert.ok(response.body.data.currentGameId);
-  assert.notEqual(response.body.data.currentGameId, "game_001");
-});
+    assert.equal(response.status, 201);
+    assert.ok(response.body.data.currentGameId);
+    assert.notEqual(response.body.data.currentGameId, "game_001");
+  });
 
-test("POST /api/matches/:id/games rejects unknown match id", async () => {
-  const response = await request(app)
-    .post("/api/matches/match_missing/games")
-    .send({
-      gameId: "game_001",
-      winnerPlayerId: "p1",
-    });
+  test("POST /api/matches/:id/games rejects unknown match id", async () => {
+    const response = await request(app)
+      .post("/api/matches/match_missing/games")
+      .send({
+        gameId: "game_001",
+        winnerPlayerId: "p1",
+      });
 
-  assert.equal(response.status, 404);
-  assert.equal(response.body?.error?.code, "NOT_FOUND");
-});
+    assert.equal(response.status, 404);
+    assert.equal(response.body?.error?.code, "NOT_FOUND");
+  });
 
-test("POST /api/matches/:id/games rejects winner not in match", async () => {
-  const match = await createMatch();
+  test("POST /api/matches/:id/games rejects winner not in match", async () => {
+    const match = await createMatch();
 
-  const response = await request(app)
-    .post(`/api/matches/${match.id}/games`)
-    .send({
-      gameId: "game_001",
-      winnerPlayerId: "p3",
-    });
+    const response = await request(app)
+      .post(`/api/matches/${match.id}/games`)
+      .send({
+        gameId: "game_001",
+        winnerPlayerId: "p3",
+      });
 
-  assert.equal(response.status, 400);
-  assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
-});
+    assert.equal(response.status, 400);
+    assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
+  });
 
-test("POST /api/matches/:id/games rejects missing next game battlefields for best-of-3", async () => {
-  const match = await createMatch("best-of-3");
+  test("POST /api/matches/:id/games rejects missing next game battlefields for best-of-3", async () => {
+    const match = await createMatch("best-of-3");
 
-  const response = await request(app)
-    .post(`/api/matches/${match.id}/games`)
-    .send({
-      gameId: "game_001",
-      winnerPlayerId: "p1",
-    });
+    const response = await request(app)
+      .post(`/api/matches/${match.id}/games`)
+      .send({
+        gameId: "game_001",
+        winnerPlayerId: "p1",
+      });
 
-  assert.equal(response.status, 400);
-  assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
-});
+    assert.equal(response.status, 400);
+    assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
+  });
 
-test("POST /api/matches/:id/games rejects reusing a battlefield in best-of-3", async () => {
-  const match = await createMatch("best-of-3");
+  test("POST /api/matches/:id/games rejects reusing a battlefield in best-of-3", async () => {
+    const match = await createMatch("best-of-3");
 
-  const response = await request(app)
-    .post(`/api/matches/${match.id}/games`)
-    .send({
-      gameId: "game_001",
-      winnerPlayerId: "p1",
-      nextGameSelectedBattlefieldsByPlayer: {
-        p1: "Fortified Position",
-        p2: "The Dreaming Tree",
-      },
-    });
+    const response = await request(app)
+      .post(`/api/matches/${match.id}/games`)
+      .send({
+        gameId: "game_001",
+        winnerPlayerId: "p1",
+        nextGameSelectedBattlefieldsByPlayer: {
+          p1: "Fortified Position",
+          p2: "The Dreaming Tree",
+        },
+      });
 
-  assert.equal(response.status, 400);
-  assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
+    assert.equal(response.status, 400);
+    assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
+  });
 });
