@@ -68,10 +68,11 @@ describe("Match creation", () => {
     assert.equal(response.status, 201);
     assert.ok(response.body?.data?.id);
     assert.equal(response.body.data.format, "best-of-1");
-    assert.equal(response.body.data.status, "ready");
+    assert.equal(response.body.data.status, "setup_pending");
     assert.equal(response.body.data.players.length, 2);
     assert.deepEqual(response.body.data.score, { p1: 0, p2: 0 });
-    assert.ok(["p1", "p2"].includes(response.body.data.startingPlayerId));
+    assert.equal(response.body.data.startingPlayerId, null);
+    assert.ok(["p1", "p2"].includes(response.body.data.startingPlayerChooserId));
   });
 
   test("US-1.1.2 initializes games list and score tracking", async () => {
@@ -86,10 +87,6 @@ describe("Match creation", () => {
         decksByPlayer: {
           p1: deckList,
           p2: deckList,
-        },
-        selectedBattlefieldsByPlayer: {
-          p1: "Fortified Position",
-          p2: "Grove of the God-Willow",
         },
       });
 
@@ -123,6 +120,29 @@ describe("Match creation", () => {
       .send({
         format: "best-of-1",
         players: [{ id: "p1", displayName: "Alice" }],
+      });
+
+    assert.equal(response.status, 400);
+    assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
+  });
+
+  test("POST /api/matches rejects selected battlefields during match creation", async () => {
+    const response = await request(app)
+      .post("/api/matches")
+      .send({
+        format: "best-of-3",
+        players: [
+          { id: "p1", displayName: "Alice" },
+          { id: "p2", displayName: "Bob" },
+        ],
+        decksByPlayer: {
+          p1: deckList,
+          p2: deckList,
+        },
+        selectedBattlefieldsByPlayer: {
+          p1: "Fortified Position",
+          p2: "Grove of the God-Willow",
+        },
       });
 
     assert.equal(response.status, 400);

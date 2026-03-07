@@ -2,12 +2,14 @@ import { ValidationError } from "../shared/errors";
 
 export interface ValidatedDeck {
   raw: string;
+  chosenChampion: string;
   battlefields: string[];
 }
 
 export interface DeckValidationResult {
   isValid: boolean;
   reasons: string[];
+  chosenChampion: string | null;
   battlefields: string[];
 }
 
@@ -40,6 +42,7 @@ export class DeckValidator {
 
     return {
       raw: deckList.trim(),
+      chosenChampion: result.chosenChampion ?? "",
       battlefields: result.battlefields,
     };
   }
@@ -49,7 +52,7 @@ export class DeckValidator {
 
     if (typeof deckList !== "string" || deckList.trim().length === 0) {
       reasons.push("Deck must be provided.");
-      return { isValid: false, reasons, battlefields: [] };
+      return { isValid: false, reasons, chosenChampion: null, battlefields: [] };
     }
 
     const raw = deckList.trim();
@@ -78,10 +81,11 @@ export class DeckValidator {
     );
 
     const battlefieldsSection = sections.battlefields;
+    const chosenChampion = DeckValidator.resolveChosenChampionName(sections.champion);
 
     if (!battlefieldsSection || battlefieldsSection.entries.length === 0) {
       reasons.push("Deck must include a Battlefields section.");
-      return { isValid: false, reasons, battlefields: [] };
+      return { isValid: false, reasons, chosenChampion, battlefields: [] };
     }
 
     if (battlefieldsSection.invalidEntries > 0) {
@@ -96,6 +100,7 @@ export class DeckValidator {
     return {
       isValid: reasons.length === 0,
       reasons,
+      chosenChampion,
       battlefields: validatedBattlefields,
     };
   }
@@ -368,5 +373,21 @@ export class DeckValidator {
     }
 
     return normalized;
+  }
+
+  private static resolveChosenChampionName(
+    section: DeckSection | undefined,
+  ): string | null {
+    if (!section || section.entries.length !== 1) {
+      return null;
+    }
+
+    const [entry] = section.entries;
+
+    if (!entry || entry.quantity !== 1) {
+      return null;
+    }
+
+    return entry.name.trim() || null;
   }
 }

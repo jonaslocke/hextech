@@ -58,10 +58,6 @@ Sideboard:
         p1: deckList,
         p2: deckList,
       },
-      selectedBattlefieldsByPlayer: {
-        p1: "Fortified Position",
-        p2: "Grove of the God-Willow",
-      },
     });
 
     const [playerA, playerB] = match.players;

@@ -7,12 +7,11 @@ interface CreateMatchParams {
   format: MatchFormat;
   players: PlayerRef[];
   decksByPlayer: Record<string, string>;
-  selectedBattlefieldsByPlayer?: Record<string, string>;
 }
 
 export class MatchFactory {
   static create(params: CreateMatchParams): Match {
-    const { format, players, decksByPlayer, selectedBattlefieldsByPlayer } = params;
+    const { format, players, decksByPlayer } = params;
 
     const validFormats: MatchFormat[] = ["best-of-1", "best-of-3"];
 
@@ -48,74 +47,47 @@ export class MatchFactory {
 
     for (const playerId of playerIds) {
       const deckList = decksByPlayer[playerId];
+      if (typeof deckList !== "string") {
+        throw new ValidationError("Deck is required for each player.");
+      }
       const validatedDeck = DeckValidator.validate(deckList);
 
       normalizedDecksByPlayer[playerId] = validatedDeck.raw;
       normalizedBattlefieldsByPlayer[playerId] = validatedDeck.battlefields;
     }
 
-    const resolvedBattlefieldsByPlayer: Record<string, string> = {};
+    const selectedBattlefieldsByPlayer: Record<string, string> = {};
     const battlefieldsUsedByPlayer: Record<string, string[]> = {};
 
-    if (format === "best-of-1") {
-      for (const playerId of playerIds) {
-        const pool = normalizedBattlefieldsByPlayer[playerId];
-        if (!pool || pool.length === 0) {
-          throw new ValidationError("Each player must provide exactly 3 battlefields.");
-        }
-        const randomIndex = Math.floor(Math.random() * pool.length);
-        resolvedBattlefieldsByPlayer[playerId] = pool[randomIndex]!;
-        battlefieldsUsedByPlayer[playerId] = [resolvedBattlefieldsByPlayer[playerId]!];
+    for (const playerId of playerIds) {
+      const pool = normalizedBattlefieldsByPlayer[playerId];
+      if (!pool || pool.length === 0) {
+        throw new ValidationError("Each player must provide exactly 3 battlefields.");
       }
-    } else {
-      if (!selectedBattlefieldsByPlayer) {
-        throw new ValidationError(
-          "Selected battlefields are required for best-of-3.",
-        );
-      }
-
-      for (const playerId of playerIds) {
-        const selection = selectedBattlefieldsByPlayer[playerId];
-        const pool = normalizedBattlefieldsByPlayer[playerId];
-        if (!pool || pool.length === 0) {
-          throw new ValidationError("Each player must provide exactly 3 battlefields.");
-        }
-
-        if (!selection) {
-          throw new ValidationError(
-            "Each player must select a battlefield for best-of-3.",
-          );
-        }
-
-        if (!pool.includes(selection)) {
-          throw new ValidationError(
-            "Selected battlefield must be one of the provided battlefields.",
-          );
-        }
-
-        resolvedBattlefieldsByPlayer[playerId] = selection;
-        battlefieldsUsedByPlayer[playerId] = [selection];
-      }
+      battlefieldsUsedByPlayer[playerId] = [];
     }
 
-    const startingPlayerId = playerIds[Math.floor(Math.random() * playerIds.length)]!;
+    const startingPlayerChooserId =
+      playerIds[Math.floor(Math.random() * playerIds.length)]!;
 
     const now = new Date().toISOString();
 
     return {
       id: `match_${randomUUID()}`,
       format,
-      status: "ready",
+      status: "setup_pending",
       players: [playerA, playerB],
       games: [],
       score: {
         [playerA.id]: 0,
         [playerB.id]: 0,
       },
-      startingPlayerId,
+      startingPlayerChooserId,
+      startingPlayerId: null,
       decksByPlayer: normalizedDecksByPlayer,
+      chosenChampionByPlayer: {},
       battlefieldsByPlayer: normalizedBattlefieldsByPlayer,
-      selectedBattlefieldsByPlayer: resolvedBattlefieldsByPlayer,
+      selectedBattlefieldsByPlayer,
       battlefieldsUsedByPlayer,
       createdAt: now,
       updatedAt: now,

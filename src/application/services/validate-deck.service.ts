@@ -8,8 +8,14 @@ export interface ValidateDeckResult {
 
 export class ValidateDeckService {
   execute(deckList: unknown): ValidateDeckResult {
-    return DeckValidator.validateWithReasons(
+    const result = DeckValidator.validateWithReasons(
       typeof deckList === "string" ? deckList : "",
     );
+
+    return {
+      isValid: result.isValid,
+      reasons: result.reasons,
+      battlefields: result.battlefields,
+    };
   }
 }

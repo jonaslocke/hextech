@@ -1,5 +1,5 @@
 export type MatchFormat = "best-of-1" | "best-of-3";
-export type MatchStatus = "waiting" | "ready" | "in_progress" | "finished";
+export type MatchStatus = "setup_pending" | "ready" | "in_progress" | "finished";
 
 export interface PlayerRef {
   id: string;
@@ -17,8 +17,10 @@ export interface Match {
   players: [PlayerRef, PlayerRef];
   games: string[];
   score: MatchScore;
-  startingPlayerId: string;
+  startingPlayerChooserId: string;
+  startingPlayerId: string | null;
   decksByPlayer: Record<string, string>;
+  chosenChampionByPlayer: Record<string, string>;
   battlefieldsByPlayer: Record<string, string[]>;
   selectedBattlefieldsByPlayer: Record<string, string>;
   battlefieldsUsedByPlayer: Record<string, string[]>;

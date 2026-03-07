@@ -40,6 +40,10 @@ export class RecordGameResultService {
       throw new NotFoundError("Match not found.");
     }
 
+    if (match.status === "setup_pending") {
+      throw new ValidationError("Match setup is pending.");
+    }
+
     if (match.status === "finished" || match.winnerPlayerId) {
       throw new ValidationError("Match is already finished.");
     }

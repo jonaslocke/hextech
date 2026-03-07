@@ -61,14 +61,52 @@ Sideboard:
         p1: deckList,
         p2: deckList,
       },
-      selectedBattlefieldsByPlayer:
-        format === "best-of-3"
-          ? { p1: "Fortified Position", p2: "Grove of the God-Willow" }
-          : undefined,
     });
 
   assert.equal(response.status, 201);
-  return response.body.data;
+  const match = response.body.data;
+
+  const championP1 = await request(app)
+    .post(`/api/matches/${match.id}/setup/champion`)
+    .send({ playerId: "p1" });
+  assert.equal(championP1.status, 201);
+
+  const championP2 = await request(app)
+    .post(`/api/matches/${match.id}/setup/champion`)
+    .send({ playerId: "p2" });
+  assert.equal(championP2.status, 201);
+
+  if (format === "best-of-1") {
+    const battlefieldP1 = await request(app)
+      .post(`/api/matches/${match.id}/setup/battlefield`)
+      .send({ playerId: "p1" });
+    assert.equal(battlefieldP1.status, 201);
+
+    const battlefieldP2 = await request(app)
+      .post(`/api/matches/${match.id}/setup/battlefield`)
+      .send({ playerId: "p2" });
+    assert.equal(battlefieldP2.status, 201);
+  } else {
+    const battlefieldP1 = await request(app)
+      .post(`/api/matches/${match.id}/setup/battlefield`)
+      .send({ playerId: "p1", battlefield: "Fortified Position" });
+    assert.equal(battlefieldP1.status, 201);
+
+    const battlefieldP2 = await request(app)
+      .post(`/api/matches/${match.id}/setup/battlefield`)
+      .send({ playerId: "p2", battlefield: "Grove of the God-Willow" });
+    assert.equal(battlefieldP2.status, 201);
+  }
+
+  const chooserId = match.startingPlayerChooserId as "p1" | "p2";
+  const startingPlayer = await request(app)
+    .post(`/api/matches/${match.id}/setup/starting-player`)
+    .send({ playerId: chooserId, startingPlayerId: chooserId });
+
+  assert.equal(startingPlayer.status, 201);
+  assert.equal(startingPlayer.body.data.status, "ready");
+
+  return startingPlayer.body.data;
 }
 
 describe("Match games", () => {
