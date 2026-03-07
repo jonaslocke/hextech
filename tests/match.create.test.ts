@@ -26,7 +26,7 @@ MainDeck:
 2 Tasty Faefolk
 2 Retreat
 1 Find Your Center
-1 Wind Wall
+2 Wind Wall
 2 Sona, Harmonious
 1 Ahri, Alluring
 

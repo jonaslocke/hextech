@@ -26,7 +26,7 @@ MainDeck:
 2 Tasty Faefolk
 2 Retreat
 1 Find Your Center
-1 Wind Wall
+2 Wind Wall
 2 Sona, Harmonious
 1 Ahri, Alluring
 
@@ -70,7 +70,7 @@ MainDeck:
 2 Tasty Faefolk
 2 Retreat
 1 Find Your Center
-1 Wind Wall
+2 Wind Wall
 2 Sona, Harmonious
 1 Ahri, Alluring
 
@@ -87,6 +87,38 @@ Sideboard:
 1 Singularity
 1 Unchecked Power
 1 Fox-Fire`;
+
+const deckWithTwoLegends = deckList.replace(
+  "1 Ahri, Nine-Tailed Fox",
+  "2 Ahri, Nine-Tailed Fox",
+);
+
+const deckWithTwoChampions = deckList.replace(
+  "Champion:\n1 Ahri, Inquisitive",
+  "Champion:\n2 Ahri, Inquisitive",
+);
+
+const deckWithThirtyNineMainDeckCards = deckList.replace(
+  "2 Wind Wall",
+  "1 Wind Wall",
+);
+
+const deckWithoutRunes = deckList.replace(
+  "Runes:\n7 Calm Rune\n5 Mind Rune\n\n",
+  "",
+);
+
+const deckWithElevenRunes = deckList.replace("5 Mind Rune", "4 Mind Rune");
+const deckWithFourCopiesInMainDeck = deckList.replace("2 Wind Wall", "4 Wind Wall");
+const deckWithSplitCopiesAboveThree = deckList.replace(
+  "3 En Garde",
+  "3 Defy",
+);
+const deckWithDuplicateSideboardCard = deckList.replace(
+  "1 Fox-Fire",
+  "1 Wind Wall",
+);
+const deckWithFourCombinedCopies = deckList.replace("1 Fox-Fire", "1 Defy");
 
 describe("Deck validation", () => {
   test("POST /api/decks/validate returns valid result for a legal deck", async () => {
@@ -147,7 +179,7 @@ MainDeck:
 2 Tasty Faefolk
 2 Retreat
 1 Find Your Center
-1 Wind Wall
+2 Wind Wall
 2 Sona, Harmonious
 1 Ahri, Alluring
 
@@ -174,5 +206,129 @@ Sideboard:
     assert.equal(response.status, 200);
     assert.equal(response.body.data.isValid, false);
     assert.ok(response.body.data.reasons.length > 0);
+  });
+
+  test("POST /api/decks/validate rejects legend count different from 1", async () => {
+    const response = await request(app)
+      .post("/api/decks/validate")
+      .send({ deckList: deckWithTwoLegends });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Deck must include exactly 1 Champion Legend.",
+      ),
+    );
+  });
+
+  test("POST /api/decks/validate rejects champion count different from 1", async () => {
+    const response = await request(app)
+      .post("/api/decks/validate")
+      .send({ deckList: deckWithTwoChampions });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Deck must include exactly 1 Chosen Champion Unit.",
+      ),
+    );
+  });
+
+  test("POST /api/decks/validate rejects main deck smaller than 40 cards", async () => {
+    const response = await request(app)
+      .post("/api/decks/validate")
+      .send({ deckList: deckWithThirtyNineMainDeckCards });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Main Deck must include at least 40 cards.",
+      ),
+    );
+  });
+
+  test("POST /api/decks/validate rejects missing rune deck section", async () => {
+    const response = await request(app)
+      .post("/api/decks/validate")
+      .send({ deckList: deckWithoutRunes });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes("Deck must include a Rune Deck section."),
+    );
+  });
+
+  test("POST /api/decks/validate rejects rune deck not equal to 12 cards", async () => {
+    const response = await request(app)
+      .post("/api/decks/validate")
+      .send({ deckList: deckWithElevenRunes });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Rune Deck must include exactly 12 cards.",
+      ),
+    );
+  });
+
+  test("POST /api/decks/validate rejects main deck entries above 3 copies", async () => {
+    const response = await request(app)
+      .post("/api/decks/validate")
+      .send({ deckList: deckWithFourCopiesInMainDeck });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Main Deck card copies must be between 1 and 3.",
+      ),
+    );
+  });
+
+  test("POST /api/decks/validate rejects duplicate main deck card entries", async () => {
+    const response = await request(app)
+      .post("/api/decks/validate")
+      .send({ deckList: deckWithSplitCopiesAboveThree });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Main Deck must not list the same card more than once.",
+      ),
+    );
+  });
+
+  test("POST /api/decks/validate rejects duplicate sideboard card entries", async () => {
+    const response = await request(app)
+      .post("/api/decks/validate")
+      .send({ deckList: deckWithDuplicateSideboardCard });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Sideboard must not list the same card more than once.",
+      ),
+    );
+  });
+
+  test("POST /api/decks/validate rejects more than 3 combined copies across champion, main deck, and sideboard", async () => {
+    const response = await request(app)
+      .post("/api/decks/validate")
+      .send({ deckList: deckWithFourCombinedCopies });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Chosen Champion, Main Deck, and Sideboard combined must not include more than 3 copies of the same card.",
+      ),
+    );
   });
 });
