@@ -119,11 +119,11 @@ describe("Match setup", () => {
 
     assert.equal(match.format, "best-of-3");
     assert.equal(match.status, "setup_pending");
-    assert.equal(match.currentGameNumber, 1);
-    assert.equal(match.startingPlayerId, null);
+    assert.equal(match.currentGame.number, 1);
+    assert.equal(match.currentGame.startingPlayerId, null);
     assert.ok(["p1", "p2"].includes(match.startingPlayerChooserId));
-    assert.deepEqual(match.selectedBattlefieldsByPlayer, {});
-    assert.deepEqual(match.chosenChampionByPlayer, {});
+    assert.deepEqual(match.currentGame.selectedBattlefieldsByPlayer, {});
+    assert.deepEqual(match.currentGame.chosenChampionByPlayer, {});
     assert.deepEqual(match.battlefieldsUsedByPlayer, { p1: [], p2: [] });
   });
 
@@ -235,7 +235,7 @@ describe("Match setup", () => {
       .send({ playerId: "p1" });
 
     assert.equal(first.status, 201);
-    assert.equal(first.body.data.chosenChampionByPlayer.p1, "Ahri, Inquisitive");
+    assert.equal(first.body.data.currentGame.chosenChampionByPlayer.p1, "Ahri, Inquisitive");
 
     const second = await request(app)
       .post(`/api/matches/${match.id}/setup/champion`)
@@ -260,7 +260,10 @@ describe("Match setup", () => {
       .send({ playerId: "p1", battlefield: "Fortified Position" });
 
     assert.equal(first.status, 201);
-    assert.equal(first.body.data.selectedBattlefieldsByPlayer.p1, "Fortified Position");
+    assert.equal(
+      first.body.data.currentGame.selectedBattlefieldsByPlayer.p1,
+      "Fortified Position",
+    );
 
     const second = await request(app)
       .post(`/api/matches/${match.id}/setup/battlefield`)
@@ -283,7 +286,9 @@ describe("Match setup", () => {
       .send({ playerId: "p1", battlefield: "Fortified Position" });
 
     assert.equal(response.status, 201);
-    assert.ok(validBattlefields.has(response.body.data.selectedBattlefieldsByPlayer.p1));
+    assert.ok(
+      validBattlefields.has(response.body.data.currentGame.selectedBattlefieldsByPlayer.p1),
+    );
   });
 
   test("only chooser can select starting player and setup completes to ready", async () => {
@@ -323,8 +328,9 @@ describe("Match setup", () => {
       .send({ playerId: chooserId, startingPlayerId: "p1" });
 
     assert.equal(accepted.status, 201);
-    assert.equal(accepted.body.data.startingPlayerId, "p1");
+    assert.equal(accepted.body.data.currentGame.startingPlayerId, "p1");
     assert.equal(accepted.body.data.status, "ready");
+    assert.equal(accepted.body.data.currentGame.status, "ready");
 
     const repeated = await request(app)
       .post(`/api/matches/${match.id}/setup/starting-player`)

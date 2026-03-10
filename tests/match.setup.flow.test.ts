@@ -85,13 +85,19 @@ describe("Match setup flow (beginning -> ready)", () => {
       .post(`/api/matches/${matchId}/setup/champion`)
       .send({ playerId: "p1" });
     assert.equal(championP1.status, 201);
-    assert.equal(championP1.body.data.chosenChampionByPlayer.p1, "Ahri, Inquisitive");
+    assert.equal(
+      championP1.body.data.currentGame.chosenChampionByPlayer.p1,
+      "Ahri, Inquisitive",
+    );
 
     const championP2 = await request(app)
       .post(`/api/matches/${matchId}/setup/champion`)
       .send({ playerId: "p2" });
     assert.equal(championP2.status, 201);
-    assert.equal(championP2.body.data.chosenChampionByPlayer.p2, "Ahri, Inquisitive");
+    assert.equal(
+      championP2.body.data.currentGame.chosenChampionByPlayer.p2,
+      "Ahri, Inquisitive",
+    );
 
     // Battlefield decision: unhappy path (selection not in roster)
     const battlefieldUnhappy = await request(app)
@@ -107,7 +113,7 @@ describe("Match setup flow (beginning -> ready)", () => {
       .send({ playerId: "p1", battlefield: "Fortified Position" });
     assert.equal(battlefieldP1.status, 201);
     assert.equal(
-      battlefieldP1.body.data.selectedBattlefieldsByPlayer.p1,
+      battlefieldP1.body.data.currentGame.selectedBattlefieldsByPlayer.p1,
       "Fortified Position",
     );
 
@@ -116,7 +122,7 @@ describe("Match setup flow (beginning -> ready)", () => {
       .send({ playerId: "p2", battlefield: "Grove of the God-Willow" });
     assert.equal(battlefieldP2.status, 201);
     assert.equal(
-      battlefieldP2.body.data.selectedBattlefieldsByPlayer.p2,
+      battlefieldP2.body.data.currentGame.selectedBattlefieldsByPlayer.p2,
       "Grove of the God-Willow",
     );
 
@@ -134,8 +140,8 @@ describe("Match setup flow (beginning -> ready)", () => {
       .send({ playerId: chooserId, startingPlayerId: "p1" });
 
     assert.equal(startingPlayerHappy.status, 201);
-    assert.equal(startingPlayerHappy.body.data.startingPlayerId, "p1");
+    assert.equal(startingPlayerHappy.body.data.currentGame.startingPlayerId, "p1");
     assert.equal(startingPlayerHappy.body.data.status, "ready");
-    assert.equal(startingPlayerHappy.body.data.currentGameNumber, 1);
+    assert.equal(startingPlayerHappy.body.data.currentGame.number, 1);
   });
 });

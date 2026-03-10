@@ -48,7 +48,7 @@ Expected:
 
 Expected:
 - `data.status = "setup_pending"`
-- `data.startingPlayerId = null`
+- `data.currentGame.startingPlayerId = null`
 - `data.startingPlayerChooserId` is `"p1"` or `"p2"`
 
 Save:
@@ -66,7 +66,7 @@ Save:
 ```
 
 Expected:
-- `data.chosenChampionByPlayer.p1 = "Ahri, Inquisitive"`
+- `data.currentGame.chosenChampionByPlayer.p1 = "Ahri, Inquisitive"`
 - `data.status` still `setup_pending`
 
 ## 5. Select Chosen Champion (p2)
@@ -80,7 +80,7 @@ Expected:
 ```
 
 Expected:
-- `data.chosenChampionByPlayer.p2 = "Ahri, Inquisitive"`
+- `data.currentGame.chosenChampionByPlayer.p2 = "Ahri, Inquisitive"`
 
 ## 6. Select Battlefield (p1)
 
@@ -94,7 +94,7 @@ Expected:
 ```
 
 Expected:
-- `data.selectedBattlefieldsByPlayer.p1 = "Fortified Position"`
+- `data.currentGame.selectedBattlefieldsByPlayer.p1 = "Fortified Position"`
 
 ## 7. Select Battlefield (p2)
 
@@ -108,7 +108,7 @@ Expected:
 ```
 
 Expected:
-- `data.selectedBattlefieldsByPlayer.p2 = "Grove of the God-Willow"`
+- `data.currentGame.selectedBattlefieldsByPlayer.p2 = "Grove of the God-Willow"`
 
 ## 8. Select Starting Player (only chooser can do this)
 
@@ -124,7 +124,7 @@ Use the `chooser_id` value from step 3.
 ```
 
 Expected:
-- `data.startingPlayerId = "p1"`
+- `data.currentGame.startingPlayerId = "p1"`
 - `data.status = "ready"`
 
 ## 9. Verify Final Match State
@@ -133,9 +133,9 @@ Expected:
 
 Expected:
 - `data.status = "ready"`
-- `data.chosenChampionByPlayer.p1` and `data.chosenChampionByPlayer.p2` are filled
-- `data.selectedBattlefieldsByPlayer.p1` and `data.selectedBattlefieldsByPlayer.p2` are filled
-- `data.startingPlayerId` is filled
+- `data.currentGame.chosenChampionByPlayer.p1` and `data.currentGame.chosenChampionByPlayer.p2` are filled
+- `data.currentGame.selectedBattlefieldsByPlayer.p1` and `data.currentGame.selectedBattlefieldsByPlayer.p2` are filled
+- `data.currentGame.startingPlayerId` is filled
 
 ---
 

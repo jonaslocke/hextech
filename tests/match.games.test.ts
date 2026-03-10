@@ -126,8 +126,17 @@ describe("Match games", () => {
 
     assert.equal(response.status, 201);
     assert.deepEqual(response.body.data.games, ["game_001"]);
+    assert.equal(response.body.data.completedGames.length, 1);
+    assert.deepEqual(response.body.data.completedGames[0].chosenChampionByPlayer, {
+      p1: "Ahri, Inquisitive",
+      p2: "Ahri, Inquisitive",
+    });
+    assert.deepEqual(response.body.data.completedGames[0].selectedBattlefieldsByPlayer, {
+      p1: "Fortified Position",
+      p2: "Grove of the God-Willow",
+    });
     assert.deepEqual(response.body.data.score, { p1: 1, p2: 0 });
-    assert.equal(response.body.data.currentGameNumber, 2);
+    assert.equal(response.body.data.currentGame.number, 2);
     assert.deepEqual(response.body.data.battlefieldsUsedByPlayer, {
       p1: ["Fortified Position", "Grove of the God-Willow"],
       p2: ["Grove of the God-Willow", "The Dreaming Tree"],
@@ -146,7 +155,8 @@ describe("Match games", () => {
 
     assert.equal(response.status, 201);
     assert.equal(response.body.data.status, "finished");
-    assert.equal(response.body.data.currentGameNumber, 1);
+    assert.equal(response.body.data.currentGame.number, 1);
+    assert.equal(response.body.data.currentGame.winnerPlayerId, "p1");
   });
 
   test("POST /api/matches/:id/games keeps best-of-3 running after one win", async () => {
@@ -165,7 +175,7 @@ describe("Match games", () => {
 
     assert.equal(response.status, 201);
     assert.notEqual(response.body.data.status, "finished");
-    assert.equal(response.body.data.currentGameNumber, 2);
+    assert.equal(response.body.data.currentGame.number, 2);
   });
 
   test("POST /api/matches/:id/games finishes best-of-3 after two wins", async () => {
@@ -193,11 +203,12 @@ describe("Match games", () => {
 
     assert.equal(second.status, 201);
     assert.equal(second.body.data.status, "finished");
-    assert.equal(second.body.data.currentGameNumber, 2);
+    assert.equal(second.body.data.currentGame.number, 2);
   });
 
-  test("POST /api/matches/:id/games assigns currentGameId when next game starts", async () => {
+  test("POST /api/matches/:id/games assigns currentGame.id when next game starts", async () => {
     const match = await createMatch("best-of-3");
+    const previousCurrentGameId = match.currentGame.id as string;
 
     const response = await request(app)
       .post(`/api/matches/${match.id}/games`)
@@ -211,9 +222,9 @@ describe("Match games", () => {
       });
 
     assert.equal(response.status, 201);
-    assert.ok(response.body.data.currentGameId);
-    assert.notEqual(response.body.data.currentGameId, "game_001");
-    assert.equal(response.body.data.currentGameNumber, 2);
+    assert.ok(response.body.data.currentGame.id);
+    assert.notEqual(response.body.data.currentGame.id, previousCurrentGameId);
+    assert.equal(response.body.data.currentGame.number, 2);
   });
 
   test("POST /api/matches/:id/games rejects unknown match id", async () => {
