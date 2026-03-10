@@ -3,66 +3,66 @@ import type {
   SelectChosenChampionIntentRequestDto,
   SelectStartingPlayerIntentRequestDto,
 } from "../dto/setup-intents.dto";
-import type { Match } from "../../domain/match";
+import type { GameRepository } from "../../domain/game.repository";
 import type { MatchRepository } from "../../domain/match.repository";
 import { MatchSetup } from "../../domain/match.setup";
-import { NotFoundError, ValidationError } from "../../shared/errors";
+import type { MatchView } from "../match.view";
+import { MatchViewLoader } from "./match-view.loader";
 
 export class SubmitSetupIntentService {
-  constructor(private readonly matchRepository: MatchRepository) {}
+  private readonly matchViewLoader: MatchViewLoader;
+
+  constructor(
+    private readonly matchRepository: MatchRepository,
+    private readonly gameRepository: GameRepository,
+  ) {
+    this.matchViewLoader = new MatchViewLoader(matchRepository, gameRepository);
+  }
 
   async selectChosenChampion(
     input: SelectChosenChampionIntentRequestDto,
-  ): Promise<Match> {
-    const match = await this.getMatch(input.matchId);
-    const updated = MatchSetup.applySelectChosenChampionIntent(match, {
+  ): Promise<MatchView> {
+    const match = await this.matchViewLoader.getMatch(input.matchId);
+    const game = await this.matchViewLoader.getCurrentGameOrThrow(match);
+    const updated = MatchSetup.applySelectChosenChampionIntent(match, game, {
       playerId: input.playerId,
     });
 
-    await this.matchRepository.save(updated);
-    return updated;
+    await this.gameRepository.save(updated.game);
+    await this.matchRepository.save(updated.match);
+    return this.matchViewLoader.build(updated.match);
   }
 
   async selectBattlefield(
     input: SelectBattlefieldIntentRequestDto,
-  ): Promise<Match> {
-    const match = await this.getMatch(input.matchId);
+  ): Promise<MatchView> {
+    const match = await this.matchViewLoader.getMatch(input.matchId);
+    const game = await this.matchViewLoader.getCurrentGameOrThrow(match);
     const intent =
       input.battlefield === undefined
         ? { playerId: input.playerId }
         : { playerId: input.playerId, battlefield: input.battlefield };
-    const updated = MatchSetup.applySelectBattlefieldIntent(match, {
+    const updated = MatchSetup.applySelectBattlefieldIntent(match, game, {
       ...intent,
     });
 
-    await this.matchRepository.save(updated);
-    return updated;
+    await this.gameRepository.save(updated.game);
+    await this.matchRepository.save(updated.match);
+    return this.matchViewLoader.build(updated.match);
   }
 
   async selectStartingPlayer(
     input: SelectStartingPlayerIntentRequestDto,
-  ): Promise<Match> {
-    const match = await this.getMatch(input.matchId);
-    const updated = MatchSetup.applySelectStartingPlayerIntent(match, {
+  ): Promise<MatchView> {
+    const match = await this.matchViewLoader.getMatch(input.matchId);
+    const game = await this.matchViewLoader.getCurrentGameOrThrow(match);
+    const updated = MatchSetup.applySelectStartingPlayerIntent(match, game, {
       playerId: input.playerId,
       startingPlayerId: input.startingPlayerId,
     });
 
-    await this.matchRepository.save(updated);
-    return updated;
-  }
-
-  private async getMatch(matchId: string): Promise<Match> {
-    if (!matchId) {
-      throw new ValidationError("Match id is required.");
-    }
-
-    const match = await this.matchRepository.findById(matchId);
-
-    if (!match) {
-      throw new NotFoundError("Match not found.");
-    }
-
-    return match;
+    await this.gameRepository.save(updated.game);
+    await this.matchRepository.save(updated.match);
+    return this.matchViewLoader.build(updated.match);
   }
 }

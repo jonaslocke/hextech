@@ -1,4 +1,5 @@
 import { DeckValidator } from "./deck.validator";
+import type { Game } from "./game";
 import type { Match } from "./match";
 import { ValidationError } from "../shared/errors";
 
@@ -16,16 +17,22 @@ interface SelectStartingPlayerIntent {
   startingPlayerId: string;
 }
 
+interface SetupTransitionResult {
+  match: Match;
+  game: Game;
+}
+
 export class MatchSetup {
   static applySelectChosenChampionIntent(
     match: Match,
+    game: Game,
     intent: SelectChosenChampionIntent,
-  ): Match {
-    MatchSetup.assertSetupPending(match);
+  ): SetupTransitionResult {
+    MatchSetup.assertSetupPending(match, game);
 
     const playerId = MatchSetup.assertMatchPlayer(match, intent.playerId);
 
-    if (match.chosenChampionByPlayer[playerId]) {
+    if (game.chosenChampionByPlayer[playerId]) {
       throw new ValidationError(
         "Chosen champion setup intent can only be sent once per player.",
       );
@@ -35,9 +42,9 @@ export class MatchSetup {
       match.decksByPlayer[playerId] ?? "",
     );
 
-    return MatchSetup.withSetupProgress(match, {
+    return MatchSetup.withSetupProgress(match, game, {
       chosenChampionByPlayer: {
-        ...match.chosenChampionByPlayer,
+        ...game.chosenChampionByPlayer,
         [playerId]: chosenChampion,
       },
     });
@@ -45,19 +52,22 @@ export class MatchSetup {
 
   static applySelectBattlefieldIntent(
     match: Match,
+    game: Game,
     intent: SelectBattlefieldIntent,
-  ): Match {
-    MatchSetup.assertSetupPending(match);
+  ): SetupTransitionResult {
+    MatchSetup.assertSetupPending(match, game);
 
     const playerId = MatchSetup.assertMatchPlayer(match, intent.playerId);
 
-    if (match.selectedBattlefieldsByPlayer[playerId]) {
+    if (game.selectedBattlefieldsByPlayer[playerId]) {
       throw new ValidationError(
         "Battlefield setup intent can only be sent once per player.",
       );
     }
 
-    const playerBattlefields = match.battlefieldsByPlayer[playerId] ?? [];
+    const playerBattlefields = (
+      match.battlefieldRosterByPlayer[playerId] ?? []
+    ).map((entry) => entry.name);
 
     if (playerBattlefields.length !== 3) {
       throw new ValidationError("Each player must provide exactly 3 battlefields.");
@@ -99,11 +109,26 @@ export class MatchSetup {
       );
     }
 
-    return MatchSetup.withSetupProgress(match, {
+    const updatedBattlefieldRosterByPlayer = {
+      ...match.battlefieldRosterByPlayer,
+      [playerId]: (match.battlefieldRosterByPlayer[playerId] ?? []).map((entry) =>
+        entry.name.toLowerCase() !== selectedBattlefield.toLowerCase()
+          ? entry
+          : {
+              ...entry,
+              usedInGameNumbers: entry.usedInGameNumbers.includes(game.number)
+                ? entry.usedInGameNumbers
+                : [...entry.usedInGameNumbers, game.number],
+            },
+      ),
+    };
+
+    return MatchSetup.withSetupProgress(match, game, {
       selectedBattlefieldsByPlayer: {
-        ...match.selectedBattlefieldsByPlayer,
+        ...game.selectedBattlefieldsByPlayer,
         [playerId]: selectedBattlefield,
       },
+      battlefieldRosterByPlayer: updatedBattlefieldRosterByPlayer,
       battlefieldsUsedByPlayer: {
         ...match.battlefieldsUsedByPlayer,
         [playerId]: [...usedBattlefields, selectedBattlefield],
@@ -113,9 +138,10 @@ export class MatchSetup {
 
   static applySelectStartingPlayerIntent(
     match: Match,
+    game: Game,
     intent: SelectStartingPlayerIntent,
-  ): Match {
-    MatchSetup.assertSetupPending(match);
+  ): SetupTransitionResult {
+    MatchSetup.assertSetupPending(match, game);
 
     const playerId = MatchSetup.assertMatchPlayer(match, intent.playerId);
 
@@ -125,7 +151,7 @@ export class MatchSetup {
       );
     }
 
-    if (match.startingPlayerId) {
+    if (game.startingPlayerId) {
       throw new ValidationError("Starting player setup intent can only be sent once.");
     }
 
@@ -134,44 +160,75 @@ export class MatchSetup {
       intent.startingPlayerId,
     );
 
-    return MatchSetup.withSetupProgress(match, {
+    return MatchSetup.withSetupProgress(match, game, {
       startingPlayerId,
     });
   }
 
-  private static withSetupProgress(match: Match, patch: Partial<Match>): Match {
-    const updatedMatch: Match = {
-      ...match,
-      ...patch,
+  private static withSetupProgress(
+    match: Match,
+    game: Game,
+    patch: {
+      chosenChampionByPlayer?: Record<string, string>;
+      selectedBattlefieldsByPlayer?: Record<string, string>;
+      startingPlayerId?: string;
+      battlefieldsUsedByPlayer?: Record<string, string[]>;
+      battlefieldRosterByPlayer?: Match["battlefieldRosterByPlayer"];
+    },
+  ): SetupTransitionResult {
+    const updatedGame: Game = {
+      ...game,
+      ...(patch.chosenChampionByPlayer
+        ? { chosenChampionByPlayer: patch.chosenChampionByPlayer }
+        : {}),
+      ...(patch.selectedBattlefieldsByPlayer
+        ? { selectedBattlefieldsByPlayer: patch.selectedBattlefieldsByPlayer }
+        : {}),
+      ...(patch.startingPlayerId ? { startingPlayerId: patch.startingPlayerId } : {}),
       updatedAt: new Date().toISOString(),
+      version: game.version + 1,
     };
 
-    if (MatchSetup.isSetupComplete(updatedMatch)) {
+    const updatedMatch: Match = {
+      ...match,
+      ...(patch.battlefieldsUsedByPlayer
+        ? { battlefieldsUsedByPlayer: patch.battlefieldsUsedByPlayer }
+        : {}),
+      ...(patch.battlefieldRosterByPlayer
+        ? { battlefieldRosterByPlayer: patch.battlefieldRosterByPlayer }
+        : {}),
+      updatedAt: new Date().toISOString(),
+      version: match.version + 1,
+    };
+
+    if (MatchSetup.isSetupComplete(updatedGame, updatedMatch.players.map((p) => p.id))) {
+      updatedGame.status = "ready";
       updatedMatch.status = "ready";
     }
 
-    return updatedMatch;
+    return {
+      match: updatedMatch,
+      game: updatedGame,
+    };
   }
 
-  private static isSetupComplete(match: Match): boolean {
-    const playerIds = match.players.map((player) => player.id);
-
+  private static isSetupComplete(game: Game, playerIds: string[]): boolean {
     const allPlayersSelectedChampion = playerIds.every(
-      (playerId) => !!match.chosenChampionByPlayer[playerId],
+      (playerId) => !!game.chosenChampionByPlayer[playerId],
     );
     const allPlayersSelectedBattlefield = playerIds.every(
-      (playerId) => !!match.selectedBattlefieldsByPlayer[playerId],
+      (playerId) => !!game.selectedBattlefieldsByPlayer[playerId],
     );
 
     return (
       allPlayersSelectedChampion &&
       allPlayersSelectedBattlefield &&
-      !!match.startingPlayerId
+      !!game.startingPlayerId
     );
   }
 
-  private static assertSetupPending(match: Match): void {
-    if (match.status !== "setup_pending") {
+  private static assertSetupPending(match: Match, game: Game): void {
+    if (match.status !== "setup_pending" || game.status !== "setup_pending") {
       throw new ValidationError("Match setup is not pending.");
     }
   }
