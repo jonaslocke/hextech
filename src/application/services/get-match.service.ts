@@ -1,21 +1,20 @@
-import type { Match } from "../../domain/match";
+import type { GameRepository } from "../../domain/game.repository";
 import type { MatchRepository } from "../../domain/match.repository";
-import { NotFoundError, ValidationError } from "../../shared/errors";
+import type { MatchView } from "../match.view";
+import { MatchViewLoader } from "./match-view.loader";
 
 export class GetMatchService {
-  constructor(private readonly matchRepository: MatchRepository) {}
+  private readonly matchViewLoader: MatchViewLoader;
 
-  async execute(matchId: string): Promise<Match> {
-    if (!matchId) {
-      throw new ValidationError("Match id is required.");
-    }
+  constructor(
+    private readonly matchRepository: MatchRepository,
+    private readonly gameRepository: GameRepository,
+  ) {
+    this.matchViewLoader = new MatchViewLoader(matchRepository, gameRepository);
+  }
 
-    const match = await this.matchRepository.findById(matchId);
-
-    if (!match) {
-      throw new NotFoundError("Match not found.");
-    }
-
-    return match;
+  async execute(matchId: string): Promise<MatchView> {
+    const match = await this.matchViewLoader.getMatch(matchId);
+    return this.matchViewLoader.build(match);
   }
 }

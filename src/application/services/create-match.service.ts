@@ -1,13 +1,23 @@
-import type { Match } from "../../domain/match";
+import type { GameRepository } from "../../domain/game.repository";
 import type { MatchRepository } from "../../domain/match.repository";
 import type { CreateMatchRequestDto } from "../dto/create-match.dto";
+import { GameFactory } from "../../domain/game.factory";
 import { MatchFactory } from "../../domain/match.factory";
 import { ValidationError } from "../../shared/errors";
+import { MatchViewLoader } from "./match-view.loader";
+import type { MatchView } from "../match.view";
 
 export class CreateMatchService {
-  constructor(private readonly matchRepository: MatchRepository) {}
+  private readonly matchViewLoader: MatchViewLoader;
 
-  async execute(input: CreateMatchRequestDto): Promise<Match> {
+  constructor(
+    private readonly matchRepository: MatchRepository,
+    private readonly gameRepository: GameRepository,
+  ) {
+    this.matchViewLoader = new MatchViewLoader(matchRepository, gameRepository);
+  }
+
+  async execute(input: CreateMatchRequestDto): Promise<MatchView> {
     if (
       input &&
       typeof input === "object" &&
@@ -26,9 +36,20 @@ export class CreateMatchService {
       players: input.players,
       decksByPlayer: input.decksByPlayer,
     });
+    const initialGame = GameFactory.create({
+      matchId: match.id,
+      number: 1,
+      status: "setup_pending",
+    });
+    const initializedMatch = {
+      ...match,
+      gameIds: [initialGame.id],
+      currentGameId: initialGame.id,
+    };
 
-    await this.matchRepository.save(match);
+    await this.gameRepository.save(initialGame);
+    await this.matchRepository.save(initializedMatch);
 
-    return match;
+    return this.matchViewLoader.build(initializedMatch);
   }
 }

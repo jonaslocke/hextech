@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Match, MatchFormat, PlayerRef } from "./match";
+import type { Match, MatchFormat, PlayerRef, BattlefieldRosterEntry } from "./match";
 import { DeckValidator } from "./deck.validator";
 import { ValidationError } from "../shared/errors";
 
@@ -43,7 +43,7 @@ export class MatchFactory {
 
     const playerIds = players.map((player) => player.id);
     const normalizedDecksByPlayer: Record<string, string> = {};
-    const normalizedBattlefieldsByPlayer: Record<string, string[]> = {};
+    const battlefieldRosterByPlayer: Record<string, BattlefieldRosterEntry[]> = {};
 
     for (const playerId of playerIds) {
       const deckList = decksByPlayer[playerId];
@@ -53,15 +53,19 @@ export class MatchFactory {
       const validatedDeck = DeckValidator.validate(deckList);
 
       normalizedDecksByPlayer[playerId] = validatedDeck.raw;
-      normalizedBattlefieldsByPlayer[playerId] = validatedDeck.battlefields;
+      battlefieldRosterByPlayer[playerId] = validatedDeck.battlefields.map(
+        (battlefield) => ({
+          name: battlefield,
+          usedInGameNumbers: [],
+        }),
+      );
     }
 
-    const selectedBattlefieldsByPlayer: Record<string, string> = {};
     const battlefieldsUsedByPlayer: Record<string, string[]> = {};
 
     for (const playerId of playerIds) {
-      const pool = normalizedBattlefieldsByPlayer[playerId];
-      if (!pool || pool.length === 0) {
+      const roster = battlefieldRosterByPlayer[playerId];
+      if (!roster || roster.length !== 3) {
         throw new ValidationError("Each player must provide exactly 3 battlefields.");
       }
       battlefieldsUsedByPlayer[playerId] = [];
@@ -78,22 +82,20 @@ export class MatchFactory {
       status: "setup_pending",
       players: [playerA, playerB],
       games: [],
+      gameIds: [],
+      currentGameId: null,
       score: {
         [playerA.id]: 0,
         [playerB.id]: 0,
       },
       startingPlayerChooserId,
-      startingPlayerId: null,
       decksByPlayer: normalizedDecksByPlayer,
-      chosenChampionByPlayer: {},
-      battlefieldsByPlayer: normalizedBattlefieldsByPlayer,
-      selectedBattlefieldsByPlayer,
+      battlefieldRosterByPlayer,
       battlefieldsUsedByPlayer,
       createdAt: now,
       updatedAt: now,
-      currentGameNumber: 1,
-      currentGameId: null,
       winnerPlayerId: null,
+      version: 1,
     };
   }
 }

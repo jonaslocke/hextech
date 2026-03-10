@@ -10,23 +10,26 @@ export interface MatchScore {
   [playerId: string]: number;
 }
 
+export interface BattlefieldRosterEntry {
+  name: string;
+  usedInGameNumbers: number[];
+}
+
 export interface Match {
   id: string;
   format: MatchFormat;
   status: MatchStatus;
   players: [PlayerRef, PlayerRef];
   games: string[];
+  gameIds: string[];
+  currentGameId: string | null;
   score: MatchScore;
   startingPlayerChooserId: string;
-  startingPlayerId: string | null;
   decksByPlayer: Record<string, string>;
-  chosenChampionByPlayer: Record<string, string>;
-  battlefieldsByPlayer: Record<string, string[]>;
-  selectedBattlefieldsByPlayer: Record<string, string>;
+  battlefieldRosterByPlayer: Record<string, BattlefieldRosterEntry[]>;
   battlefieldsUsedByPlayer: Record<string, string[]>;
   createdAt: string;
   updatedAt: string;
-  currentGameNumber: number;
-  currentGameId: string | null;
   winnerPlayerId: string | null;
+  version: number;
 }
