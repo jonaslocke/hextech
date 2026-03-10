@@ -21,6 +21,7 @@ describe("Match creation contract", () => {
     assert.deepEqual(match.games, []);
     assert.deepEqual(match.completedGames, []);
     assert.deepEqual(match.score, { p1: 0, p2: 0 });
+    assert.equal(match.decksByPlayer, undefined);
   });
 
   test("rejects invalid format", async () => {

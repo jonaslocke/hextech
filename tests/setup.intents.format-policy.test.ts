@@ -23,6 +23,7 @@ describe("Setup intents format policy", () => {
       .send({ playerId: "p1", battlefield: "Fortified Position" });
 
     assert.equal(response.status, 201);
+    assert.equal(response.body.data.decksByPlayer, undefined);
     assert.ok(
       validBattlefields.has(response.body.data.currentGame.selectedBattlefieldsByPlayer.p1),
     );
@@ -50,6 +51,7 @@ describe("Setup intents format policy", () => {
       .post(`/api/matches/${match.id}/setup/battlefield`)
       .send({ playerId: "p1", battlefield: "Fortified Position" });
     assert.equal(valid.status, 201);
+    assert.equal(valid.body.data.decksByPlayer, undefined);
     assert.equal(
       valid.body.data.currentGame.selectedBattlefieldsByPlayer.p1,
       "Fortified Position",
@@ -74,6 +76,7 @@ describe("Setup intents format policy", () => {
       .send({ playerId: chooserId, startingPlayerId: "p1" });
 
     assert.equal(ready.status, 201);
+    assert.equal(ready.body.data.decksByPlayer, undefined);
     assert.equal(ready.body.data.status, "ready");
     assert.equal(ready.body.data.currentGame.status, "ready");
   });

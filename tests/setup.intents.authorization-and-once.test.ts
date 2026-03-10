@@ -47,6 +47,7 @@ describe("Setup intents authorization and one-shot", () => {
       .post(`/api/matches/${match.id}/setup/starting-player`)
       .send({ playerId: chooserId, startingPlayerId: chooserId });
     assert.equal(accepted.status, 201);
+    assert.equal(accepted.body.data.decksByPlayer, undefined);
     assert.equal(accepted.body.data.currentGame.startingPlayerId, chooserId);
   });
 

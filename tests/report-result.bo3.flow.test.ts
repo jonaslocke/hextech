@@ -23,6 +23,7 @@ describe("Report result best-of-3 flow", () => {
       });
 
     assert.equal(response.status, 201);
+    assert.equal(response.body.data.decksByPlayer, undefined);
     assert.equal(response.body.data.status, "in_progress");
     assert.deepEqual(response.body.data.score, { p1: 1, p2: 0 });
     assert.equal(response.body.data.currentGame.number, 2);
@@ -57,6 +58,7 @@ describe("Report result best-of-3 flow", () => {
       });
 
     assert.equal(second.status, 201);
+    assert.equal(second.body.data.decksByPlayer, undefined);
     assert.equal(second.body.data.status, "finished");
     assert.equal(second.body.data.winnerPlayerId, "p1");
     assert.deepEqual(second.body.data.score, { p1: 2, p2: 0 });

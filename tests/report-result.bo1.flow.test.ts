@@ -19,6 +19,7 @@ describe("Report result best-of-1 flow", () => {
       });
 
     assert.equal(response.status, 201);
+    assert.equal(response.body.data.decksByPlayer, undefined);
     assert.equal(response.body.data.status, "finished");
     assert.equal(response.body.data.winnerPlayerId, "p1");
     assert.deepEqual(response.body.data.score, { p1: 1, p2: 0 });
