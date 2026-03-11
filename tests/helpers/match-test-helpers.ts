@@ -3,6 +3,12 @@ import type { Express } from "express";
 import request from "supertest";
 
 export type TestMatchFormat = "best-of-1" | "best-of-3";
+export type TestPlayerId = "p1" | "p2";
+
+interface SetupMatchToReadyOptions {
+  startingPlayerId?: TestPlayerId;
+  battlefieldByPlayer?: Record<TestPlayerId, string>;
+}
 
 export const validDeckList = `Legend:
 1 Ahri, Nine-Tailed Fox
@@ -74,8 +80,10 @@ export async function setupMatchToReady(
   app: Express,
   matchId: string,
   format: TestMatchFormat,
-  startingPlayerId?: "p1" | "p2",
+  options: SetupMatchToReadyOptions = {},
 ) {
+  const { startingPlayerId, battlefieldByPlayer } = options;
+
   const championP1 = await request(app)
     .post(`/api/matches/${matchId}/setup/champion`)
     .send({ playerId: "p1" });
@@ -97,20 +105,25 @@ export async function setupMatchToReady(
       .send({ playerId: "p2" });
     assert.equal(battlefieldP2.status, 201);
   } else {
+    const p1Battlefield =
+      battlefieldByPlayer?.p1 ?? "Fortified Position";
+    const p2Battlefield =
+      battlefieldByPlayer?.p2 ?? "Grove of the God-Willow";
+
     const battlefieldP1 = await request(app)
       .post(`/api/matches/${matchId}/setup/battlefield`)
-      .send({ playerId: "p1", battlefield: "Fortified Position" });
+      .send({ playerId: "p1", battlefield: p1Battlefield });
     assert.equal(battlefieldP1.status, 201);
 
     const battlefieldP2 = await request(app)
       .post(`/api/matches/${matchId}/setup/battlefield`)
-      .send({ playerId: "p2", battlefield: "Grove of the God-Willow" });
+      .send({ playerId: "p2", battlefield: p2Battlefield });
     assert.equal(battlefieldP2.status, 201);
   }
 
   const fetched = await request(app).get(`/api/matches/${matchId}`);
   assert.equal(fetched.status, 200);
-  const chooserId = fetched.body.data.startingPlayerChooserId as "p1" | "p2";
+  const chooserId = fetched.body.data.startingPlayerChooserId as TestPlayerId;
 
   const startingPlayer = await request(app)
     .post(`/api/matches/${matchId}/setup/starting-player`)

@@ -7,19 +7,26 @@ import { createMatch, setupMatchToReady } from "./helpers/match-test-helpers.js"
 const app = createApp();
 
 describe("Battlefield history across games", () => {
-  test("rejects reusing a battlefield in best-of-3", async () => {
+  test("rejects reusing a battlefield in next game setup for best-of-3", async () => {
     const created = await createMatch(app, "best-of-3");
     const ready = await setupMatchToReady(app, created.id, "best-of-3");
 
-    const response = await request(app)
+    const reported = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
         gameId: "game_report_001",
         winnerPlayerId: "p1",
-        nextGameSelectedBattlefieldsByPlayer: {
-          p1: "Fortified Position",
-          p2: "The Dreaming Tree",
-        },
+      });
+    assert.equal(reported.status, 201);
+
+    await request(app).post(`/api/matches/${ready.id}/setup/champion`).send({ playerId: "p1" });
+    await request(app).post(`/api/matches/${ready.id}/setup/champion`).send({ playerId: "p2" });
+
+    const response = await request(app)
+      .post(`/api/matches/${ready.id}/setup/battlefield`)
+      .send({
+        playerId: "p1",
+        battlefield: "Fortified Position",
       });
 
     assert.equal(response.status, 400);
@@ -35,23 +42,19 @@ describe("Battlefield history across games", () => {
       .send({
         gameId: "game_report_001",
         winnerPlayerId: "p1",
-        nextGameSelectedBattlefieldsByPlayer: {
-          p1: "Grove of the God-Willow",
-          p2: "The Dreaming Tree",
-        },
       });
 
     assert.equal(first.status, 201);
     assert.deepEqual(first.body.data.battlefieldPoolByPlayer, {
       p1: [
         { name: "Fortified Position", used: true },
-        { name: "Grove of the God-Willow", used: true },
+        { name: "Grove of the God-Willow", used: false },
         { name: "The Dreaming Tree", used: false },
       ],
       p2: [
         { name: "Fortified Position", used: false },
         { name: "Grove of the God-Willow", used: true },
-        { name: "The Dreaming Tree", used: true },
+        { name: "The Dreaming Tree", used: false },
       ],
     });
   });

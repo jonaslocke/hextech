@@ -34,13 +34,16 @@ describe("API smoke end-to-end", () => {
       .send({
         gameId: "smoke_bo3_001",
         winnerPlayerId: "p1",
-        nextGameSelectedBattlefieldsByPlayer: {
-          p1: "Grove of the God-Willow",
-          p2: "The Dreaming Tree",
-        },
       });
     assert.equal(first.status, 201);
-    assert.equal(first.body.data.status, "in_progress");
+    assert.equal(first.body.data.status, "setup_pending");
+
+    await setupMatchToReady(app, created.id, "best-of-3", {
+      battlefieldByPlayer: {
+        p1: "Grove of the God-Willow",
+        p2: "The Dreaming Tree",
+      },
+    });
 
     const second = await request(app)
       .post(`/api/matches/${ready.id}/games`)

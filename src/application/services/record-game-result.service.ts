@@ -41,8 +41,7 @@ export class RecordGameResultService {
   }
 
   async execute(input: RecordGameResultRequestDto): Promise<MatchView> {
-    const { matchId, gameId, winnerPlayerId, nextGameSelectedBattlefieldsByPlayer } =
-      input;
+    const { matchId, gameId, winnerPlayerId } = input;
 
     if (!matchId) {
       throw new ValidationError("Match id is required.");
@@ -105,26 +104,21 @@ export class RecordGameResultService {
     );
 
     let nextGame: Game | null = null;
+    let nextStartingPlayerChooserId = match.startingPlayerChooserId;
 
     if (!isMatchFinished) {
       const nextGameNumber = finishedGame.number + 1;
-      const nextSelections = this.resolveNextGameBattlefields(
-        match,
-        nextGameSelectedBattlefieldsByPlayer,
-        nextBattlefieldPoolByPlayer,
-      );
-
-      nextBattlefieldPoolByPlayer = nextSelections.battlefieldPoolByPlayer;
 
       nextGame = GameFactory.create({
         matchId: match.id,
         number: nextGameNumber,
-        status: "ready",
+        status: "setup_pending",
         deckRegistrationsByPlayer: match.decksByPlayer,
-        chosenChampionByPlayer: finishedGame.chosenChampionByPlayer,
-        selectedBattlefieldsByPlayer: nextSelections.selectedBattlefieldsByPlayer,
-        startingPlayerId: finishedGame.startingPlayerId,
       });
+      nextStartingPlayerChooserId = this.resolveNextStartingPlayerChooser(
+        match,
+        winnerPlayerId,
+      );
     }
 
     const updatedMatch: Match = {
@@ -133,8 +127,9 @@ export class RecordGameResultService {
       gameIds: nextGame ? [...match.gameIds, nextGame.id] : [...match.gameIds],
       currentGameId: nextGame ? nextGame.id : finishedGame.id,
       score: updatedScore,
-      status: isMatchFinished ? "finished" : "in_progress",
+      status: isMatchFinished ? "finished" : "setup_pending",
       winnerPlayerId: isMatchFinished ? winnerPlayerId : null,
+      startingPlayerChooserId: nextStartingPlayerChooserId,
       battlefieldPoolByPlayer: nextBattlefieldPoolByPlayer,
       updatedAt: new Date().toISOString(),
       version: match.version + 1,
@@ -147,6 +142,18 @@ export class RecordGameResultService {
     await this.matchRepository.save(updatedMatch);
 
     return this.matchViewLoader.build(updatedMatch);
+  }
+
+  private resolveNextStartingPlayerChooser(
+    match: Match,
+    winnerPlayerId: string,
+  ): string {
+    const loser = match.players.find((player) => player.id !== winnerPlayerId);
+    if (!loser) {
+      throw new ValidationError("Unable to resolve next starting player chooser.");
+    }
+
+    return loser.id;
   }
 
   private withCurrentGameSelectionsEnsuredInPool(
@@ -174,67 +181,5 @@ export class RecordGameResultService {
     }
 
     return nextPool;
-  }
-
-  private resolveNextGameBattlefields(
-    match: Match,
-    nextGameSelectedBattlefieldsByPlayer: Record<string, string> | undefined,
-    battlefieldPoolByPlayer: Match["battlefieldPoolByPlayer"],
-  ): {
-    selectedBattlefieldsByPlayer: Record<string, string>;
-    battlefieldPoolByPlayer: Match["battlefieldPoolByPlayer"];
-  } {
-    if (match.format !== "best-of-3") {
-      throw new ValidationError("Only best-of-3 can proceed to another game.");
-    }
-
-    if (!nextGameSelectedBattlefieldsByPlayer) {
-      throw new ValidationError("Next game battlefields are required for best-of-3.");
-    }
-
-    const playerIds = match.players.map((player) => player.id);
-    const nextSelections: Record<string, string> = {};
-    const nextPool = { ...battlefieldPoolByPlayer };
-
-    for (const playerId of playerIds) {
-      const selection = nextGameSelectedBattlefieldsByPlayer[playerId];
-      const pool = nextPool[playerId] ?? [];
-      const allowedNames = pool.map((entry) => entry.name);
-
-      if (!selection) {
-        throw new ValidationError(
-          "Each player must select a battlefield for the next game.",
-        );
-      }
-
-      if (!allowedNames.includes(selection)) {
-        throw new ValidationError(
-          "Selected battlefield must be one of the provided battlefields.",
-        );
-      }
-
-      const selectedEntry = pool.find(
-        (entry) => entry.name.toLowerCase() === selection.toLowerCase(),
-      );
-
-      if (selectedEntry?.used) {
-        throw new ValidationError("Battlefield has already been selected in this match.");
-      }
-
-      nextSelections[playerId] = selection;
-      nextPool[playerId] = pool.map((entry) =>
-        entry.name.toLowerCase() !== selection.toLowerCase()
-          ? entry
-          : {
-              ...entry,
-              used: true,
-            },
-      );
-    }
-
-    return {
-      selectedBattlefieldsByPlayer: nextSelections,
-      battlefieldPoolByPlayer: nextPool,
-    };
   }
 }

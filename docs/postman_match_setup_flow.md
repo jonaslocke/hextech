@@ -163,21 +163,87 @@ Expected:
 ```json
 {
   "gameId": "postman_bo3_game_001",
-  "winnerPlayerId": "p1",
-  "nextGameSelectedBattlefieldsByPlayer": {
-    "p1": "Grove of the God-Willow",
-    "p2": "The Dreaming Tree"
-  }
+  "winnerPlayerId": "p1"
 }
 ```
 
 Expected:
-- `data.status = "in_progress"`
+- `data.status = "setup_pending"`
 - `data.currentGame.number = 2`
+- `data.currentGame.status = "setup_pending"`
 - `data.decksByPlayer` is absent / undefined
 - `data.currentGame.deckStateByPlayer` is absent / undefined
 
-## 11. (Best-of-3) Report Game 2 Result and Verify Secrecy
+Save:
+- `data.startingPlayerChooserId` -> `chooser_id` (for game 2 setup)
+
+## 11. (Best-of-3) Setup Game 2: Select Chosen Champion (p1)
+
+`POST {{base_url}}/matches/{{match_id}}/setup/champion`
+
+```json
+{
+  "playerId": "p1"
+}
+```
+
+## 12. (Best-of-3) Setup Game 2: Select Chosen Champion (p2)
+
+`POST {{base_url}}/matches/{{match_id}}/setup/champion`
+
+```json
+{
+  "playerId": "p2"
+}
+```
+
+## 13. (Best-of-3) Setup Game 2: Select Battlefield (p1)
+
+Use one of p1's remaining battlefields not used in game 1.
+
+`POST {{base_url}}/matches/{{match_id}}/setup/battlefield`
+
+```json
+{
+  "playerId": "p1",
+  "battlefield": "Grove of the God-Willow"
+}
+```
+
+## 14. (Best-of-3) Setup Game 2: Select Battlefield (p2)
+
+Use one of p2's remaining battlefields not used in game 1.
+
+`POST {{base_url}}/matches/{{match_id}}/setup/battlefield`
+
+```json
+{
+  "playerId": "p2",
+  "battlefield": "The Dreaming Tree"
+}
+```
+
+## 15. (Best-of-3) Setup Game 2: Select Starting Player
+
+Use `chooser_id` saved from step 10.
+
+`POST {{base_url}}/matches/{{match_id}}/setup/starting-player`
+
+```json
+{
+  "playerId": "{{chooser_id}}",
+  "startingPlayerId": "p2"
+}
+```
+
+Expected:
+- `data.status = "ready"`
+- `data.currentGame.number = 2`
+- `data.currentGame.status = "ready"`
+- `data.decksByPlayer` is absent / undefined
+- `data.currentGame.deckStateByPlayer` is absent / undefined
+
+## 16. (Best-of-3) Report Game 2 Result and Verify Secrecy
 
 `POST {{base_url}}/matches/{{match_id}}/games`
 
@@ -199,6 +265,7 @@ Expected:
 ## Notes
 
 - Do not send `selectedBattlefieldsByPlayer` in `POST /matches`; it is rejected.
+- Do not send `nextGameSelectedBattlefieldsByPlayer` in `POST /matches/{id}/games`; game setup always happens through `/setup/*`.
 - Setup intents are one-shot per player per setup step.
 - For `best-of-1`, use the same `/setup/battlefield` endpoint, but battlefield is randomly resolved by the server.
 - Internal deck tracking is authoritative and not visible in public API responses.

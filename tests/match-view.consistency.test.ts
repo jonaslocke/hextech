@@ -16,10 +16,6 @@ describe("Match view consistency", () => {
       .send({
         gameId: "game_report_001",
         winnerPlayerId: "p1",
-        nextGameSelectedBattlefieldsByPlayer: {
-          p1: "Grove of the God-Willow",
-          p2: "The Dreaming Tree",
-        },
       });
     assert.equal(reported.status, 201);
 
