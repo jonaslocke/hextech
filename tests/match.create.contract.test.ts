@@ -18,7 +18,6 @@ describe("Match creation contract", () => {
     assert.equal(match.currentGame.matchId, match.id);
     assert.equal(match.currentGame.number, 1);
     assert.equal(match.currentGame.version, 1);
-    assert.deepEqual(match.games, []);
     assert.deepEqual(match.completedGames, []);
     assert.deepEqual(match.score, { p1: 0, p2: 0 });
     assert.equal(match.decksByPlayer, undefined);

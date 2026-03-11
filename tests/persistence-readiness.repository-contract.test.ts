@@ -23,7 +23,7 @@ describe("Persistence readiness repository contracts", () => {
         p2: validDeckList,
       },
     });
-    match.games.push("game_report_001");
+    match.gameIds.push("game_001");
     match.version = 7;
 
     const repo = new InMemoryMatchRepository();
@@ -32,7 +32,7 @@ describe("Persistence readiness repository contracts", () => {
     const loaded = await repo.findById(match.id);
     assert.ok(loaded);
     assert.equal(loaded?.id, match.id);
-    assert.deepEqual(loaded?.games, ["game_report_001"]);
+    assert.deepEqual(loaded?.gameIds, ["game_001"]);
     assert.equal(loaded?.version, 7);
   });
 
@@ -80,7 +80,6 @@ describe("Persistence readiness repository contracts", () => {
     const reported = await request(app)
       .post(`/api/matches/${created.id}/games`)
       .send({
-        gameId: "game_report_001",
         winnerPlayerId: "p1",
       });
     assert.equal(reported.status, 201);

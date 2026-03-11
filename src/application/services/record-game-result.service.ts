@@ -41,14 +41,10 @@ export class RecordGameResultService {
   }
 
   async execute(input: RecordGameResultRequestDto): Promise<MatchView> {
-    const { matchId, gameId, winnerPlayerId } = input;
+    const { matchId, winnerPlayerId } = input;
 
     if (!matchId) {
       throw new ValidationError("Match id is required.");
-    }
-
-    if (!gameId) {
-      throw new ValidationError("Game id is required.");
     }
 
     if (!winnerPlayerId) {
@@ -64,10 +60,6 @@ export class RecordGameResultService {
 
     if (match.status === "finished" || match.winnerPlayerId) {
       throw new ValidationError("Match is already finished.");
-    }
-
-    if (match.games.includes(gameId)) {
-      throw new ValidationError("Game has already been recorded.");
     }
 
     const hasWinner = match.players.some((player) => player.id === winnerPlayerId);
@@ -92,7 +84,6 @@ export class RecordGameResultService {
       ...currentGame,
       status: "finished",
       winnerPlayerId,
-      reportedGameId: gameId,
       resultReportedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       version: currentGame.version + 1,
@@ -123,7 +114,6 @@ export class RecordGameResultService {
 
     const updatedMatch: Match = {
       ...match,
-      games: [...match.games, gameId],
       gameIds: nextGame ? [...match.gameIds, nextGame.id] : [...match.gameIds],
       currentGameId: nextGame ? nextGame.id : finishedGame.id,
       score: updatedScore,

@@ -75,7 +75,6 @@ export class MatchFactory {
       format,
       status: "setup_pending",
       players: [playerA, playerB],
-      games: [],
       gameIds: [],
       currentGameId: null,
       score: {

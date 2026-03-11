@@ -14,7 +14,6 @@ describe("API smoke end-to-end", () => {
     const reported = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        gameId: "smoke_bo1_001",
         winnerPlayerId: "p1",
       });
 
@@ -32,7 +31,6 @@ describe("API smoke end-to-end", () => {
     const first = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        gameId: "smoke_bo3_001",
         winnerPlayerId: "p1",
       });
     assert.equal(first.status, 201);
@@ -48,7 +46,6 @@ describe("API smoke end-to-end", () => {
     const second = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        gameId: "smoke_bo3_002",
         winnerPlayerId: "p1",
       });
     assert.equal(second.status, 201);

@@ -31,7 +31,6 @@ export class MatchController {
         : req.params.id;
       const match = await this.recordGameResultService.execute({
         matchId: matchId ?? "",
-        gameId: req.body?.gameId,
         winnerPlayerId: req.body?.winnerPlayerId,
       });
 

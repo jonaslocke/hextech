@@ -14,7 +14,6 @@ describe("Report result best-of-1 flow", () => {
     const response = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        gameId: "game_report_001",
         winnerPlayerId: "p1",
       });
 
@@ -24,20 +23,17 @@ describe("Report result best-of-1 flow", () => {
     assert.equal(response.body.data.status, "finished");
     assert.equal(response.body.data.winnerPlayerId, "p1");
     assert.deepEqual(response.body.data.score, { p1: 1, p2: 0 });
-    assert.deepEqual(response.body.data.games, ["game_report_001"]);
     assert.equal(response.body.data.completedGames.length, 1);
     assert.equal(response.body.data.currentGame.winnerPlayerId, "p1");
-    assert.equal(response.body.data.currentGame.reportedGameId, "game_report_001");
   });
 
-  test("rejects duplicate reported game id", async () => {
+  test("rejects reporting another result once match is finished", async () => {
     const created = await createMatch(app, "best-of-1");
     const ready = await setupMatchToReady(app, created.id, "best-of-1");
 
     const first = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        gameId: "game_report_001",
         winnerPlayerId: "p1",
       });
     assert.equal(first.status, 201);
@@ -45,7 +41,6 @@ describe("Report result best-of-1 flow", () => {
     const second = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        gameId: "game_report_001",
         winnerPlayerId: "p1",
       });
     assert.equal(second.status, 400);
@@ -58,7 +53,6 @@ describe("Report result best-of-1 flow", () => {
     const response = await request(app)
       .post(`/api/matches/${created.id}/games`)
       .send({
-        gameId: "game_report_001",
         winnerPlayerId: "p1",
       });
 

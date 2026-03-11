@@ -36,7 +36,6 @@ export class GameFactory {
       selectedBattlefieldsByPlayer: { ...(params.selectedBattlefieldsByPlayer ?? {}) },
       startingPlayerId: params.startingPlayerId ?? null,
       winnerPlayerId: null,
-      reportedGameId: null,
       resultReportedAt: null,
       createdAt: now,
       updatedAt: now,

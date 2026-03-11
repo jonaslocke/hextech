@@ -14,7 +14,6 @@ describe("Report result best-of-3 flow", () => {
     const response = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        gameId: "game_report_001",
         winnerPlayerId: "p1",
       });
 
@@ -38,7 +37,6 @@ describe("Report result best-of-3 flow", () => {
     const first = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        gameId: "game_report_001",
         winnerPlayerId: "p1",
       });
     assert.equal(first.status, 201);
@@ -54,7 +52,6 @@ describe("Report result best-of-3 flow", () => {
     const second = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        gameId: "game_report_002",
         winnerPlayerId: "p1",
       });
 
@@ -74,7 +71,6 @@ describe("Report result best-of-3 flow", () => {
     const first = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        gameId: "game_report_001",
         winnerPlayerId: "p1",
       });
     assert.equal(first.status, 201);
@@ -82,7 +78,6 @@ describe("Report result best-of-3 flow", () => {
     const response = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        gameId: "game_report_002",
         winnerPlayerId: "p1",
       });
 

@@ -14,7 +14,6 @@ describe("Match view consistency", () => {
     const reported = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        gameId: "game_report_001",
         winnerPlayerId: "p1",
       });
     assert.equal(reported.status, 201);

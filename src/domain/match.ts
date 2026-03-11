@@ -20,7 +20,6 @@ export interface Match {
   format: MatchFormat;
   status: MatchStatus;
   players: [PlayerRef, PlayerRef];
-  games: string[];
   gameIds: string[];
   currentGameId: string | null;
   score: MatchScore;

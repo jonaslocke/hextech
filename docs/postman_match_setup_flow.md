@@ -162,7 +162,6 @@ Expected:
 
 ```json
 {
-  "gameId": "postman_bo3_game_001",
   "winnerPlayerId": "p1"
 }
 ```
@@ -249,7 +248,6 @@ Expected:
 
 ```json
 {
-  "gameId": "postman_bo3_game_002",
   "winnerPlayerId": "p1"
 }
 ```
@@ -265,6 +263,7 @@ Expected:
 ## Notes
 
 - Do not send `selectedBattlefieldsByPlayer` in `POST /matches`; it is rejected.
+- Do not send `gameId` in `POST /matches/{id}/games`; result reporting always applies to the current game.
 - Do not send `nextGameSelectedBattlefieldsByPlayer` in `POST /matches/{id}/games`; game setup always happens through `/setup/*`.
 - Setup intents are one-shot per player per setup step.
 - For `best-of-1`, use the same `/setup/battlefield` endpoint, but battlefield is randomly resolved by the server.

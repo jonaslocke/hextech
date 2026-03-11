@@ -67,7 +67,6 @@ describe("Setup intents authorization and one-shot", () => {
     const result = await request(app)
       .post(`/api/matches/${match.id}/games`)
       .send({
-        gameId: "game_report_001",
         winnerPlayerId: "p1",
       });
     assert.equal(result.status, 201);

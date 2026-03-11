@@ -29,7 +29,6 @@ export interface Game {
   selectedBattlefieldsByPlayer: Record<string, string>;
   startingPlayerId: string | null;
   winnerPlayerId: string | null;
-  reportedGameId: string | null;
   resultReportedAt: string | null;
   createdAt: string;
   updatedAt: string;
