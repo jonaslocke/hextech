@@ -42,9 +42,17 @@ describe("Battlefield history across games", () => {
       });
 
     assert.equal(first.status, 201);
-    assert.deepEqual(first.body.data.battlefieldsUsedByPlayer, {
-      p1: ["Fortified Position", "Grove of the God-Willow"],
-      p2: ["Grove of the God-Willow", "The Dreaming Tree"],
+    assert.deepEqual(first.body.data.battlefieldPoolByPlayer, {
+      p1: [
+        { name: "Fortified Position", used: true },
+        { name: "Grove of the God-Willow", used: true },
+        { name: "The Dreaming Tree", used: false },
+      ],
+      p2: [
+        { name: "Fortified Position", used: false },
+        { name: "Grove of the God-Willow", used: true },
+        { name: "The Dreaming Tree", used: true },
+      ],
     });
   });
 });

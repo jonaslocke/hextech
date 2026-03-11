@@ -99,12 +99,10 @@ export class RecordGameResultService {
       version: currentGame.version + 1,
     };
 
-    const normalizedUsage = this.withCurrentGameSelectionsEnsuredInHistory(
+    let nextBattlefieldPoolByPlayer = this.withCurrentGameSelectionsEnsuredInPool(
       match,
       finishedGame,
     );
-    let nextBattlefieldsUsedByPlayer = normalizedUsage.battlefieldsUsedByPlayer;
-    let nextBattlefieldRosterByPlayer = normalizedUsage.battlefieldRosterByPlayer;
 
     let nextGame: Game | null = null;
 
@@ -112,13 +110,11 @@ export class RecordGameResultService {
       const nextGameNumber = finishedGame.number + 1;
       const nextSelections = this.resolveNextGameBattlefields(
         match,
-        nextGameNumber,
         nextGameSelectedBattlefieldsByPlayer,
-        nextBattlefieldsUsedByPlayer,
+        nextBattlefieldPoolByPlayer,
       );
 
-      nextBattlefieldsUsedByPlayer = nextSelections.battlefieldsUsedByPlayer;
-      nextBattlefieldRosterByPlayer = nextSelections.battlefieldRosterByPlayer;
+      nextBattlefieldPoolByPlayer = nextSelections.battlefieldPoolByPlayer;
 
       nextGame = GameFactory.create({
         matchId: match.id,
@@ -139,8 +135,7 @@ export class RecordGameResultService {
       score: updatedScore,
       status: isMatchFinished ? "finished" : "in_progress",
       winnerPlayerId: isMatchFinished ? winnerPlayerId : null,
-      battlefieldsUsedByPlayer: nextBattlefieldsUsedByPlayer,
-      battlefieldRosterByPlayer: nextBattlefieldRosterByPlayer,
+      battlefieldPoolByPlayer: nextBattlefieldPoolByPlayer,
       updatedAt: new Date().toISOString(),
       version: match.version + 1,
     };
@@ -154,13 +149,12 @@ export class RecordGameResultService {
     return this.matchViewLoader.build(updatedMatch);
   }
 
-  private withCurrentGameSelectionsEnsuredInHistory(match: Match, game: Game): {
-    battlefieldsUsedByPlayer: Match["battlefieldsUsedByPlayer"];
-    battlefieldRosterByPlayer: Match["battlefieldRosterByPlayer"];
-  } {
+  private withCurrentGameSelectionsEnsuredInPool(
+    match: Match,
+    game: Game,
+  ): Match["battlefieldPoolByPlayer"] {
     const playerIds = match.players.map((player) => player.id);
-    const nextUsed = { ...match.battlefieldsUsedByPlayer };
-    const nextRoster = { ...match.battlefieldRosterByPlayer };
+    const nextPool = { ...match.battlefieldPoolByPlayer };
 
     for (const playerId of playerIds) {
       const selected = game.selectedBattlefieldsByPlayer[playerId];
@@ -168,39 +162,27 @@ export class RecordGameResultService {
         continue;
       }
 
-      const used = nextUsed[playerId] ?? [];
       const selectedKey = selected.toLowerCase();
-      if (!used.some((battlefield) => battlefield.toLowerCase() === selectedKey)) {
-        nextUsed[playerId] = [...used, selected];
-      }
-
-      nextRoster[playerId] = (nextRoster[playerId] ?? []).map((entry) =>
+      nextPool[playerId] = (nextPool[playerId] ?? []).map((entry) =>
         entry.name.toLowerCase() !== selectedKey
           ? entry
           : {
               ...entry,
-              usedInGameNumbers: entry.usedInGameNumbers.includes(game.number)
-                ? entry.usedInGameNumbers
-                : [...entry.usedInGameNumbers, game.number],
+              used: true,
             },
       );
     }
 
-    return {
-      battlefieldsUsedByPlayer: nextUsed,
-      battlefieldRosterByPlayer: nextRoster,
-    };
+    return nextPool;
   }
 
   private resolveNextGameBattlefields(
     match: Match,
-    nextGameNumber: number,
     nextGameSelectedBattlefieldsByPlayer: Record<string, string> | undefined,
-    battlefieldsUsedByPlayer: Match["battlefieldsUsedByPlayer"],
+    battlefieldPoolByPlayer: Match["battlefieldPoolByPlayer"],
   ): {
     selectedBattlefieldsByPlayer: Record<string, string>;
-    battlefieldsUsedByPlayer: Match["battlefieldsUsedByPlayer"];
-    battlefieldRosterByPlayer: Match["battlefieldRosterByPlayer"];
+    battlefieldPoolByPlayer: Match["battlefieldPoolByPlayer"];
   } {
     if (match.format !== "best-of-3") {
       throw new ValidationError("Only best-of-3 can proceed to another game.");
@@ -212,14 +194,12 @@ export class RecordGameResultService {
 
     const playerIds = match.players.map((player) => player.id);
     const nextSelections: Record<string, string> = {};
-    const nextUsed = { ...battlefieldsUsedByPlayer };
-    const nextRoster = { ...match.battlefieldRosterByPlayer };
+    const nextPool = { ...battlefieldPoolByPlayer };
 
     for (const playerId of playerIds) {
       const selection = nextGameSelectedBattlefieldsByPlayer[playerId];
-      const roster = nextRoster[playerId] ?? [];
-      const pool = roster.map((entry) => entry.name);
-      const used = nextUsed[playerId] ?? [];
+      const pool = nextPool[playerId] ?? [];
+      const allowedNames = pool.map((entry) => entry.name);
 
       if (!selection) {
         throw new ValidationError(
@@ -227,34 +207,34 @@ export class RecordGameResultService {
         );
       }
 
-      if (!pool.includes(selection)) {
+      if (!allowedNames.includes(selection)) {
         throw new ValidationError(
           "Selected battlefield must be one of the provided battlefields.",
         );
       }
 
-      if (used.some((battlefield) => battlefield.toLowerCase() === selection.toLowerCase())) {
+      const selectedEntry = pool.find(
+        (entry) => entry.name.toLowerCase() === selection.toLowerCase(),
+      );
+
+      if (selectedEntry?.used) {
         throw new ValidationError("Battlefield has already been selected in this match.");
       }
 
       nextSelections[playerId] = selection;
-      nextUsed[playerId] = [...used, selection];
-      nextRoster[playerId] = roster.map((entry) =>
+      nextPool[playerId] = pool.map((entry) =>
         entry.name.toLowerCase() !== selection.toLowerCase()
           ? entry
           : {
               ...entry,
-              usedInGameNumbers: entry.usedInGameNumbers.includes(nextGameNumber)
-                ? entry.usedInGameNumbers
-                : [...entry.usedInGameNumbers, nextGameNumber],
+              used: true,
             },
       );
     }
 
     return {
       selectedBattlefieldsByPlayer: nextSelections,
-      battlefieldsUsedByPlayer: nextUsed,
-      battlefieldRosterByPlayer: nextRoster,
+      battlefieldPoolByPlayer: nextPool,
     };
   }
 }

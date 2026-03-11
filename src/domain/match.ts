@@ -10,9 +10,9 @@ export interface MatchScore {
   [playerId: string]: number;
 }
 
-export interface BattlefieldRosterEntry {
+export interface BattlefieldPoolEntry {
   name: string;
-  usedInGameNumbers: number[];
+  used: boolean;
 }
 
 export interface Match {
@@ -26,8 +26,7 @@ export interface Match {
   score: MatchScore;
   startingPlayerChooserId: string;
   decksByPlayer: Record<string, string>;
-  battlefieldRosterByPlayer: Record<string, BattlefieldRosterEntry[]>;
-  battlefieldsUsedByPlayer: Record<string, string[]>;
+  battlefieldPoolByPlayer: Record<string, BattlefieldPoolEntry[]>;
   createdAt: string;
   updatedAt: string;
   winnerPlayerId: string | null;

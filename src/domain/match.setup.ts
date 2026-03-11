@@ -65,11 +65,10 @@ export class MatchSetup {
       );
     }
 
-    const playerBattlefields = (
-      match.battlefieldRosterByPlayer[playerId] ?? []
-    ).map((entry) => entry.name);
+    const playerPool = match.battlefieldPoolByPlayer[playerId] ?? [];
+    const playerBattlefields = playerPool.map((entry) => entry.name);
 
-    if (playerBattlefields.length !== 3) {
+    if (playerPool.length !== 3) {
       throw new ValidationError("Each player must provide exactly 3 battlefields.");
     }
 
@@ -96,29 +95,24 @@ export class MatchSetup {
       selectedBattlefield = requestedBattlefield;
     }
 
-    const usedBattlefields = match.battlefieldsUsedByPlayer[playerId] ?? [];
+    const selectedPoolEntry = playerPool.find(
+      (entry) => entry.name.toLowerCase() === selectedBattlefield.toLowerCase(),
+    );
 
-    if (
-      usedBattlefields.some(
-        (battlefield) =>
-          battlefield.toLowerCase() === selectedBattlefield.toLowerCase(),
-      )
-    ) {
+    if (selectedPoolEntry?.used) {
       throw new ValidationError(
         "Battlefield has already been selected in this match.",
       );
     }
 
-    const updatedBattlefieldRosterByPlayer = {
-      ...match.battlefieldRosterByPlayer,
-      [playerId]: (match.battlefieldRosterByPlayer[playerId] ?? []).map((entry) =>
+    const updatedBattlefieldPoolByPlayer = {
+      ...match.battlefieldPoolByPlayer,
+      [playerId]: playerPool.map((entry) =>
         entry.name.toLowerCase() !== selectedBattlefield.toLowerCase()
           ? entry
           : {
               ...entry,
-              usedInGameNumbers: entry.usedInGameNumbers.includes(game.number)
-                ? entry.usedInGameNumbers
-                : [...entry.usedInGameNumbers, game.number],
+              used: true,
             },
       ),
     };
@@ -128,11 +122,7 @@ export class MatchSetup {
         ...game.selectedBattlefieldsByPlayer,
         [playerId]: selectedBattlefield,
       },
-      battlefieldRosterByPlayer: updatedBattlefieldRosterByPlayer,
-      battlefieldsUsedByPlayer: {
-        ...match.battlefieldsUsedByPlayer,
-        [playerId]: [...usedBattlefields, selectedBattlefield],
-      },
+      battlefieldPoolByPlayer: updatedBattlefieldPoolByPlayer,
     });
   }
 
@@ -172,8 +162,7 @@ export class MatchSetup {
       chosenChampionByPlayer?: Record<string, string>;
       selectedBattlefieldsByPlayer?: Record<string, string>;
       startingPlayerId?: string;
-      battlefieldsUsedByPlayer?: Record<string, string[]>;
-      battlefieldRosterByPlayer?: Match["battlefieldRosterByPlayer"];
+      battlefieldPoolByPlayer?: Match["battlefieldPoolByPlayer"];
     },
   ): SetupTransitionResult {
     const updatedGame: Game = {
@@ -191,11 +180,8 @@ export class MatchSetup {
 
     const updatedMatch: Match = {
       ...match,
-      ...(patch.battlefieldsUsedByPlayer
-        ? { battlefieldsUsedByPlayer: patch.battlefieldsUsedByPlayer }
-        : {}),
-      ...(patch.battlefieldRosterByPlayer
-        ? { battlefieldRosterByPlayer: patch.battlefieldRosterByPlayer }
+      ...(patch.battlefieldPoolByPlayer
+        ? { battlefieldPoolByPlayer: patch.battlefieldPoolByPlayer }
         : {}),
       updatedAt: new Date().toISOString(),
       version: match.version + 1,

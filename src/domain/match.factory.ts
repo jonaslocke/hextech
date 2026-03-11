@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Match, MatchFormat, PlayerRef, BattlefieldRosterEntry } from "./match";
+import type { Match, MatchFormat, PlayerRef, BattlefieldPoolEntry } from "./match";
 import { DeckValidator } from "./deck.validator";
 import { ValidationError } from "../shared/errors";
 
@@ -43,7 +43,7 @@ export class MatchFactory {
 
     const playerIds = players.map((player) => player.id);
     const normalizedDecksByPlayer: Record<string, string> = {};
-    const battlefieldRosterByPlayer: Record<string, BattlefieldRosterEntry[]> = {};
+    const battlefieldPoolByPlayer: Record<string, BattlefieldPoolEntry[]> = {};
 
     for (const playerId of playerIds) {
       const deckList = decksByPlayer[playerId];
@@ -53,22 +53,16 @@ export class MatchFactory {
       const validatedDeck = DeckValidator.validate(deckList);
 
       normalizedDecksByPlayer[playerId] = validatedDeck.raw;
-      battlefieldRosterByPlayer[playerId] = validatedDeck.battlefields.map(
+      battlefieldPoolByPlayer[playerId] = validatedDeck.battlefields.map(
         (battlefield) => ({
           name: battlefield,
-          usedInGameNumbers: [],
+          used: false,
         }),
       );
-    }
-
-    const battlefieldsUsedByPlayer: Record<string, string[]> = {};
-
-    for (const playerId of playerIds) {
-      const roster = battlefieldRosterByPlayer[playerId];
-      if (!roster || roster.length !== 3) {
+      const pool = battlefieldPoolByPlayer[playerId];
+      if (!pool || pool.length !== 3) {
         throw new ValidationError("Each player must provide exactly 3 battlefields.");
       }
-      battlefieldsUsedByPlayer[playerId] = [];
     }
 
     const startingPlayerChooserId =
@@ -90,8 +84,7 @@ export class MatchFactory {
       },
       startingPlayerChooserId,
       decksByPlayer: normalizedDecksByPlayer,
-      battlefieldRosterByPlayer,
-      battlefieldsUsedByPlayer,
+      battlefieldPoolByPlayer,
       createdAt: now,
       updatedAt: now,
       winnerPlayerId: null,
