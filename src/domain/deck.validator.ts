@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { ValidationError } from "../shared/errors";
 
 export interface ValidatedDeck {
@@ -11,6 +12,20 @@ export interface DeckValidationResult {
   reasons: string[];
   chosenChampion: string | null;
   battlefields: string[];
+}
+
+export interface RuntimeDeckCardInstance {
+  id: string;
+  name: string;
+  source: "main_deck" | "rune_deck";
+}
+
+export interface RuntimeDeckSnapshot {
+  registrationRef: string;
+  mainLibrary: RuntimeDeckCardInstance[];
+  runeLibrary: RuntimeDeckCardInstance[];
+  hand: RuntimeDeckCardInstance[];
+  trash: RuntimeDeckCardInstance[];
 }
 
 interface DeckEntry {
@@ -102,6 +117,45 @@ export class DeckValidator {
       reasons,
       chosenChampion,
       battlefields: validatedBattlefields,
+    };
+  }
+
+  static buildRuntimeDeckSnapshot(
+    deckList: string,
+    playerId: string,
+  ): RuntimeDeckSnapshot {
+    const normalizedPlayerId = playerId?.trim();
+
+    if (!normalizedPlayerId) {
+      throw new ValidationError("Player id is required to build deck state.");
+    }
+
+    const validatedDeck = DeckValidator.validate(deckList);
+    const sections = DeckValidator.extractSections(validatedDeck.raw);
+    const registrationRef = createHash("sha256")
+      .update(validatedDeck.raw)
+      .digest("hex")
+      .slice(0, 16);
+
+    const mainLibrary = DeckValidator.expandEntriesToInstances(
+      sections.mainDeck?.entries ?? [],
+      normalizedPlayerId,
+      "main_deck",
+      registrationRef,
+    );
+    const runeLibrary = DeckValidator.expandEntriesToInstances(
+      sections.runeDeck?.entries ?? [],
+      normalizedPlayerId,
+      "rune_deck",
+      registrationRef,
+    );
+
+    return {
+      registrationRef,
+      mainLibrary,
+      runeLibrary,
+      hand: [],
+      trash: [],
     };
   }
 
@@ -373,6 +427,29 @@ export class DeckValidator {
     }
 
     return normalized;
+  }
+
+  private static expandEntriesToInstances(
+    entries: DeckEntry[],
+    playerId: string,
+    source: RuntimeDeckCardInstance["source"],
+    registrationRef: string,
+  ): RuntimeDeckCardInstance[] {
+    const expanded: RuntimeDeckCardInstance[] = [];
+    let sequence = 1;
+
+    for (const entry of entries) {
+      for (let copy = 0; copy < entry.quantity; copy += 1) {
+        expanded.push({
+          id: `${registrationRef}:${playerId}:${source}:${String(sequence).padStart(3, "0")}`,
+          name: entry.name,
+          source,
+        });
+        sequence += 1;
+      }
+    }
+
+    return expanded;
   }
 
   private static resolveChosenChampionName(

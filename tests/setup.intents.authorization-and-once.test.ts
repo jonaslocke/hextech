@@ -48,6 +48,7 @@ describe("Setup intents authorization and one-shot", () => {
       .send({ playerId: chooserId, startingPlayerId: chooserId });
     assert.equal(accepted.status, 201);
     assert.equal(accepted.body.data.decksByPlayer, undefined);
+    assert.equal(accepted.body.data.currentGame.deckStateByPlayer, undefined);
     assert.equal(accepted.body.data.currentGame.startingPlayerId, chooserId);
   });
 

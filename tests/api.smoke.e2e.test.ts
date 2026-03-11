@@ -20,6 +20,7 @@ describe("API smoke end-to-end", () => {
 
     assert.equal(reported.status, 201);
     assert.equal(reported.body.data.decksByPlayer, undefined);
+    assert.equal(reported.body.data.currentGame.deckStateByPlayer, undefined);
     assert.equal(reported.body.data.status, "finished");
     assert.equal(reported.body.data.winnerPlayerId, "p1");
   });
@@ -49,6 +50,7 @@ describe("API smoke end-to-end", () => {
       });
     assert.equal(second.status, 201);
     assert.equal(second.body.data.decksByPlayer, undefined);
+    assert.equal(second.body.data.currentGame.deckStateByPlayer, undefined);
     assert.equal(second.body.data.status, "finished");
     assert.equal(second.body.data.winnerPlayerId, "p1");
   });

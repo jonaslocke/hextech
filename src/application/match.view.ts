@@ -2,19 +2,26 @@ import type { Game } from "../domain/game";
 import type { Match } from "../domain/match";
 
 type PublicMatch = Omit<Match, "decksByPlayer">;
+type PublicGame = Omit<Game, "deckStateByPlayer">;
 
 export interface MatchView extends PublicMatch {
-  currentGame: Game | null;
-  completedGames: Game[];
+  currentGame: PublicGame | null;
+  completedGames: PublicGame[];
   currentGameNumber: number;
 }
 
+function toPublicGame(game: Game): PublicGame {
+  const { deckStateByPlayer: _deckStateByPlayer, ...publicGame } = game;
+  return publicGame;
+}
+
 export function toMatchView(match: Match, orderedGames: Game[]): MatchView {
-  const gamesById = new Map(orderedGames.map((game) => [game.id, game]));
+  const orderedPublicGames = orderedGames.map(toPublicGame);
+  const gamesById = new Map(orderedPublicGames.map((game) => [game.id, game]));
   const currentGame = match.currentGameId
     ? (gamesById.get(match.currentGameId) ?? null)
     : null;
-  const completedGames = orderedGames.filter((game) => game.status === "finished");
+  const completedGames = orderedPublicGames.filter((game) => game.status === "finished");
   const currentGameNumber = currentGame
     ? currentGame.number
     : completedGames.length > 0

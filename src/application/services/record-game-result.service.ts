@@ -124,6 +124,7 @@ export class RecordGameResultService {
         matchId: match.id,
         number: nextGameNumber,
         status: "ready",
+        deckRegistrationsByPlayer: match.decksByPlayer,
         chosenChampionByPlayer: finishedGame.chosenChampionByPlayer,
         selectedBattlefieldsByPlayer: nextSelections.selectedBattlefieldsByPlayer,
         startingPlayerId: finishedGame.startingPlayerId,

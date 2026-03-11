@@ -28,6 +28,7 @@ describe("Match view consistency", () => {
     const match = response.body.data;
 
     assert.equal(match.decksByPlayer, undefined);
+    assert.equal(match.currentGame.deckStateByPlayer, undefined);
     assert.ok(match.currentGameId);
     assert.ok(match.gameIds.includes(match.currentGameId));
     assert.equal(match.currentGame.id, match.currentGameId);

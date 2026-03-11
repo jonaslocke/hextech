@@ -50,6 +50,24 @@ describe("Persistence readiness repository contracts", () => {
     assert.equal(ordered[1]?.id, game1.id);
   });
 
+  test("game factory builds per-player runtime deck state from deck registrations", () => {
+    const game = GameFactory.create({
+      matchId: "m1",
+      number: 1,
+      deckRegistrationsByPlayer: {
+        p1: validDeckList,
+        p2: validDeckList,
+      },
+    });
+
+    assert.equal(Object.keys(game.deckStateByPlayer).length, 2);
+    assert.equal(game.deckStateByPlayer.p1?.mainLibrary.length, 40);
+    assert.equal(game.deckStateByPlayer.p1?.runeLibrary.length, 12);
+    assert.equal(game.deckStateByPlayer.p1?.hand.length, 0);
+    assert.equal(game.deckStateByPlayer.p1?.trash.length, 0);
+    assert.ok(game.deckStateByPlayer.p1?.registrationRef);
+  });
+
   test("versions increment through setup and result reporting writes", async () => {
     const created = await createMatch(app, "best-of-1");
     assert.equal(created.version, 1);

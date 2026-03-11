@@ -1,6 +1,9 @@
-# Postman Setup Flow: Create Match -> `ready`
+# Postman Setup Flow: Create Match -> `ready` (+ Deck Secrecy Checks)
 
-This guide shows the exact HTTP requests to move a match from creation to `ready`.
+This guide shows the exact HTTP requests to move a match from creation to `ready`
+and verify deck secrecy behavior introduced in the latest implementation:
+- Decks are stored under server authority.
+- Decks are not exposed in public match responses.
 
 ## 1. Preconditions
 
@@ -14,6 +17,8 @@ npm start
 - `base_url` = `http://localhost:3000/api`
 - `match_id` = (empty)
 - `chooser_id` = (empty)
+
+3. Optional (recommended): open Postman Console so you can inspect full response JSON.
 
 ## 2. Optional: Validate Deck First
 
@@ -50,6 +55,8 @@ Expected:
 - `data.status = "setup_pending"`
 - `data.currentGame.startingPlayerId = null`
 - `data.startingPlayerChooserId` is `"p1"` or `"p2"`
+- `data.decksByPlayer` is absent / undefined
+- `data.currentGame.deckStateByPlayer` is absent / undefined
 
 Save:
 - `data.id` -> `match_id`
@@ -68,6 +75,8 @@ Save:
 Expected:
 - `data.currentGame.chosenChampionByPlayer.p1 = "Ahri, Inquisitive"`
 - `data.status` still `setup_pending`
+- `data.decksByPlayer` is absent / undefined
+- `data.currentGame.deckStateByPlayer` is absent / undefined
 
 ## 5. Select Chosen Champion (p2)
 
@@ -81,6 +90,8 @@ Expected:
 
 Expected:
 - `data.currentGame.chosenChampionByPlayer.p2 = "Ahri, Inquisitive"`
+- `data.decksByPlayer` is absent / undefined
+- `data.currentGame.deckStateByPlayer` is absent / undefined
 
 ## 6. Select Battlefield (p1)
 
@@ -95,6 +106,8 @@ Expected:
 
 Expected:
 - `data.currentGame.selectedBattlefieldsByPlayer.p1 = "Fortified Position"`
+- `data.decksByPlayer` is absent / undefined
+- `data.currentGame.deckStateByPlayer` is absent / undefined
 
 ## 7. Select Battlefield (p2)
 
@@ -109,6 +122,8 @@ Expected:
 
 Expected:
 - `data.currentGame.selectedBattlefieldsByPlayer.p2 = "Grove of the God-Willow"`
+- `data.decksByPlayer` is absent / undefined
+- `data.currentGame.deckStateByPlayer` is absent / undefined
 
 ## 8. Select Starting Player (only chooser can do this)
 
@@ -126,6 +141,8 @@ Use the `chooser_id` value from step 3.
 Expected:
 - `data.currentGame.startingPlayerId = "p1"`
 - `data.status = "ready"`
+- `data.decksByPlayer` is absent / undefined
+- `data.currentGame.deckStateByPlayer` is absent / undefined
 
 ## 9. Verify Final Match State
 
@@ -136,6 +153,46 @@ Expected:
 - `data.currentGame.chosenChampionByPlayer.p1` and `data.currentGame.chosenChampionByPlayer.p2` are filled
 - `data.currentGame.selectedBattlefieldsByPlayer.p1` and `data.currentGame.selectedBattlefieldsByPlayer.p2` are filled
 - `data.currentGame.startingPlayerId` is filled
+- `data.decksByPlayer` is absent / undefined
+- `data.currentGame.deckStateByPlayer` is absent / undefined
+
+## 10. (Best-of-3) Report Game 1 Result and Verify Secrecy
+
+`POST {{base_url}}/matches/{{match_id}}/games`
+
+```json
+{
+  "gameId": "postman_bo3_game_001",
+  "winnerPlayerId": "p1",
+  "nextGameSelectedBattlefieldsByPlayer": {
+    "p1": "Grove of the God-Willow",
+    "p2": "The Dreaming Tree"
+  }
+}
+```
+
+Expected:
+- `data.status = "in_progress"`
+- `data.currentGame.number = 2`
+- `data.decksByPlayer` is absent / undefined
+- `data.currentGame.deckStateByPlayer` is absent / undefined
+
+## 11. (Best-of-3) Report Game 2 Result and Verify Secrecy
+
+`POST {{base_url}}/matches/{{match_id}}/games`
+
+```json
+{
+  "gameId": "postman_bo3_game_002",
+  "winnerPlayerId": "p1"
+}
+```
+
+Expected:
+- `data.status = "finished"`
+- `data.winnerPlayerId = "p1"`
+- `data.decksByPlayer` is absent / undefined
+- `data.currentGame.deckStateByPlayer` is absent / undefined
 
 ---
 
@@ -144,3 +201,6 @@ Expected:
 - Do not send `selectedBattlefieldsByPlayer` in `POST /matches`; it is rejected.
 - Setup intents are one-shot per player per setup step.
 - For `best-of-1`, use the same `/setup/battlefield` endpoint, but battlefield is randomly resolved by the server.
+- Internal deck tracking is authoritative and not visible in public API responses.
+- To verify internal tracking exists, run the test suite and confirm this subtest passes:
+  `game factory builds per-player runtime deck state from deck registrations`.

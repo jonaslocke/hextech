@@ -39,6 +39,7 @@ export class CreateMatchService {
     const initialGame = GameFactory.create({
       matchId: match.id,
       number: 1,
+      deckRegistrationsByPlayer: match.decksByPlayer,
       status: "setup_pending",
     });
     const initializedMatch = {
