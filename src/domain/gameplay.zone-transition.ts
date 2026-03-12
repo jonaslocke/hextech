@@ -1,8 +1,15 @@
 import { ValidationError } from "../shared/errors";
-import type { GameplayRuntime, PlayerZoneBuckets } from "./gameplay";
+import type {
+  CanonicalCardZone,
+  GameplayRuntime,
+  PlayerZoneBuckets,
+  ZonePrivacy,
+} from "./gameplay";
 import {
+  appendGameplayEvent,
   collectGameplayZoneInvariantViolations,
   resolveHiddenCapacityForBattlefield,
+  ZONE_PRIVACY_BY_ZONE,
 } from "./gameplay";
 
 type PlayerScopedZone = Exclude<keyof PlayerZoneBuckets, "base">;
@@ -20,6 +27,7 @@ export interface MoveCardBetweenZonesInput {
   source: GameplayZoneRef;
   destination: GameplayZoneRef;
   cardControllerId: string;
+  cardOwnerId?: string;
   battlefieldControllerById?: Record<string, string | null>;
 }
 
@@ -49,7 +57,7 @@ export function moveCardBetweenZones(
     throw new ValidationError("Source and destination zones must be different.");
   }
 
-  const next = structuredClone(gameplay);
+  let next = structuredClone(gameplay);
   const sourceBucket = resolveZoneBucket(next, input.source, false);
   const destinationBucket = resolveZoneBucket(next, input.destination, true);
   const sourceIndex = sourceBucket.findIndex((currentCardId) => currentCardId === cardId);
@@ -59,6 +67,7 @@ export function moveCardBetweenZones(
   }
 
   enforceDestinationRules(next, input);
+  next = appendRevealEventForFacedownToNonPublicMove(next, input);
 
   sourceBucket.splice(sourceIndex, 1);
   destinationBucket.push(cardId);
@@ -225,6 +234,76 @@ function describeZoneRef(zoneRef: GameplayZoneRef): string {
       return zoneRef.kind;
     case "facedown":
       return `${zoneRef.kind}:${zoneRef.battlefieldId}`;
+  }
+}
+
+function appendRevealEventForFacedownToNonPublicMove(
+  gameplay: GameplayRuntime,
+  input: MoveCardBetweenZonesInput,
+): GameplayRuntime {
+  if (input.source.kind !== "facedown") {
+    return gameplay;
+  }
+
+  const destinationPrivacy = resolveZoneRefPrivacy(input.destination);
+  if (destinationPrivacy === "public") {
+    return gameplay;
+  }
+
+  const rawOwnerId = input.cardOwnerId?.trim() ?? input.cardControllerId.trim();
+  if (!rawOwnerId) {
+    throw new ValidationError("Card owner id is required for facedown reveal events.");
+  }
+
+  if (!gameplay.zones.players[rawOwnerId]) {
+    throw new ValidationError("Card owner is not part of this gameplay state.");
+  }
+
+  return appendGameplayEvent(gameplay, {
+    type: "facedown_card_revealed",
+    details: {
+      reason: "move_to_non_public_zone",
+      cardId: input.cardId.trim(),
+      battlefieldId: input.source.battlefieldId,
+      destination: describeZoneRef(input.destination),
+      revealedByPlayerId: rawOwnerId,
+    },
+  });
+}
+
+function resolveZoneRefPrivacy(zoneRef: GameplayZoneRef): ZonePrivacy {
+  const canonicalZone = toCanonicalZone(zoneRef);
+  return ZONE_PRIVACY_BY_ZONE[canonicalZone];
+}
+
+function toCanonicalZone(zoneRef: GameplayZoneRef): CanonicalCardZone {
+  switch (zoneRef.kind) {
+    case "player_zone":
+      switch (zoneRef.zone) {
+        case "mainDeck":
+          return "main_deck";
+        case "hand":
+          return "hand";
+        case "trash":
+          return "trash";
+        case "banishment":
+          return "banishment";
+        case "runeDeck":
+          return "rune_deck";
+        case "legendZone":
+          return "legend_zone";
+        case "championZone":
+          return "champion_zone";
+      }
+    case "base_cards":
+    case "base_runes":
+      return "base";
+    case "battlefield":
+      return "battlefield";
+    case "chain":
+      return "chain";
+    case "facedown":
+      return "facedown";
   }
 }
 

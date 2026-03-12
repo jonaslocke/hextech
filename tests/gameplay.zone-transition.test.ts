@@ -147,4 +147,45 @@ describe("Gameplay zone transition primitive", () => {
         error.message === "Card is already present in gameplay zones.",
     );
   });
+
+  test("emits reveal event when moving facedown card to private zone", () => {
+    const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.zones.shared.facedownByBattlefield.bf_1 = ["card_hidden_001"];
+
+    const next = moveCardBetweenZones(gameplay, {
+      cardId: "card_hidden_001",
+      cardControllerId: "p1",
+      cardOwnerId: "p2",
+      source: { kind: "facedown", battlefieldId: "bf_1" },
+      destination: { kind: "player_zone", playerId: "p2", zone: "hand" },
+    });
+
+    assert.deepEqual(next.zones.shared.facedownByBattlefield.bf_1, []);
+    assert.deepEqual(next.zones.players.p2!.hand, ["card_hidden_001"]);
+    assert.equal(next.events.length, 1);
+    assert.equal(next.events[0]?.type, "facedown_card_revealed");
+    assert.deepEqual(next.events[0]?.details, {
+      reason: "move_to_non_public_zone",
+      cardId: "card_hidden_001",
+      battlefieldId: "bf_1",
+      destination: "player_zone:p2:hand",
+      revealedByPlayerId: "p2",
+    });
+  });
+
+  test("does not emit reveal event when moving facedown card to public zone", () => {
+    const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.zones.shared.facedownByBattlefield.bf_1 = ["card_hidden_001"];
+
+    const next = moveCardBetweenZones(gameplay, {
+      cardId: "card_hidden_001",
+      cardControllerId: "p1",
+      cardOwnerId: "p1",
+      source: { kind: "facedown", battlefieldId: "bf_1" },
+      destination: { kind: "player_zone", playerId: "p1", zone: "trash" },
+    });
+
+    assert.deepEqual(next.zones.players.p1!.trash, ["card_hidden_001"]);
+    assert.equal(next.events.length, 0);
+  });
 });
