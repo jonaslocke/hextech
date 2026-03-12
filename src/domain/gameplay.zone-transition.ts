@@ -23,6 +23,13 @@ export interface MoveCardBetweenZonesInput {
   battlefieldControllerById?: Record<string, string | null>;
 }
 
+export interface PlaceCardIntoZoneInput {
+  cardId: string;
+  destination: GameplayZoneRef;
+  cardControllerId: string;
+  battlefieldControllerById?: Record<string, string | null>;
+}
+
 export function moveCardBetweenZones(
   gameplay: GameplayRuntime,
   input: MoveCardBetweenZonesInput,
@@ -54,6 +61,46 @@ export function moveCardBetweenZones(
   enforceDestinationRules(next, input);
 
   sourceBucket.splice(sourceIndex, 1);
+  destinationBucket.push(cardId);
+
+  const invariantViolations = collectGameplayZoneInvariantViolations(next);
+  if (invariantViolations.length > 0) {
+    throw new ValidationError(invariantViolations[0]?.message ?? "Gameplay zone state invalid.");
+  }
+
+  return next;
+}
+
+export function placeCardIntoZone(
+  gameplay: GameplayRuntime,
+  input: PlaceCardIntoZoneInput,
+): GameplayRuntime {
+  const cardId = input.cardId.trim();
+  const cardControllerId = input.cardControllerId.trim();
+
+  if (!cardId) {
+    throw new ValidationError("Card id is required for zone placement.");
+  }
+
+  if (!cardControllerId) {
+    throw new ValidationError("Card controller id is required for zone placement.");
+  }
+
+  const next = structuredClone(gameplay);
+
+  if (isCardPresentInGameplay(next, cardId)) {
+    throw new ValidationError("Card is already present in gameplay zones.");
+  }
+
+  const destinationBucket = resolveZoneBucket(next, input.destination, true);
+  enforceDestinationRules(next, {
+    cardId,
+    cardControllerId,
+    source: input.destination,
+    destination: input.destination,
+    battlefieldControllerById: input.battlefieldControllerById,
+  });
+
   destinationBucket.push(cardId);
 
   const invariantViolations = collectGameplayZoneInvariantViolations(next);
@@ -179,4 +226,51 @@ function describeZoneRef(zoneRef: GameplayZoneRef): string {
     case "facedown":
       return `${zoneRef.kind}:${zoneRef.battlefieldId}`;
   }
+}
+
+function isCardPresentInGameplay(gameplay: GameplayRuntime, cardId: string): boolean {
+  for (const playerZones of Object.values(gameplay.zones.players)) {
+    if (playerZones.mainDeck.includes(cardId)) {
+      return true;
+    }
+    if (playerZones.hand.includes(cardId)) {
+      return true;
+    }
+    if (playerZones.trash.includes(cardId)) {
+      return true;
+    }
+    if (playerZones.banishment.includes(cardId)) {
+      return true;
+    }
+    if (playerZones.runeDeck.includes(cardId)) {
+      return true;
+    }
+    if (playerZones.championZone.includes(cardId)) {
+      return true;
+    }
+    if (playerZones.legendZone.includes(cardId)) {
+      return true;
+    }
+    if (playerZones.base.cards.includes(cardId)) {
+      return true;
+    }
+    if (playerZones.base.runes.includes(cardId)) {
+      return true;
+    }
+  }
+
+  if (gameplay.zones.shared.battlefield.includes(cardId)) {
+    return true;
+  }
+  if (gameplay.zones.shared.chain.includes(cardId)) {
+    return true;
+  }
+
+  for (const cards of Object.values(gameplay.zones.shared.facedownByBattlefield)) {
+    if (cards.includes(cardId)) {
+      return true;
+    }
+  }
+
+  return false;
 }

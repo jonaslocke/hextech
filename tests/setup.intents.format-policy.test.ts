@@ -82,5 +82,25 @@ describe("Setup intents format policy", () => {
     assert.equal(ready.body.data.currentGame.deckStateByPlayer, undefined);
     assert.equal(ready.body.data.status, "ready");
     assert.equal(ready.body.data.currentGame.status, "ready");
+    assert.equal(ready.body.data.currentGame.gameplay.zones.players.p1.mainDeck.length, 40);
+    assert.equal(ready.body.data.currentGame.gameplay.zones.players.p2.mainDeck.length, 40);
+    assert.equal(ready.body.data.currentGame.gameplay.zones.players.p1.runeDeck.length, 12);
+    assert.equal(ready.body.data.currentGame.gameplay.zones.players.p2.runeDeck.length, 12);
+    assert.equal(
+      ready.body.data.currentGame.gameplay.zones.players.p1.championZone.length,
+      1,
+    );
+    assert.equal(
+      ready.body.data.currentGame.gameplay.zones.players.p2.championZone.length,
+      1,
+    );
+    assert.equal(ready.body.data.currentGame.gameplay.zones.players.p1.legendZone.length, 1);
+    assert.equal(ready.body.data.currentGame.gameplay.zones.players.p2.legendZone.length, 1);
+    assert.equal(ready.body.data.currentGame.gameplay.zones.shared.battlefield.length, 2);
+    const facedownBattlefieldSlots = Object.values(
+      ready.body.data.currentGame.gameplay.zones.shared.facedownByBattlefield,
+    );
+    assert.equal(facedownBattlefieldSlots.length, 2);
+    assert.ok(facedownBattlefieldSlots.every((cards: string[]) => cards.length === 0));
   });
 });

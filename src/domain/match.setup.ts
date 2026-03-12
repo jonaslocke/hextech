@@ -1,5 +1,6 @@
 import { DeckValidator } from "./deck.validator";
 import type { Game } from "./game";
+import { hydrateGameplayForReadySetup } from "./gameplay.setup-hydration";
 import type { Match } from "./match";
 import { ValidationError } from "../shared/errors";
 
@@ -189,6 +190,7 @@ export class MatchSetup {
 
     if (MatchSetup.isSetupComplete(updatedGame, updatedMatch.players.map((p) => p.id))) {
       updatedGame.status = "ready";
+      updatedGame.gameplay = hydrateGameplayForReadySetup(updatedMatch, updatedGame);
       updatedMatch.status = "ready";
     }
 

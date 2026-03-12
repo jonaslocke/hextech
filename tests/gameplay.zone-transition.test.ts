@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { ValidationError } from "../src/shared/errors.js";
 import { createEmptyGameplayRuntime } from "../src/domain/gameplay.js";
-import { moveCardBetweenZones } from "../src/domain/gameplay.zone-transition.js";
+import {
+  moveCardBetweenZones,
+  placeCardIntoZone,
+} from "../src/domain/gameplay.zone-transition.js";
 
 describe("Gameplay zone transition primitive", () => {
   test("moves a card between player zones", () => {
@@ -114,5 +117,34 @@ describe("Gameplay zone transition primitive", () => {
       "card_002",
     ]);
     assert.deepEqual(next.zones.players.p1!.hand, []);
+  });
+
+  test("places card into a destination zone", () => {
+    const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+
+    const next = placeCardIntoZone(gameplay, {
+      cardId: "card_001",
+      cardControllerId: "p1",
+      destination: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+    });
+
+    assert.deepEqual(next.zones.players.p1!.mainDeck, ["card_001"]);
+  });
+
+  test("rejects placing duplicate card ids in gameplay zones", () => {
+    const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.zones.players.p1!.mainDeck.push("card_001");
+
+    assert.throws(
+      () =>
+        placeCardIntoZone(gameplay, {
+          cardId: "card_001",
+          cardControllerId: "p1",
+          destination: { kind: "player_zone", playerId: "p1", zone: "hand" },
+        }),
+      (error: unknown) =>
+        error instanceof ValidationError &&
+        error.message === "Card is already present in gameplay zones.",
+    );
   });
 });
