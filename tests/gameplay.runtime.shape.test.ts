@@ -21,6 +21,10 @@ describe("Gameplay runtime shape", () => {
       chain: [],
       facedownByBattlefield: {},
     });
+    assert.deepEqual(game.gameplay.ruleParameters, {
+      defaultHiddenCapacityPerBattlefield: 1,
+      hiddenCapacityByBattlefield: {},
+    });
 
     assert.deepEqual(game.gameplay.zones.players.p1, {
       mainDeck: [],
@@ -66,6 +70,7 @@ describe("Gameplay runtime shape", () => {
       cards: [],
       runes: [],
     });
+    assert.equal(serialized.gameplay.ruleParameters.defaultHiddenCapacityPerBattlefield, 1);
     assert.deepEqual(serialized.gameplay.events, []);
   });
 });
