@@ -138,7 +138,11 @@ export function resolveHiddenCapacityForBattlefield(
   const overriddenCapacity =
     gameplay.ruleParameters.hiddenCapacityByBattlefield[trimmedBattlefieldId];
 
-  if (Number.isInteger(overriddenCapacity) && (overriddenCapacity ?? 0) >= 1) {
+  if (
+    typeof overriddenCapacity === "number" &&
+    Number.isInteger(overriddenCapacity) &&
+    overriddenCapacity >= 1
+  ) {
     return overriddenCapacity;
   }
 
