@@ -4,6 +4,7 @@ import { CreateMatchService } from "../../application/services/create-match.serv
 import { GetMatchService } from "../../application/services/get-match.service";
 import { RecordGameResultService } from "../../application/services/record-game-result.service";
 import { SubmitSetupIntentService } from "../../application/services/submit-setup-intent.service";
+import { DebugGameplayZonesService } from "../../application/services/debug-gameplay-zones.service";
 import { InMemoryGameRepository } from "../../infrastructure/repositories/in-memory-game.repository";
 import { InMemoryMatchRepository } from "../../infrastructure/repositories/in-memory-match.repository";
 
@@ -21,11 +22,16 @@ const submitSetupIntentService = new SubmitSetupIntentService(
   matchRepository,
   gameRepository,
 );
+const debugGameplayZonesService = new DebugGameplayZonesService(
+  matchRepository,
+  gameRepository,
+);
 const matchController = new MatchController(
   createMatchService,
   getMatchService,
   recordGameResultService,
   submitSetupIntentService,
+  debugGameplayZonesService,
 );
 
 router.post("/matches", matchController.create);
@@ -37,5 +43,16 @@ router.post(
   matchController.selectStartingPlayer,
 );
 router.post("/matches/:id/games", matchController.recordGame);
+router.post("/matches/:id/debug/zones/place", matchController.debugPlaceZoneCard);
+router.post("/matches/:id/debug/zones/move", matchController.debugMoveZoneCard);
+router.post(
+  "/matches/:id/debug/zones/cleanup-hidden",
+  matchController.debugCleanupHidden,
+);
+router.post(
+  "/matches/:id/debug/zones/reveal-game-end",
+  matchController.debugRevealGameEnd,
+);
+router.post("/matches/:id/debug/zones/rules", matchController.debugUpdateZoneRules);
 
 export { router as matchRoutes };
