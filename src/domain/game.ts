@@ -1,3 +1,5 @@
+import type { GameplayRuntime } from "./gameplay";
+
 export type GameStatus =
   | "setup_pending"
   | "ready"
@@ -24,6 +26,7 @@ export interface Game {
   matchId: string;
   number: number;
   status: GameStatus;
+  gameplay: GameplayRuntime;
   deckStateByPlayer: Record<string, GamePlayerDeckState>;
   chosenChampionByPlayer: Record<string, string>;
   selectedBattlefieldsByPlayer: Record<string, string>;

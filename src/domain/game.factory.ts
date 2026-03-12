@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Game } from "./game";
 import { DeckValidator } from "./deck.validator";
+import { createEmptyGameplayRuntime } from "./gameplay";
 
 interface CreateGameParams {
   matchId: string;
@@ -25,12 +26,14 @@ export class GameFactory {
         playerId,
       );
     }
+    const gameplay = createEmptyGameplayRuntime(Object.keys(deckStateByPlayer));
 
     return {
       id: `game_${randomUUID()}`,
       matchId: params.matchId,
       number: params.number,
       status: params.status ?? "setup_pending",
+      gameplay,
       deckStateByPlayer,
       chosenChampionByPlayer: { ...(params.chosenChampionByPlayer ?? {}) },
       selectedBattlefieldsByPlayer: { ...(params.selectedBattlefieldsByPlayer ?? {}) },
