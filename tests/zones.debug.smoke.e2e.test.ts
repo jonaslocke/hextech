@@ -19,8 +19,8 @@ describe("Zone debug smoke flow", () => {
 
     const gameplay = ready.currentGame.gameplay;
     assert.equal(ready.currentGame.status, "ready");
-    assert.equal(gameplay.zones.players.p1.mainDeck.length, 40);
-    assert.equal(gameplay.zones.players.p2.mainDeck.length, 40);
+    assert.equal(gameplay.zones.players.p1.mainDeck.length, 39);
+    assert.equal(gameplay.zones.players.p2.mainDeck.length, 39);
     assert.equal(gameplay.zones.players.p1.runeDeck.length, 12);
     assert.equal(gameplay.zones.players.p2.runeDeck.length, 12);
     assert.equal(gameplay.zones.players.p1.championZone.length, 1);

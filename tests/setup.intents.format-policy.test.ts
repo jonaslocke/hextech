@@ -82,8 +82,8 @@ describe("Setup intents format policy", () => {
     assert.equal(ready.body.data.currentGame.deckStateByPlayer, undefined);
     assert.equal(ready.body.data.status, "ready");
     assert.equal(ready.body.data.currentGame.status, "ready");
-    assert.equal(ready.body.data.currentGame.gameplay.zones.players.p1.mainDeck.length, 40);
-    assert.equal(ready.body.data.currentGame.gameplay.zones.players.p2.mainDeck.length, 40);
+    assert.equal(ready.body.data.currentGame.gameplay.zones.players.p1.mainDeck.length, 39);
+    assert.equal(ready.body.data.currentGame.gameplay.zones.players.p2.mainDeck.length, 39);
     assert.equal(ready.body.data.currentGame.gameplay.zones.players.p1.runeDeck.length, 12);
     assert.equal(ready.body.data.currentGame.gameplay.zones.players.p2.runeDeck.length, 12);
     assert.equal(

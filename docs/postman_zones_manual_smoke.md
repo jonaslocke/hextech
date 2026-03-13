@@ -34,8 +34,8 @@ npm start
 
 Checks:
 - `data.currentGame.status = "ready"`
-- `data.currentGame.gameplay.zones.players.p1.mainDeck.length = 40`
-- `data.currentGame.gameplay.zones.players.p2.mainDeck.length = 40`
+- `data.currentGame.gameplay.zones.players.p1.mainDeck.length = 39`
+- `data.currentGame.gameplay.zones.players.p2.mainDeck.length = 39`
 - `data.currentGame.gameplay.zones.players.p1.runeDeck.length = 12`
 - `data.currentGame.gameplay.zones.players.p2.runeDeck.length = 12`
 - `data.currentGame.gameplay.zones.players.p1.championZone.length = 1`

@@ -23,6 +23,7 @@ export interface RuntimeDeckCardInstance {
 export interface RuntimeDeckSnapshot {
   registrationRef: string;
   mainLibrary: RuntimeDeckCardInstance[];
+  chosenChampionCardId: string;
   runeLibrary: RuntimeDeckCardInstance[];
   hand: RuntimeDeckCardInstance[];
   trash: RuntimeDeckCardInstance[];
@@ -85,7 +86,7 @@ export class DeckValidator {
       "Chosen Champion Unit",
       reasons,
     );
-    DeckValidator.validateMainDeckSection(sections.mainDeck, reasons);
+    DeckValidator.validateMainDeckSection(sections.mainDeck, sections.champion, reasons);
     DeckValidator.validateRuneDeckSection(sections.runeDeck, reasons);
     DeckValidator.validateSideboardSection(sections.sideboard, reasons);
     DeckValidator.validateCombinedCopyLimit(
@@ -137,12 +138,21 @@ export class DeckValidator {
       .digest("hex")
       .slice(0, 16);
 
+    const championEntry = DeckValidator.resolveChosenChampionEntry(sections.champion);
+    if (!championEntry) {
+      throw new ValidationError("Chosen champion entry is required to build deck state.");
+    }
+
     const mainLibrary = DeckValidator.expandEntriesToInstances(
-      sections.mainDeck?.entries ?? [],
+      [championEntry, ...(sections.mainDeck?.entries ?? [])],
       normalizedPlayerId,
       "main_deck",
       registrationRef,
     );
+    const chosenChampionCardId = mainLibrary[0]?.id ?? "";
+    if (!chosenChampionCardId) {
+      throw new ValidationError("Chosen champion card instance is required to build deck state.");
+    }
     const runeLibrary = DeckValidator.expandEntriesToInstances(
       sections.runeDeck?.entries ?? [],
       normalizedPlayerId,
@@ -153,6 +163,7 @@ export class DeckValidator {
     return {
       registrationRef,
       mainLibrary,
+      chosenChampionCardId,
       runeLibrary,
       hand: [],
       trash: [],
@@ -276,6 +287,7 @@ export class DeckValidator {
 
   private static validateMainDeckSection(
     section: DeckSection | undefined,
+    championSection: DeckSection | undefined,
     reasons: string[],
   ): void {
     if (!section || section.entries.length === 0) {
@@ -312,7 +324,12 @@ export class DeckValidator {
       reasons.push("Main Deck must not list the same card more than once.");
     }
 
-    const total = section.entries.reduce((sum, entry) => sum + entry.quantity, 0);
+    const mainDeckTotal = section.entries.reduce((sum, entry) => sum + entry.quantity, 0);
+    const championTotal = championSection?.entries.reduce(
+      (sum, entry) => sum + entry.quantity,
+      0,
+    ) ?? 0;
+    const total = mainDeckTotal + championTotal;
 
     if (total < 40) {
       reasons.push("Main Deck must include at least 40 cards.");
@@ -455,6 +472,17 @@ export class DeckValidator {
   private static resolveChosenChampionName(
     section: DeckSection | undefined,
   ): string | null {
+    const entry = DeckValidator.resolveChosenChampionEntry(section);
+    if (!entry) {
+      return null;
+    }
+
+    return entry.name.trim() || null;
+  }
+
+  private static resolveChosenChampionEntry(
+    section: DeckSection | undefined,
+  ): DeckEntry | null {
     if (!section || section.entries.length !== 1) {
       return null;
     }
@@ -465,6 +493,6 @@ export class DeckValidator {
       return null;
     }
 
-    return entry.name.trim() || null;
+    return entry;
   }
 }

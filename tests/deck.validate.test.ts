@@ -179,7 +179,7 @@ describe("Deck validation (Core Rules 101 - Deck Construction)", () => {
     );
   });
 
-  test("103.2 - requires Main Deck size of at least 40 cards", async () => {
+  test("103.2 - requires Main Deck size of at least 40 cards (including chosen champion)", async () => {
     const response = await validateDeck(
       buildDeckList({
         mainDeckEntries: [
@@ -198,7 +198,7 @@ describe("Deck validation (Core Rules 101 - Deck Construction)", () => {
           "2 Retreat",
           "1 Find Your Center",
           "1 Wind Wall",
-          "2 Sona, Harmonious",
+          "1 Sona, Harmonious",
           "1 Ahri, Alluring",
         ],
       }),
@@ -211,6 +211,36 @@ describe("Deck validation (Core Rules 101 - Deck Construction)", () => {
         "Main Deck must include at least 40 cards.",
       ),
     );
+  });
+
+  test("103.2 - accepts 39 Main Deck cards when chosen champion brings total to 40", async () => {
+    const response = await validateDeck(
+      buildDeckList({
+        mainDeckEntries: [
+          "3 Defy",
+          "3 En Garde",
+          "3 Stalwart Poro",
+          "3 Discipline",
+          "3 Stupefy",
+          "3 Ravenbloom Student",
+          "3 Sprite Mother",
+          "3 Thousand-Tailed Watcher",
+          "2 Charm",
+          "2 Clockwork Keeper",
+          "2 Rune Prison",
+          "2 Tasty Faefolk",
+          "2 Retreat",
+          "1 Find Your Center",
+          "2 Wind Wall",
+          "1 Sona, Harmonious",
+          "1 Ahri, Alluring",
+        ],
+      }),
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, true);
+    assert.deepEqual(response.body.data.reasons, []);
   });
 
   test("103.2.b - enforces 1..3 copies per Main Deck entry", async () => {

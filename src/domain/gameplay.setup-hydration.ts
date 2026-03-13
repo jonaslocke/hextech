@@ -14,7 +14,32 @@ export function hydrateGameplayForReadySetup(match: Match, game: Game): Gameplay
       throw new ValidationError("Deck state is required for setup hydration.");
     }
 
+    const chosenChampionName = game.chosenChampionByPlayer[playerId]?.trim();
+    if (!chosenChampionName) {
+      throw new ValidationError("Chosen champion is required for setup hydration.");
+    }
+
+    const chosenChampionCardId = deckState.chosenChampionCardId?.trim();
+    if (!chosenChampionCardId) {
+      throw new ValidationError("Chosen champion card id is required for setup hydration.");
+    }
+
+    const chosenChampionCard = deckState.mainLibrary.find(
+      (card) => card.id === chosenChampionCardId,
+    );
+    if (!chosenChampionCard) {
+      throw new ValidationError("Chosen champion card instance is required for setup hydration.");
+    }
+
+    if (chosenChampionCard.name.trim() !== chosenChampionName) {
+      throw new ValidationError("Chosen champion card instance does not match selected champion.");
+    }
+
     for (const card of deckState.mainLibrary) {
+      if (card.id === chosenChampionCardId) {
+        continue;
+      }
+
       gameplay = placeCardIntoZone(gameplay, {
         cardId: card.id,
         cardControllerId: playerId,
@@ -30,13 +55,8 @@ export function hydrateGameplayForReadySetup(match: Match, game: Game): Gameplay
       });
     }
 
-    const chosenChampionName = game.chosenChampionByPlayer[playerId]?.trim();
-    if (!chosenChampionName) {
-      throw new ValidationError("Chosen champion is required for setup hydration.");
-    }
-
     gameplay = placeCardIntoZone(gameplay, {
-      cardId: buildSetupObjectId("chosen_champion", playerId, chosenChampionName),
+      cardId: chosenChampionCardId,
       cardControllerId: playerId,
       destination: { kind: "player_zone", playerId, zone: "championZone" },
     });
@@ -73,7 +93,7 @@ export function hydrateGameplayForReadySetup(match: Match, game: Game): Gameplay
 }
 
 function buildSetupObjectId(
-  objectType: "chosen_champion" | "legend" | "battlefield",
+  objectType: "legend" | "battlefield",
   playerId: string,
   sourceValue: string,
 ): string {

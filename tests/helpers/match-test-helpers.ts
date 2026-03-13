@@ -32,7 +32,7 @@ MainDeck:
 2 Retreat
 1 Find Your Center
 2 Wind Wall
-2 Sona, Harmonious
+1 Sona, Harmonious
 1 Ahri, Alluring
 
 Battlefields:

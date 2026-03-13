@@ -16,6 +16,7 @@ export interface DeckCardInstance {
 export interface GamePlayerDeckState {
   registrationRef: string;
   mainLibrary: DeckCardInstance[];
+  chosenChampionCardId: string;
   runeLibrary: DeckCardInstance[];
   hand: DeckCardInstance[];
   trash: DeckCardInstance[];

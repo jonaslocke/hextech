@@ -65,6 +65,12 @@ describe("Persistence readiness repository contracts", () => {
 
     assert.equal(Object.keys(game.deckStateByPlayer).length, 2);
     assert.equal(game.deckStateByPlayer.p1?.mainLibrary.length, 40);
+    assert.ok(game.deckStateByPlayer.p1?.chosenChampionCardId);
+    assert.ok(
+      game.deckStateByPlayer.p1?.mainLibrary.some(
+        (card) => card.id === game.deckStateByPlayer.p1?.chosenChampionCardId,
+      ),
+    );
     assert.equal(game.deckStateByPlayer.p1?.runeLibrary.length, 12);
     assert.equal(game.deckStateByPlayer.p1?.hand.length, 0);
     assert.equal(game.deckStateByPlayer.p1?.trash.length, 0);

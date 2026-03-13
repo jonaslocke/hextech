@@ -37,13 +37,19 @@ describe("Gameplay setup hydration", () => {
     });
 
     const hydrated = hydrateGameplayForReadySetup(match, game);
+    const p1ChosenChampionCardId = game.deckStateByPlayer.p1!.chosenChampionCardId;
+    const p2ChosenChampionCardId = game.deckStateByPlayer.p2!.chosenChampionCardId;
 
-    assert.equal(hydrated.zones.players.p1?.mainDeck.length, 40);
-    assert.equal(hydrated.zones.players.p2?.mainDeck.length, 40);
+    assert.equal(hydrated.zones.players.p1?.mainDeck.length, 39);
+    assert.equal(hydrated.zones.players.p2?.mainDeck.length, 39);
     assert.equal(hydrated.zones.players.p1?.runeDeck.length, 12);
     assert.equal(hydrated.zones.players.p2?.runeDeck.length, 12);
     assert.equal(hydrated.zones.players.p1?.championZone.length, 1);
     assert.equal(hydrated.zones.players.p2?.championZone.length, 1);
+    assert.deepEqual(hydrated.zones.players.p1?.championZone, [p1ChosenChampionCardId]);
+    assert.deepEqual(hydrated.zones.players.p2?.championZone, [p2ChosenChampionCardId]);
+    assert.ok(!hydrated.zones.players.p1?.mainDeck.includes(p1ChosenChampionCardId));
+    assert.ok(!hydrated.zones.players.p2?.mainDeck.includes(p2ChosenChampionCardId));
     assert.equal(hydrated.zones.players.p1?.legendZone.length, 1);
     assert.equal(hydrated.zones.players.p2?.legendZone.length, 1);
     assert.equal(hydrated.zones.shared.battlefield.length, 2);
