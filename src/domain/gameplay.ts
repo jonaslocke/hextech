@@ -178,6 +178,11 @@ export function collectGameplayZoneInvariantViolations(
 ): GameplayZoneInvariantViolation[] {
   const violations: GameplayZoneInvariantViolation[] = [];
   const defaultCapacity = gameplay.ruleParameters.defaultHiddenCapacityPerBattlefield;
+  const battlefieldIds = new Set(
+    gameplay.zones.shared.battlefield
+      .map((battlefieldId) => battlefieldId.trim())
+      .filter((battlefieldId) => battlefieldId.length > 0),
+  );
 
   if (!Number.isInteger(defaultCapacity) || defaultCapacity < 1) {
     violations.push({
@@ -190,6 +195,15 @@ export function collectGameplayZoneInvariantViolations(
   for (const [battlefieldId, capacity] of Object.entries(
     gameplay.ruleParameters.hiddenCapacityByBattlefield,
   )) {
+    const trimmedBattlefieldId = battlefieldId.trim();
+    if (!trimmedBattlefieldId || !battlefieldIds.has(trimmedBattlefieldId)) {
+      violations.push({
+        code: "facedown_zone_invalid_battlefield_id",
+        battlefieldId,
+        message: "Hidden capacity override must reference an existing battlefield id.",
+      });
+    }
+
     if (!Number.isInteger(capacity) || capacity < 1) {
       violations.push({
         code: "facedown_zone_invalid_hidden_capacity",
@@ -212,11 +226,22 @@ export function collectGameplayZoneInvariantViolations(
   for (const [battlefieldId, slotValue] of Object.entries(
     facedownByBattlefield as Record<string, unknown>,
   )) {
-    if (!battlefieldId.trim()) {
+    const trimmedBattlefieldId = battlefieldId.trim();
+
+    if (!trimmedBattlefieldId) {
       violations.push({
         code: "facedown_zone_invalid_battlefield_id",
         battlefieldId,
         message: "Facedown zone key must be a non-empty battlefield id.",
+      });
+      continue;
+    }
+
+    if (!battlefieldIds.has(trimmedBattlefieldId)) {
+      violations.push({
+        code: "facedown_zone_invalid_battlefield_id",
+        battlefieldId,
+        message: "Facedown zone key must reference an existing battlefield id.",
       });
       continue;
     }

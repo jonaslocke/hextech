@@ -48,6 +48,8 @@ Save that id as `p1_battlefield_id`.
 
 `POST {{base_url}}/matches/{{match_id}}/debug/zones/place`
 
+//TODO fix this implementation, I've sent the payload as it is, without replacing for the correct battlefieldId and the POST request passed, it was expected to fail since {{p1_battlefield_id}} will never be a battle field in this game. as result the match API created a new battlefield with this '"{p1_battlefield_id}": [ "manual_hidden_001" ]'. is important to notice that this intent of of setting a hidden card can only be applied to a existing battlefield in the game
+
 ```json
 {
   "cardId": "manual_hidden_001",
@@ -77,6 +79,8 @@ Checks:
 Checks:
 - HTTP `400`
 - `error.code = "VALIDATION_ERROR"`
+
+//TODO fix this, we have a similar issue as stated before, the a new battlefield were created when posting the payload as it is here. this was on the updated match object: "hiddenCapacityByBattlefield": { "{{p1_battlefield_id}}": 2 }
 
 ## 4) Override Hidden Capacity to 2 (should pass)
 
@@ -108,6 +112,8 @@ Checks:
 Checks:
 - HTTP `201`
 - `...facedownByBattlefield["{{p1_battlefield_id}}"] = ["manual_hidden_001", "manual_hidden_002"]`
+
+//TODO we need to validade this, from my game understanding is not possible to move hidden cards from battlefield to hand, from hidden cards can go to chain, resolving a spell, to trash, hidden owner lost control of the battlefiled or to battlefields / base when the hidden card is a unit or gear
 
 ## 6) Move Hidden Card to Hand (must emit reveal event)
 

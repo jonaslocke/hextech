@@ -16,6 +16,7 @@ describe("Gameplay facedown zone invariants", () => {
 
   test("accepts one hidden card per battlefield", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.zones.shared.battlefield.push("bf_1");
     gameplay.zones.shared.facedownByBattlefield.bf_1 = ["card_hidden_001"];
 
     const violations = collectGameplayZoneInvariantViolations(gameplay);
@@ -25,6 +26,7 @@ describe("Gameplay facedown zone invariants", () => {
 
   test("rejects two hidden cards in the same battlefield by default capacity", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]) as unknown as GameplayRuntime;
+    gameplay.zones.shared.battlefield.push("bf_1");
     gameplay.zones.shared.facedownByBattlefield = {
       bf_1: ["card_hidden_001", "card_hidden_002"],
     };
@@ -38,6 +40,7 @@ describe("Gameplay facedown zone invariants", () => {
 
   test("accepts two hidden cards when battlefield hidden capacity is overridden to 2", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.zones.shared.battlefield.push("bf_1");
     gameplay.ruleParameters.hiddenCapacityByBattlefield.bf_1 = 2;
     gameplay.zones.shared.facedownByBattlefield.bf_1 = [
       "card_hidden_001",
@@ -51,6 +54,7 @@ describe("Gameplay facedown zone invariants", () => {
 
   test("rejects invalid slot values", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]) as unknown as GameplayRuntime;
+    gameplay.zones.shared.battlefield.push("bf_1", "bf_2");
     (
       gameplay as unknown as {
         zones: { shared: { facedownByBattlefield: Record<string, unknown> } };
@@ -68,6 +72,7 @@ describe("Gameplay facedown zone invariants", () => {
 
   test("rejects invalid hidden capacity overrides", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.zones.shared.battlefield.push("bf_1");
     gameplay.ruleParameters.defaultHiddenCapacityPerBattlefield = 0;
     gameplay.ruleParameters.hiddenCapacityByBattlefield.bf_1 = -1;
 
@@ -77,5 +82,27 @@ describe("Gameplay facedown zone invariants", () => {
       .map((violation) => violation.code);
 
     assert.equal(codes.length, 2);
+  });
+
+  test("rejects hidden capacity override for unknown battlefield id", () => {
+    const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.ruleParameters.hiddenCapacityByBattlefield.unknown_bf = 2;
+
+    const violations = collectGameplayZoneInvariantViolations(gameplay);
+
+    assert.equal(violations.length, 1);
+    assert.equal(violations[0]?.code, "facedown_zone_invalid_battlefield_id");
+    assert.equal(violations[0]?.battlefieldId, "unknown_bf");
+  });
+
+  test("rejects facedown slot key for unknown battlefield id", () => {
+    const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.zones.shared.facedownByBattlefield.unknown_bf = ["card_hidden_001"];
+
+    const violations = collectGameplayZoneInvariantViolations(gameplay);
+
+    assert.equal(violations.length, 1);
+    assert.equal(violations[0]?.code, "facedown_zone_invalid_battlefield_id");
+    assert.equal(violations[0]?.battlefieldId, "unknown_bf");
   });
 });

@@ -58,8 +58,8 @@ export function moveCardBetweenZones(
   }
 
   let next = structuredClone(gameplay);
-  const sourceBucket = resolveZoneBucket(next, input.source, false);
-  const destinationBucket = resolveZoneBucket(next, input.destination, true);
+  const sourceBucket = resolveZoneBucket(next, input.source);
+  const destinationBucket = resolveZoneBucket(next, input.destination);
   const sourceIndex = sourceBucket.findIndex((currentCardId) => currentCardId === cardId);
 
   if (sourceIndex < 0) {
@@ -101,7 +101,7 @@ export function placeCardIntoZone(
     throw new ValidationError("Card is already present in gameplay zones.");
   }
 
-  const destinationBucket = resolveZoneBucket(next, input.destination, true);
+  const destinationBucket = resolveZoneBucket(next, input.destination);
   enforceDestinationRules(next, {
     cardId,
     cardControllerId,
@@ -170,7 +170,6 @@ function enforceDestinationRules(
 function resolveZoneBucket(
   gameplay: GameplayRuntime,
   zoneRef: GameplayZoneRef,
-  allowCreateFacedown: boolean,
 ): string[] {
   switch (zoneRef.kind) {
     case "player_zone": {
@@ -209,12 +208,7 @@ function resolveZoneBucket(
 
       const current = gameplay.zones.shared.facedownByBattlefield[battlefieldId];
       if (!current) {
-        if (!allowCreateFacedown) {
-          throw new ValidationError("Facedown zone for battlefield does not exist.");
-        }
-
-        gameplay.zones.shared.facedownByBattlefield[battlefieldId] = [];
-        return gameplay.zones.shared.facedownByBattlefield[battlefieldId]!;
+        throw new ValidationError("Facedown zone for battlefield does not exist.");
       }
 
       return current;

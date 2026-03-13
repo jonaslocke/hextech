@@ -27,6 +27,29 @@ describe("Zone debug smoke flow", () => {
     );
     assert.ok(p1BattlefieldId);
 
+    const unresolvedPlaceholderBattlefieldId = "{{p1_battlefield_id}}";
+    const placeWithUnknownBattlefieldId = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/place`)
+      .send({
+        cardId: "manual_hidden_unknown_001",
+        cardControllerId: "p1",
+        destination: {
+          kind: "facedown",
+          battlefieldId: unresolvedPlaceholderBattlefieldId,
+        },
+        battlefieldControllerById: { [unresolvedPlaceholderBattlefieldId]: "p1" },
+      });
+    assert.equal(placeWithUnknownBattlefieldId.status, 400);
+    assert.equal(placeWithUnknownBattlefieldId.body?.error?.code, "VALIDATION_ERROR");
+
+    const overrideUnknownBattlefieldId = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/rules`)
+      .send({
+        hiddenCapacityByBattlefield: { [unresolvedPlaceholderBattlefieldId]: 2 },
+      });
+    assert.equal(overrideUnknownBattlefieldId.status, 400);
+    assert.equal(overrideUnknownBattlefieldId.body?.error?.code, "VALIDATION_ERROR");
+
     const placeFirst = await request(app)
       .post(`/api/matches/${ready.id}/debug/zones/place`)
       .send({

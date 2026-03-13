@@ -7,6 +7,7 @@ import { cleanupHiddenCardsAfterControlChange } from "../src/domain/gameplay.cle
 describe("Hidden cleanup after control change", () => {
   test("removes hidden card to owner's trash when battlefield is no longer controlled by card controller", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.zones.shared.battlefield.push("bf_1");
     gameplay.zones.shared.facedownByBattlefield.bf_1 = ["card_hidden_001"];
 
     const result = cleanupHiddenCardsAfterControlChange(gameplay, {
@@ -29,6 +30,7 @@ describe("Hidden cleanup after control change", () => {
 
   test("keeps hidden card when battlefield controller still matches card controller", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.zones.shared.battlefield.push("bf_1");
     gameplay.zones.shared.facedownByBattlefield.bf_1 = ["card_hidden_001"];
 
     const result = cleanupHiddenCardsAfterControlChange(gameplay, {
@@ -46,6 +48,7 @@ describe("Hidden cleanup after control change", () => {
 
   test("moves hidden card to owner trash even when owner differs from controller", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.zones.shared.battlefield.push("bf_1");
     gameplay.zones.shared.facedownByBattlefield.bf_1 = ["card_hidden_001"];
 
     const result = cleanupHiddenCardsAfterControlChange(gameplay, {
@@ -69,6 +72,7 @@ describe("Hidden cleanup after control change", () => {
 
   test("throws when hidden card controller mapping is missing", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.zones.shared.battlefield.push("bf_1");
     gameplay.zones.shared.facedownByBattlefield.bf_1 = ["card_hidden_001"];
 
     assert.throws(
