@@ -24,18 +24,29 @@ Scope policy: implement the core engine without card ability logic for now, whil
 | `Completed` | Manual zone testing API | Added debug endpoints for manual Postman-like validation of zone behaviors (`place`, `move`, `cleanup-hidden`, `reveal-game-end`, `rules`). |
 | `Completed` | Manual zone smoke document | Added manual testing document for ready-game zone validation flow. |
 | `Completed` | Automated zone smoke test | Added end-to-end smoke test that mirrors the manual zone testing flow. |
-| `Pending` | Deterministic RNG policy | Add seeded RNG (derived from game identity) for all randomness in gameplay engine paths. |
-| `Pending` | Gameplay intent API (non-debug) | Add production gameplay intent endpoint/service for in-game actions. |
-| `Pending` | Turn kernel | Implement turn ownership, turn number, and phase progression states. |
-| `Pending` | Timing states | Implement neutral/showdown + open/closed timing state model and transitions. |
-| `Pending` | Priority/focus engine | Implement priority and focus ownership/passing rules for legal action windows. |
-| `Pending` | Minimal zone actions | Implement no-ability actions on top of zone primitives: draw, channel, play-to-chain baseline, kill-to-trash, banish. |
-| `Pending` | Chain baseline lifecycle | Implement no-ability chain presence/closure/resolution scaffolding for future effect integration. |
-| `Pending` | Gameplay projection fields | Add stable read projection for `turn`, `phase`, `timing`, `priority`, and event summary from runtime state. |
-| `Pending` | Combat/showdown skeleton | Implement no-ability movement, contested detection, showdown/combat lifecycle scaffolding. |
+| `Pending` | PR9 foundation: gameplay intent API (non-debug) | Add production gameplay intent endpoint/service with a server-authoritative intent router. Clients submit high-level intents (not raw zone mutations), and the server derives legality, ownership, and resulting transitions. |
+| `Pending` | PR9 foundation: intent validation and authorization gates | Centralize legality checks (match/game status, actor membership, turn/timing eligibility placeholders, ownership/controller constraints) before mutating gameplay state. |
+| `Pending` | PR9 foundation: deterministic intent execution contract | Define ordered intent processing and deterministic execution guarantees so future seeded RNG and replay consistency are enforceable at one entrypoint. |
+| `Pending` | PR9 foundation: domain event envelope from intents | Standardize intent result payloads and event appending shape so gameplay projections and client sync do not depend on debug endpoints. |
+| `Pending` | Deterministic RNG policy | Add seeded RNG (derived from game identity) and route all gameplay randomness through intent execution paths. |
+| `Pending` | Turn kernel | Implement turn ownership, turn number, and phase progression states, enforced through intent gates rather than direct zone debug mutations. |
+| `Pending` | Timing states | Implement neutral/showdown + open/closed timing state model and transition checks in intent validation/resolution. |
+| `Pending` | Priority/focus engine | Implement priority and focus ownership/passing rules as legal action windows for accepted intents. |
+| `Pending` | Minimal zone actions | Implement no-ability actions (draw, channel, play-to-chain baseline, kill-to-trash, banish) as explicit intents that use existing zone primitives internally. |
+| `Pending` | Chain baseline lifecycle | Implement no-ability chain presence/closure/resolution scaffolding driven by play/pass intents and deterministic resolution order. |
+| `Pending` | Gameplay projection fields | Add stable read projection (`turn`, `phase`, `timing`, `priority`, event summary) sourced from the intent-driven runtime state. |
+| `Pending` | Combat/showdown skeleton | Implement no-ability movement, contested detection, showdown/combat lifecycle scaffolding as intent-driven state transitions. |
 
 ## Notes For Next Work Session
 
 - Keep all rule decisions anchored to v1.2 only.
 - Preserve Golden Rule extensibility: avoid hardcoding constraints that cards may override later.
-- For new gameplay behavior, prefer extending the existing zone primitives instead of direct state mutations.
+- For new gameplay behavior, prefer extending the existing zone primitives behind gameplay intents instead of exposing direct state mutations.
+- Keep debug zone endpoints as test harness only; production clients should use gameplay intents.
+
+## PR9 Scope (Why It Is Necessary)
+
+- Replace debug-style low-level mutations with production high-level intents.
+- Enforce legality/authorization at a single server entrypoint before any zone transition.
+- Make deterministic execution and replay feasible by sequencing all actions through one pipeline.
+- Prepare a stable contract for upcoming turn/timing/priority/chain systems without coupling clients to internal zone maps.
