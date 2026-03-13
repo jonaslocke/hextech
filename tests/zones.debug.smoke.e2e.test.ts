@@ -7,7 +7,118 @@ import { createMatch, setupMatchToReady } from "./helpers/match-test-helpers.js"
 const app = createApp();
 
 describe("Zone debug smoke flow", () => {
-  test("covers hydration, facedown capacity, override, cleanup, and reveal", async () => {
+  test("covers hydration and core zone operations", async () => {
+    const created = await createMatch(app, "best-of-3");
+    const ready = await setupMatchToReady(app, created.id, "best-of-3", {
+      battlefieldByPlayer: {
+        p1: "Fortified Position",
+        p2: "Grove of the God-Willow",
+      },
+      startingPlayerId: "p1",
+    });
+
+    const gameplay = ready.currentGame.gameplay;
+    assert.equal(ready.currentGame.status, "ready");
+    assert.equal(gameplay.zones.players.p1.mainDeck.length, 40);
+    assert.equal(gameplay.zones.players.p2.mainDeck.length, 40);
+    assert.equal(gameplay.zones.players.p1.runeDeck.length, 12);
+    assert.equal(gameplay.zones.players.p2.runeDeck.length, 12);
+    assert.equal(gameplay.zones.players.p1.championZone.length, 1);
+    assert.equal(gameplay.zones.players.p2.championZone.length, 1);
+    assert.equal(gameplay.zones.players.p1.legendZone.length, 1);
+    assert.equal(gameplay.zones.players.p2.legendZone.length, 1);
+    assert.equal(gameplay.zones.shared.battlefield.length, 2);
+    assert.deepEqual(
+      Object.keys(gameplay.zones.shared.facedownByBattlefield).sort(),
+      [...gameplay.zones.shared.battlefield].sort(),
+    );
+
+    const placeUnitOnBattlefield = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/place`)
+      .send({
+        cardId: "manual_unit_001",
+        cardControllerId: "p1",
+        destination: { kind: "battlefield" },
+      });
+    assert.equal(placeUnitOnBattlefield.status, 201);
+    assert.ok(
+      placeUnitOnBattlefield.body.data.currentGame.gameplay.zones.shared.battlefield.includes(
+        "manual_unit_001",
+      ),
+    );
+
+    const placeDuplicateCard = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/place`)
+      .send({
+        cardId: "manual_unit_001",
+        cardControllerId: "p1",
+        destination: { kind: "chain" },
+      });
+    assert.equal(placeDuplicateCard.status, 400);
+    assert.equal(placeDuplicateCard.body?.error?.code, "VALIDATION_ERROR");
+
+    const moveUnitToOwnBase = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/move`)
+      .send({
+        cardId: "manual_unit_001",
+        cardControllerId: "p1",
+        source: { kind: "battlefield" },
+        destination: { kind: "base_cards", playerId: "p1" },
+      });
+    assert.equal(moveUnitToOwnBase.status, 201);
+    assert.ok(
+      moveUnitToOwnBase.body.data.currentGame.gameplay.zones.players.p1.base.cards.includes(
+        "manual_unit_001",
+      ),
+    );
+
+    const placeCardInOpponentBase = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/place`)
+      .send({
+        cardId: "manual_unit_002",
+        cardControllerId: "p1",
+        destination: { kind: "base_cards", playerId: "p2" },
+      });
+    assert.equal(placeCardInOpponentBase.status, 400);
+    assert.equal(placeCardInOpponentBase.body?.error?.code, "VALIDATION_ERROR");
+
+    const placeCardInUnknownPlayerZone = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/place`)
+      .send({
+        cardId: "manual_spell_001",
+        cardControllerId: "p1",
+        destination: { kind: "player_zone", playerId: "ghost", zone: "hand" },
+      });
+    assert.equal(placeCardInUnknownPlayerZone.status, 400);
+    assert.equal(placeCardInUnknownPlayerZone.body?.error?.code, "VALIDATION_ERROR");
+
+    const placeCardInChain = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/place`)
+      .send({
+        cardId: "manual_spell_002",
+        cardControllerId: "p1",
+        destination: { kind: "chain" },
+      });
+    assert.equal(placeCardInChain.status, 201);
+    assert.ok(
+      placeCardInChain.body.data.currentGame.gameplay.zones.shared.chain.includes(
+        "manual_spell_002",
+      ),
+    );
+
+    const moveMissingSourceCard = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/move`)
+      .send({
+        cardId: "manual_missing_001",
+        cardControllerId: "p1",
+        source: { kind: "battlefield" },
+        destination: { kind: "player_zone", playerId: "p1", zone: "trash" },
+      });
+    assert.equal(moveMissingSourceCard.status, 400);
+    assert.equal(moveMissingSourceCard.body?.error?.code, "VALIDATION_ERROR");
+  });
+
+  test("covers facedown capacity, cleanup, and reveal rules", async () => {
     const created = await createMatch(app, "best-of-3");
     const ready = await setupMatchToReady(app, created.id, "best-of-3", {
       battlefieldByPlayer: {
@@ -18,8 +129,6 @@ describe("Zone debug smoke flow", () => {
     });
 
     assert.equal(ready.currentGame.status, "ready");
-    assert.equal(ready.currentGame.gameplay.zones.players.p1.mainDeck.length, 40);
-    assert.equal(ready.currentGame.gameplay.zones.players.p1.runeDeck.length, 12);
     assert.equal(ready.currentGame.gameplay.zones.shared.battlefield.length, 2);
 
     const p1BattlefieldId = ready.currentGame.gameplay.zones.shared.battlefield.find(
@@ -106,6 +215,7 @@ describe("Zone debug smoke flow", () => {
       ["manual_hidden_001", "manual_hidden_002"],
     );
 
+    // Synthetic debug probe for rule 408.4 reveal behavior when moving to a non-public zone.
     const moveToHand = await request(app)
       .post(`/api/matches/${ready.id}/debug/zones/move`)
       .send({
