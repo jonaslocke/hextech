@@ -21,10 +21,26 @@ describe("Zone debug smoke flow", () => {
     assert.equal(ready.currentGame.status, "ready");
     assert.equal(gameplay.zones.players.p1.mainDeck.length, 39);
     assert.equal(gameplay.zones.players.p2.mainDeck.length, 39);
+    assert.equal(
+      gameplay.zones.players.p1.mainDeck.length +
+        gameplay.zones.players.p1.championZone.length,
+      40,
+    );
+    assert.equal(
+      gameplay.zones.players.p2.mainDeck.length +
+        gameplay.zones.players.p2.championZone.length,
+      40,
+    );
     assert.equal(gameplay.zones.players.p1.runeDeck.length, 12);
     assert.equal(gameplay.zones.players.p2.runeDeck.length, 12);
     assert.equal(gameplay.zones.players.p1.championZone.length, 1);
     assert.equal(gameplay.zones.players.p2.championZone.length, 1);
+    const p1ChampionCardId = gameplay.zones.players.p1.championZone[0];
+    const p2ChampionCardId = gameplay.zones.players.p2.championZone[0];
+    assert.ok(p1ChampionCardId);
+    assert.ok(p2ChampionCardId);
+    assert.ok(!gameplay.zones.players.p1.mainDeck.includes(p1ChampionCardId));
+    assert.ok(!gameplay.zones.players.p2.mainDeck.includes(p2ChampionCardId));
     assert.equal(gameplay.zones.players.p1.legendZone.length, 1);
     assert.equal(gameplay.zones.players.p2.legendZone.length, 1);
     assert.equal(gameplay.zones.shared.battlefield.length, 2);
@@ -72,6 +88,20 @@ describe("Zone debug smoke flow", () => {
       ),
     );
 
+    const placeRuneInOwnBase = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/place`)
+      .send({
+        cardId: "manual_rune_001",
+        cardControllerId: "p1",
+        destination: { kind: "base_runes", playerId: "p1" },
+      });
+    assert.equal(placeRuneInOwnBase.status, 201);
+    assert.ok(
+      placeRuneInOwnBase.body.data.currentGame.gameplay.zones.players.p1.base.runes.includes(
+        "manual_rune_001",
+      ),
+    );
+
     const placeCardInOpponentBase = await request(app)
       .post(`/api/matches/${ready.id}/debug/zones/place`)
       .send({
@@ -81,6 +111,16 @@ describe("Zone debug smoke flow", () => {
       });
     assert.equal(placeCardInOpponentBase.status, 400);
     assert.equal(placeCardInOpponentBase.body?.error?.code, "VALIDATION_ERROR");
+
+    const placeRuneInOpponentBase = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/place`)
+      .send({
+        cardId: "manual_rune_002",
+        cardControllerId: "p1",
+        destination: { kind: "base_runes", playerId: "p2" },
+      });
+    assert.equal(placeRuneInOpponentBase.status, 400);
+    assert.equal(placeRuneInOpponentBase.body?.error?.code, "VALIDATION_ERROR");
 
     const placeCardInUnknownPlayerZone = await request(app)
       .post(`/api/matches/${ready.id}/debug/zones/place`)
@@ -105,6 +145,17 @@ describe("Zone debug smoke flow", () => {
         "manual_spell_002",
       ),
     );
+
+    const moveCardToSameZone = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/move`)
+      .send({
+        cardId: "manual_spell_002",
+        cardControllerId: "p1",
+        source: { kind: "chain" },
+        destination: { kind: "chain" },
+      });
+    assert.equal(moveCardToSameZone.status, 400);
+    assert.equal(moveCardToSameZone.body?.error?.code, "VALIDATION_ERROR");
 
     const moveMissingSourceCard = await request(app)
       .post(`/api/matches/${ready.id}/debug/zones/move`)
@@ -158,6 +209,33 @@ describe("Zone debug smoke flow", () => {
       });
     assert.equal(overrideUnknownBattlefieldId.status, 400);
     assert.equal(overrideUnknownBattlefieldId.body?.error?.code, "VALIDATION_ERROR");
+
+    const placeWithoutBattlefieldControllerMap = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/place`)
+      .send({
+        cardId: "manual_hidden_missing_map_001",
+        cardControllerId: "p1",
+        destination: { kind: "facedown", battlefieldId: p1BattlefieldId },
+      });
+    assert.equal(placeWithoutBattlefieldControllerMap.status, 400);
+    assert.equal(
+      placeWithoutBattlefieldControllerMap.body?.error?.code,
+      "VALIDATION_ERROR",
+    );
+
+    const placeWithWrongBattlefieldController = await request(app)
+      .post(`/api/matches/${ready.id}/debug/zones/place`)
+      .send({
+        cardId: "manual_hidden_wrong_controller_001",
+        cardControllerId: "p1",
+        destination: { kind: "facedown", battlefieldId: p1BattlefieldId },
+        battlefieldControllerById: { [p1BattlefieldId!]: "p2" },
+      });
+    assert.equal(placeWithWrongBattlefieldController.status, 400);
+    assert.equal(
+      placeWithWrongBattlefieldController.body?.error?.code,
+      "VALIDATION_ERROR",
+    );
 
     const placeFirst = await request(app)
       .post(`/api/matches/${ready.id}/debug/zones/place`)
