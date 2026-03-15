@@ -29,6 +29,7 @@ npm start
 - `match_id`: ready match id
 - `p1_battlefield_id`: empty (filled in step 1)
 - `p2_battlefield_id`: empty (filled in step 1)
+4. Use deck list from `docs/ahri.dec.txt` (MainDeck has `39` cards + `1` chosen champion).
 
 ## 1) Read Current Ready Game and Capture Battlefield IDs
 
@@ -435,3 +436,4 @@ Checks:
 Automated smoke tests aligned to this document:
 
 - `tests/zones.debug.smoke.e2e.test.ts`
+

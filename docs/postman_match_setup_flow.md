@@ -19,14 +19,18 @@ npm start
 - `chooser_id` = (empty)
 
 3. Optional (recommended): open Postman Console so you can inspect full response JSON.
+4. Canonical deck source for this flow: `docs/ahri.dec.txt`.
+   Payloads below keep the full inline string for direct copy/paste in Postman.
 
 ## 2. Optional: Validate Deck First
 
 `POST {{base_url}}/decks/validate`
 
+Deck text source: `docs/ahri.dec.txt`
+
 ```json
 {
-  "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n2 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire"
+  "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire"
 }
 ```
 
@@ -45,8 +49,8 @@ Expected:
     { "id": "p2", "displayName": "Bob" }
   ],
   "decksByPlayer": {
-    "p1": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n2 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire",
-    "p2": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n2 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire"
+    "p1": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire",
+    "p2": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire"
   }
 }
 ```

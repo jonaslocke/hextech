@@ -1,0 +1,151 @@
+{
+  "zones": {
+    "players": {
+      "p1": {
+        "mainDeck": [
+          "fe34638250c268de:p1:main_deck:002",
+          "fe34638250c268de:p1:main_deck:003",
+          "fe34638250c268de:p1:main_deck:004",
+          "fe34638250c268de:p1:main_deck:005",
+          "fe34638250c268de:p1:main_deck:006",
+          "fe34638250c268de:p1:main_deck:007",
+          "fe34638250c268de:p1:main_deck:008",
+          "fe34638250c268de:p1:main_deck:009",
+          "fe34638250c268de:p1:main_deck:010",
+          "fe34638250c268de:p1:main_deck:011",
+          "fe34638250c268de:p1:main_deck:012",
+          "fe34638250c268de:p1:main_deck:013",
+          "fe34638250c268de:p1:main_deck:014",
+          "fe34638250c268de:p1:main_deck:015",
+          "fe34638250c268de:p1:main_deck:016",
+          "fe34638250c268de:p1:main_deck:017",
+          "fe34638250c268de:p1:main_deck:018",
+          "fe34638250c268de:p1:main_deck:019",
+          "fe34638250c268de:p1:main_deck:020",
+          "fe34638250c268de:p1:main_deck:021",
+          "fe34638250c268de:p1:main_deck:022",
+          "fe34638250c268de:p1:main_deck:023",
+          "fe34638250c268de:p1:main_deck:024",
+          "fe34638250c268de:p1:main_deck:025",
+          "fe34638250c268de:p1:main_deck:026",
+          "fe34638250c268de:p1:main_deck:027",
+          "fe34638250c268de:p1:main_deck:028",
+          "fe34638250c268de:p1:main_deck:029",
+          "fe34638250c268de:p1:main_deck:030",
+          "fe34638250c268de:p1:main_deck:031",
+          "fe34638250c268de:p1:main_deck:032",
+          "fe34638250c268de:p1:main_deck:033",
+          "fe34638250c268de:p1:main_deck:034",
+          "fe34638250c268de:p1:main_deck:035",
+          "fe34638250c268de:p1:main_deck:036",
+          "fe34638250c268de:p1:main_deck:037",
+          "fe34638250c268de:p1:main_deck:038",
+          "fe34638250c268de:p1:main_deck:039",
+          "fe34638250c268de:p1:main_deck:040",
+          "fe34638250c268de:p1:main_deck:041"
+        ],
+        "hand": [],
+        "trash": [],
+        "banishment": [],
+        "runeDeck": [
+          "fe34638250c268de:p1:rune_deck:001",
+          "fe34638250c268de:p1:rune_deck:002",
+          "fe34638250c268de:p1:rune_deck:003",
+          "fe34638250c268de:p1:rune_deck:004",
+          "fe34638250c268de:p1:rune_deck:005",
+          "fe34638250c268de:p1:rune_deck:006",
+          "fe34638250c268de:p1:rune_deck:007",
+          "fe34638250c268de:p1:rune_deck:008",
+          "fe34638250c268de:p1:rune_deck:009",
+          "fe34638250c268de:p1:rune_deck:010",
+          "fe34638250c268de:p1:rune_deck:011",
+          "fe34638250c268de:p1:rune_deck:012"
+        ],
+        "championZone": ["fe34638250c268de:p1:main_deck:001"],
+        "legendZone": ["setup:legend:p1:fe34638250c268de"],
+        "base": {
+          "cards": [],
+          "runes": []
+        }
+      },
+      "p2": {
+        "mainDeck": [
+          "fe34638250c268de:p2:main_deck:002",
+          "fe34638250c268de:p2:main_deck:003",
+          "fe34638250c268de:p2:main_deck:004",
+          "fe34638250c268de:p2:main_deck:005",
+          "fe34638250c268de:p2:main_deck:006",
+          "fe34638250c268de:p2:main_deck:007",
+          "fe34638250c268de:p2:main_deck:008",
+          "fe34638250c268de:p2:main_deck:009",
+          "fe34638250c268de:p2:main_deck:010",
+          "fe34638250c268de:p2:main_deck:011",
+          "fe34638250c268de:p2:main_deck:012",
+          "fe34638250c268de:p2:main_deck:013",
+          "fe34638250c268de:p2:main_deck:014",
+          "fe34638250c268de:p2:main_deck:015",
+          "fe34638250c268de:p2:main_deck:016",
+          "fe34638250c268de:p2:main_deck:017",
+          "fe34638250c268de:p2:main_deck:018",
+          "fe34638250c268de:p2:main_deck:019",
+          "fe34638250c268de:p2:main_deck:020",
+          "fe34638250c268de:p2:main_deck:021",
+          "fe34638250c268de:p2:main_deck:022",
+          "fe34638250c268de:p2:main_deck:023",
+          "fe34638250c268de:p2:main_deck:024",
+          "fe34638250c268de:p2:main_deck:025",
+          "fe34638250c268de:p2:main_deck:026",
+          "fe34638250c268de:p2:main_deck:027",
+          "fe34638250c268de:p2:main_deck:028",
+          "fe34638250c268de:p2:main_deck:029",
+          "fe34638250c268de:p2:main_deck:030",
+          "fe34638250c268de:p2:main_deck:031",
+          "fe34638250c268de:p2:main_deck:032",
+          "fe34638250c268de:p2:main_deck:033",
+          "fe34638250c268de:p2:main_deck:034",
+          "fe34638250c268de:p2:main_deck:035",
+          "fe34638250c268de:p2:main_deck:036",
+          "fe34638250c268de:p2:main_deck:037",
+          "fe34638250c268de:p2:main_deck:038",
+          "fe34638250c268de:p2:main_deck:039",
+          "fe34638250c268de:p2:main_deck:040",
+          "fe34638250c268de:p2:main_deck:041"
+        ],
+        "hand": [],
+        "trash": [],
+        "banishment": [],
+        "runeDeck": [
+          "fe34638250c268de:p2:rune_deck:001",
+          "fe34638250c268de:p2:rune_deck:002",
+          "fe34638250c268de:p2:rune_deck:003",
+          "fe34638250c268de:p2:rune_deck:004",
+          "fe34638250c268de:p2:rune_deck:005",
+          "fe34638250c268de:p2:rune_deck:006",
+          "fe34638250c268de:p2:rune_deck:007",
+          "fe34638250c268de:p2:rune_deck:008",
+          "fe34638250c268de:p2:rune_deck:009",
+          "fe34638250c268de:p2:rune_deck:010",
+          "fe34638250c268de:p2:rune_deck:011",
+          "fe34638250c268de:p2:rune_deck:012"
+        ],
+        "championZone": ["fe34638250c268de:p2:main_deck:001"],
+        "legendZone": ["setup:legend:p2:fe34638250c268de"],
+        "base": {
+          "cards": [],
+          "runes": []
+        }
+      }
+    },
+    "shared": {
+      "battlefield": [
+        "setup:battlefield:p1:fortified_position",
+        "setup:battlefield:p2:fortified_position"
+      ],
+      "chain": [],
+      "facedownByBattlefield": {
+        "setup:battlefield:p1:fortified_position": [],
+        "setup:battlefield:p2:fortified_position": []
+      }
+    }
+  }
+}

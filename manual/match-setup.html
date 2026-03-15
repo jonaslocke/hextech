@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Match Setup (Manual)</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 16px;
+        line-height: 1.4;
+      }
+      section {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin: 10px 0;
+      }
+      textarea {
+        width: 100%;
+        min-height: 140px;
+        font-family: monospace;
+      }
+      input {
+        width: 100%;
+      }
+      button {
+        margin-top: 8px;
+      }
+      code {
+        display: block;
+        margin-top: 8px;
+      }
+      pre {
+        white-space: pre-wrap;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Create One Match to Ready (Manual)</h1>
+
+    <section>
+      <label for="baseUrl">Base URL</label>
+      <input id="baseUrl" value="http://localhost:3000/api" />
+
+      <label for="matchId">match_id</label>
+      <input id="matchId" placeholder="filled from create match response" />
+
+      <label for="chooserId">chooser_id</label>
+      <input id="chooserId" placeholder="filled from create match response" />
+    </section>
+
+    <section>
+      <h2>1) Optional: Validate Deck</h2>
+      <code>POST /decks/validate</code>
+      <textarea id="payload-validate"></textarea>
+      <button data-step-id="validate">Run Step 1</button>
+    </section>
+
+    <section>
+      <h2>2) Create Match (setup_pending)</h2>
+      <code>POST /matches</code>
+      <textarea id="payload-create"></textarea>
+      <button data-step-id="create">Run Step 2</button>
+    </section>
+
+    <section>
+      <h2>3) Select Champion (p1)</h2>
+      <code>POST /matches/{{match_id}}/setup/champion</code>
+      <textarea id="payload-champion-p1"></textarea>
+      <button data-step-id="championP1">Run Step 3</button>
+    </section>
+
+    <section>
+      <h2>4) Select Champion (p2)</h2>
+      <code>POST /matches/{{match_id}}/setup/champion</code>
+      <textarea id="payload-champion-p2"></textarea>
+      <button data-step-id="championP2">Run Step 4</button>
+    </section>
+
+    <section>
+      <h2>5) Select Battlefield (p1)</h2>
+      <code>POST /matches/{{match_id}}/setup/battlefield</code>
+      <textarea id="payload-battlefield-p1"></textarea>
+      <button data-step-id="battlefieldP1">Run Step 5</button>
+    </section>
+
+    <section>
+      <h2>6) Select Battlefield (p2)</h2>
+      <code>POST /matches/{{match_id}}/setup/battlefield</code>
+      <textarea id="payload-battlefield-p2"></textarea>
+      <button data-step-id="battlefieldP2">Run Step 6</button>
+    </section>
+
+    <section>
+      <h2>7) Select Starting Player (chooser only)</h2>
+      <code>POST /matches/{{match_id}}/setup/starting-player</code>
+      <textarea id="payload-starting-player"></textarea>
+      <button data-step-id="startingPlayer">Run Step 7</button>
+    </section>
+
+    <section>
+      <h2>8) Verify Final Match State</h2>
+      <code>GET /matches/{{match_id}}</code>
+      <button data-step-id="verify">Run Step 8</button>
+    </section>
+
+    <section>
+      <h2>Last Raw Response</h2>
+      <pre id="lastResponse">No requests yet.</pre>
+    </section>
+
+    <script>
+      const DECK_LIST = `Legend:
+1 Ahri, Nine-Tailed Fox
+
+Champion:
+1 Ahri, Inquisitive
+
+MainDeck:
+3 Defy
+3 En Garde
+3 Stalwart Poro
+3 Discipline
+3 Stupefy
+3 Ravenbloom Student
+3 Sprite Mother
+3 Thousand-Tailed Watcher
+2 Charm
+2 Clockwork Keeper
+2 Rune Prison
+2 Tasty Faefolk
+2 Retreat
+1 Find Your Center
+2 Wind Wall
+1 Sona, Harmonious
+1 Ahri, Alluring
+
+Battlefields:
+1 Fortified Position
+1 Grove of the God-Willow
+1 The Dreaming Tree
+
+Runes:
+7 Calm Rune
+5 Mind Rune
+
+Sideboard:
+1 Rune Prison
+1 Wind Wall
+1 Blitzcrank, Impassive
+1 Riptide Rex
+1 Retreat
+1 Singularity
+1 Unchecked Power
+1 Fox-Fire`;
+
+      const el = {
+        baseUrl: document.getElementById("baseUrl"),
+        matchId: document.getElementById("matchId"),
+        chooserId: document.getElementById("chooserId"),
+        lastResponse: document.getElementById("lastResponse"),
+        payloads: {
+          validate: document.getElementById("payload-validate"),
+          create: document.getElementById("payload-create"),
+          championP1: document.getElementById("payload-champion-p1"),
+          championP2: document.getElementById("payload-champion-p2"),
+          battlefieldP1: document.getElementById("payload-battlefield-p1"),
+          battlefieldP2: document.getElementById("payload-battlefield-p2"),
+          startingPlayer: document.getElementById("payload-starting-player"),
+        },
+      };
+
+      const steps = {
+        validate: {
+          method: "POST",
+          endpoint: "/decks/validate",
+          payloadElId: "validate",
+        },
+        create: {
+          method: "POST",
+          endpoint: "/matches",
+          payloadElId: "create",
+        },
+        championP1: {
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/setup/champion",
+          payloadElId: "championP1",
+        },
+        championP2: {
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/setup/champion",
+          payloadElId: "championP2",
+        },
+        battlefieldP1: {
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/setup/battlefield",
+          payloadElId: "battlefieldP1",
+        },
+        battlefieldP2: {
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/setup/battlefield",
+          payloadElId: "battlefieldP2",
+        },
+        startingPlayer: {
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/setup/starting-player",
+          payloadElId: "startingPlayer",
+        },
+        verify: {
+          method: "GET",
+          endpoint: "/matches/{{match_id}}",
+        },
+      };
+
+      function replaceEndpointVariables(text) {
+        return text.replaceAll("{{match_id}}", el.matchId.value.trim());
+      }
+
+      function setDefaults() {
+        el.payloads.validate.value = JSON.stringify(
+          { deckList: DECK_LIST },
+          null,
+          2,
+        );
+
+        el.payloads.create.value = JSON.stringify(
+          {
+            format: "best-of-3",
+            players: [
+              { id: "p1", displayName: "Alice" },
+              { id: "p2", displayName: "Bob" },
+            ],
+            decksByPlayer: {
+              p1: DECK_LIST,
+              p2: DECK_LIST,
+            },
+          },
+          null,
+          2,
+        );
+
+        el.payloads.championP1.value = JSON.stringify({ playerId: "p1" }, null, 2);
+        el.payloads.championP2.value = JSON.stringify({ playerId: "p2" }, null, 2);
+        el.payloads.battlefieldP1.value = JSON.stringify(
+          { playerId: "p1", battlefield: "Fortified Position" },
+          null,
+          2,
+        );
+        el.payloads.battlefieldP2.value = JSON.stringify(
+          { playerId: "p2", battlefield: "Grove of the God-Willow" },
+          null,
+          2,
+        );
+        el.payloads.startingPlayer.value = JSON.stringify(
+          { playerId: "{{chooser_id}}", startingPlayerId: "p1" },
+          null,
+          2,
+        );
+      }
+
+      function buildUrl(endpoint) {
+        const base = el.baseUrl.value.trim().replace(/\/+$/, "");
+        return `${base}${replaceEndpointVariables(endpoint)}`;
+      }
+
+      async function runStep(stepId) {
+        const step = steps[stepId];
+        if (!step) return;
+
+        const url = buildUrl(step.endpoint);
+        const init = { method: step.method, headers: {} };
+
+        if (step.method !== "GET") {
+          const payloadRaw = el.payloads[step.payloadElId].value;
+          let payload;
+
+          try {
+            payload = JSON.parse(payloadRaw);
+          } catch (error) {
+            alert(`Invalid JSON payload for step "${stepId}": ${error.message}`);
+            return;
+          }
+
+          init.headers["Content-Type"] = "application/json";
+          init.body = JSON.stringify(payload);
+        }
+
+        try {
+          const response = await fetch(url, init);
+          const raw = await response.text();
+
+          console.log(`[${stepId}] ${step.method} ${url}`);
+          console.log(`[${stepId}] status`, response.status);
+          console.log(`[${stepId}] raw response`, raw);
+
+          el.lastResponse.textContent = `${step.method} ${url}\nstatus: ${response.status}\n\n${raw}`;
+
+          let parsed;
+          try {
+            parsed = JSON.parse(raw);
+          } catch {
+            parsed = null;
+          }
+
+          if (stepId === "create" && parsed && parsed.data) {
+            if (parsed.data.id) {
+              el.matchId.value = parsed.data.id;
+            }
+            if (parsed.data.startingPlayerChooserId) {
+              el.chooserId.value = parsed.data.startingPlayerChooserId;
+            }
+          }
+        } catch (error) {
+          console.log(`[${stepId}] request failed`, error);
+          el.lastResponse.textContent = `Request failed: ${error.message}`;
+        }
+      }
+
+      document.querySelectorAll("button[data-step-id]").forEach((button) => {
+        button.addEventListener("click", () => runStep(button.dataset.stepId));
+      });
+
+      setDefaults();
+    </script>
+  </body>
+</html>
