@@ -10,6 +10,21 @@
         margin: 16px;
         line-height: 1.4;
       }
+      .layout {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .main {
+        flex: 2;
+        min-width: 0;
+      }
+      .side {
+        flex: 1;
+        min-width: 280px;
+        position: sticky;
+        top: 16px;
+      }
       section {
         border: 1px solid #ccc;
         padding: 10px;
@@ -35,82 +50,150 @@
         border: 1px solid #ccc;
         padding: 10px;
         margin-top: 8px;
+        max-height: 55vh;
+        overflow: auto;
+      }
+      .feedback {
+        margin: 8px 0 0;
+        font-weight: bold;
+      }
+      .feedback.success {
+        color: #0b7d18;
+      }
+      .feedback.error {
+        color: #b00020;
+      }
+      .checklist {
+        margin: 8px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .checklist li {
+        margin: 6px 0;
+      }
+      .summary {
+        margin-top: 8px;
+        font-weight: bold;
+      }
+      .summary.ready {
+        color: #0b7d18;
+      }
+      .summary.not-ready {
+        color: #b00020;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          flex-direction: column;
+        }
+        .side {
+          width: 100%;
+          min-width: 0;
+          position: static;
+        }
       }
     </style>
   </head>
   <body>
     <h1>Create One Match to Ready (Manual)</h1>
 
-    <section>
-      <label for="baseUrl">Base URL</label>
-      <input id="baseUrl" value="http://localhost:3000/api" />
+    <div class="layout">
+      <div class="main">
+        <section>
+          <h2>1) Optional: Validate Deck</h2>
+          <code>POST /decks/validate</code>
+          <textarea id="payload-validate"></textarea>
+          <button data-step-id="validate">Run Step 1</button>
+          <p class="feedback" id="feedback-validate">Not executed yet.</p>
+        </section>
 
-      <label for="matchId">match_id</label>
-      <input id="matchId" placeholder="filled from create match response" />
+        <section>
+          <h2>2) Create Match (setup_pending)</h2>
+          <code>POST /matches</code>
+          <textarea id="payload-create"></textarea>
+          <button data-step-id="create">Run Step 2</button>
+          <p class="feedback" id="feedback-create">Not executed yet.</p>
+        </section>
 
-      <label for="chooserId">chooser_id</label>
-      <input id="chooserId" placeholder="filled from create match response" />
-    </section>
+        <section>
+          <h2>3) Select Champion (p1)</h2>
+          <code>POST /matches/{{match_id}}/setup/champion</code>
+          <textarea id="payload-champion-p1"></textarea>
+          <button data-step-id="championP1">Run Step 3</button>
+          <p class="feedback" id="feedback-championP1">Not executed yet.</p>
+        </section>
 
-    <section>
-      <h2>1) Optional: Validate Deck</h2>
-      <code>POST /decks/validate</code>
-      <textarea id="payload-validate"></textarea>
-      <button data-step-id="validate">Run Step 1</button>
-    </section>
+        <section>
+          <h2>4) Select Champion (p2)</h2>
+          <code>POST /matches/{{match_id}}/setup/champion</code>
+          <textarea id="payload-champion-p2"></textarea>
+          <button data-step-id="championP2">Run Step 4</button>
+          <p class="feedback" id="feedback-championP2">Not executed yet.</p>
+        </section>
 
-    <section>
-      <h2>2) Create Match (setup_pending)</h2>
-      <code>POST /matches</code>
-      <textarea id="payload-create"></textarea>
-      <button data-step-id="create">Run Step 2</button>
-    </section>
+        <section>
+          <h2>5) Select Battlefield (p1)</h2>
+          <code>POST /matches/{{match_id}}/setup/battlefield</code>
+          <textarea id="payload-battlefield-p1"></textarea>
+          <button data-step-id="battlefieldP1">Run Step 5</button>
+          <p class="feedback" id="feedback-battlefieldP1">Not executed yet.</p>
+        </section>
 
-    <section>
-      <h2>3) Select Champion (p1)</h2>
-      <code>POST /matches/{{match_id}}/setup/champion</code>
-      <textarea id="payload-champion-p1"></textarea>
-      <button data-step-id="championP1">Run Step 3</button>
-    </section>
+        <section>
+          <h2>6) Select Battlefield (p2)</h2>
+          <code>POST /matches/{{match_id}}/setup/battlefield</code>
+          <textarea id="payload-battlefield-p2"></textarea>
+          <button data-step-id="battlefieldP2">Run Step 6</button>
+          <p class="feedback" id="feedback-battlefieldP2">Not executed yet.</p>
+        </section>
 
-    <section>
-      <h2>4) Select Champion (p2)</h2>
-      <code>POST /matches/{{match_id}}/setup/champion</code>
-      <textarea id="payload-champion-p2"></textarea>
-      <button data-step-id="championP2">Run Step 4</button>
-    </section>
+        <section>
+          <h2>7) Select Starting Player (chooser only)</h2>
+          <code>POST /matches/{{match_id}}/setup/starting-player</code>
+          <textarea id="payload-starting-player"></textarea>
+          <button data-step-id="startingPlayer">Run Step 7</button>
+          <p class="feedback" id="feedback-startingPlayer">Not executed yet.</p>
+        </section>
 
-    <section>
-      <h2>5) Select Battlefield (p1)</h2>
-      <code>POST /matches/{{match_id}}/setup/battlefield</code>
-      <textarea id="payload-battlefield-p1"></textarea>
-      <button data-step-id="battlefieldP1">Run Step 5</button>
-    </section>
+        <section>
+          <h2>8) Verify Final Match State</h2>
+          <code>GET /matches/{{match_id}}</code>
+          <button data-step-id="verify">Run Step 8</button>
+          <p class="feedback" id="feedback-verify">Not executed yet.</p>
+        </section>
+      </div>
 
-    <section>
-      <h2>6) Select Battlefield (p2)</h2>
-      <code>POST /matches/{{match_id}}/setup/battlefield</code>
-      <textarea id="payload-battlefield-p2"></textarea>
-      <button data-step-id="battlefieldP2">Run Step 6</button>
-    </section>
+      <aside class="side">
+        <section>
+          <h2>Match Info</h2>
+          <label for="baseUrl">Base URL</label>
+          <input id="baseUrl" value="http://localhost:3000/api" />
 
-    <section>
-      <h2>7) Select Starting Player (chooser only)</h2>
-      <code>POST /matches/{{match_id}}/setup/starting-player</code>
-      <textarea id="payload-starting-player"></textarea>
-      <button data-step-id="startingPlayer">Run Step 7</button>
-    </section>
+          <label for="matchId">match_id</label>
+          <input id="matchId" placeholder="filled from create match response" />
 
-    <section>
-      <h2>8) Verify Final Match State</h2>
-      <code>GET /matches/{{match_id}}</code>
-      <button data-step-id="verify">Run Step 8</button>
-    </section>
+          <label for="chooserId">chooser_id</label>
+          <input id="chooserId" placeholder="filled from create match response" />
+        </section>
 
-    <section>
-      <h2>Last Raw Response</h2>
-      <pre id="lastResponse">No requests yet.</pre>
-    </section>
+        <section>
+          <h2>Mandatory Checklist (Ready)</h2>
+          <ul class="checklist">
+            <li><label><input id="check-create" type="checkbox" disabled /> Step 2: Create Match</label></li>
+            <li><label><input id="check-championP1" type="checkbox" disabled /> Step 3: Champion p1</label></li>
+            <li><label><input id="check-championP2" type="checkbox" disabled /> Step 4: Champion p2</label></li>
+            <li><label><input id="check-battlefieldP1" type="checkbox" disabled /> Step 5: Battlefield p1</label></li>
+            <li><label><input id="check-battlefieldP2" type="checkbox" disabled /> Step 6: Battlefield p2</label></li>
+            <li><label><input id="check-startingPlayer" type="checkbox" disabled /> Step 7: Starting Player</label></li>
+          </ul>
+          <div class="summary not-ready" id="readySummary">Ready checklist incomplete.</div>
+        </section>
+
+        <section>
+          <h2>Last Raw Response</h2>
+          <pre id="lastResponse">No requests yet.</pre>
+        </section>
+      </aside>
+    </div>
 
     <script>
       const DECK_LIST = `Legend:
@@ -157,11 +240,33 @@ Sideboard:
 1 Unchecked Power
 1 Fox-Fire`;
 
+      const MANDATORY_STEPS = [
+        "create",
+        "championP1",
+        "championP2",
+        "battlefieldP1",
+        "battlefieldP2",
+        "startingPlayer",
+      ];
+
+      const state = {
+        done: {
+          create: false,
+          championP1: false,
+          championP2: false,
+          battlefieldP1: false,
+          battlefieldP2: false,
+          startingPlayer: false,
+          verify: false,
+        },
+      };
+
       const el = {
         baseUrl: document.getElementById("baseUrl"),
         matchId: document.getElementById("matchId"),
         chooserId: document.getElementById("chooserId"),
         lastResponse: document.getElementById("lastResponse"),
+        readySummary: document.getElementById("readySummary"),
         payloads: {
           validate: document.getElementById("payload-validate"),
           create: document.getElementById("payload-create"),
@@ -219,6 +324,100 @@ Sideboard:
         return text.replaceAll("{{match_id}}", el.matchId.value.trim());
       }
 
+      function buildUrl(endpoint) {
+        const base = el.baseUrl.value.trim().replace(/\/+$/, "");
+        return `${base}${replaceEndpointVariables(endpoint)}`;
+      }
+
+      function setFeedback(stepId, ok, message) {
+        const feedbackEl = document.getElementById(`feedback-${stepId}`);
+        if (!feedbackEl) return;
+
+        feedbackEl.textContent = message;
+        feedbackEl.classList.remove("success", "error");
+        feedbackEl.classList.add(ok ? "success" : "error");
+      }
+
+      function updateChecklist() {
+        MANDATORY_STEPS.forEach((stepId) => {
+          const checkEl = document.getElementById(`check-${stepId}`);
+          if (checkEl) {
+            checkEl.checked = !!state.done[stepId];
+          }
+        });
+
+        const allDone = MANDATORY_STEPS.every((stepId) => state.done[stepId]);
+        el.readySummary.textContent = allDone
+          ? "All mandatory steps complete. Match should be ready."
+          : "Ready checklist incomplete.";
+        el.readySummary.classList.remove("ready", "not-ready");
+        el.readySummary.classList.add(allDone ? "ready" : "not-ready");
+      }
+
+      function getValue(obj, path) {
+        return path.split(".").reduce((acc, part) => (acc == null ? undefined : acc[part]), obj);
+      }
+
+      function evaluateStep(stepId, response, parsedBody) {
+        if (!response.ok) {
+          return { ok: false, message: `HTTP ${response.status}` };
+        }
+
+        if (stepId === "create") {
+          const hasId = !!getValue(parsedBody, "data.id");
+          const setupPending = getValue(parsedBody, "data.status") === "setup_pending";
+          if (!hasId || !setupPending) {
+            return { ok: false, message: `HTTP ${response.status} but payload shape/status unexpected` };
+          }
+          return { ok: true, message: `Success (HTTP ${response.status})` };
+        }
+
+        if (stepId === "championP1") {
+          const chosen = getValue(parsedBody, "data.currentGame.chosenChampionByPlayer.p1");
+          return chosen
+            ? { ok: true, message: `Success (HTTP ${response.status})` }
+            : { ok: false, message: `HTTP ${response.status} but p1 champion not set` };
+        }
+
+        if (stepId === "championP2") {
+          const chosen = getValue(parsedBody, "data.currentGame.chosenChampionByPlayer.p2");
+          return chosen
+            ? { ok: true, message: `Success (HTTP ${response.status})` }
+            : { ok: false, message: `HTTP ${response.status} but p2 champion not set` };
+        }
+
+        if (stepId === "battlefieldP1") {
+          const value = getValue(parsedBody, "data.currentGame.selectedBattlefieldsByPlayer.p1");
+          return value
+            ? { ok: true, message: `Success (HTTP ${response.status})` }
+            : { ok: false, message: `HTTP ${response.status} but p1 battlefield not set` };
+        }
+
+        if (stepId === "battlefieldP2") {
+          const value = getValue(parsedBody, "data.currentGame.selectedBattlefieldsByPlayer.p2");
+          return value
+            ? { ok: true, message: `Success (HTTP ${response.status})` }
+            : { ok: false, message: `HTTP ${response.status} but p2 battlefield not set` };
+        }
+
+        if (stepId === "startingPlayer") {
+          const statusReady = getValue(parsedBody, "data.status") === "ready";
+          const startingPlayerId = getValue(parsedBody, "data.currentGame.startingPlayerId");
+          return statusReady && startingPlayerId
+            ? { ok: true, message: `Success (HTTP ${response.status})` }
+            : { ok: false, message: `HTTP ${response.status} but match is not ready` };
+        }
+
+        if (stepId === "verify") {
+          const statusReady = getValue(parsedBody, "data.status") === "ready";
+          return statusReady
+            ? { ok: true, message: `Success (HTTP ${response.status}) match is ready` }
+            : { ok: false, message: `HTTP ${response.status} status is not ready` };
+        }
+
+        return { ok: true, message: `Success (HTTP ${response.status})` };
+      }
+
       function setDefaults() {
         el.payloads.validate.value = JSON.stringify(
           { deckList: DECK_LIST },
@@ -259,11 +458,8 @@ Sideboard:
           null,
           2,
         );
-      }
 
-      function buildUrl(endpoint) {
-        const base = el.baseUrl.value.trim().replace(/\/+$/, "");
-        return `${base}${replaceEndpointVariables(endpoint)}`;
+        updateChecklist();
       }
 
       async function runStep(stepId) {
@@ -280,7 +476,11 @@ Sideboard:
           try {
             payload = JSON.parse(payloadRaw);
           } catch (error) {
-            alert(`Invalid JSON payload for step "${stepId}": ${error.message}`);
+            setFeedback(stepId, false, `Failed: invalid JSON (${error.message})`);
+            if (MANDATORY_STEPS.includes(stepId)) {
+              state.done[stepId] = false;
+              updateChecklist();
+            }
             return;
           }
 
@@ -313,9 +513,22 @@ Sideboard:
               el.chooserId.value = parsed.data.startingPlayerChooserId;
             }
           }
+
+          const evaluation = evaluateStep(stepId, response, parsed);
+          setFeedback(stepId, evaluation.ok, `${evaluation.ok ? "OK" : "Failed"}: ${evaluation.message}`);
+
+          if (MANDATORY_STEPS.includes(stepId)) {
+            state.done[stepId] = evaluation.ok;
+          }
+          updateChecklist();
         } catch (error) {
           console.log(`[${stepId}] request failed`, error);
           el.lastResponse.textContent = `Request failed: ${error.message}`;
+          setFeedback(stepId, false, `Failed: ${error.message}`);
+          if (MANDATORY_STEPS.includes(stepId)) {
+            state.done[stepId] = false;
+          }
+          updateChecklist();
         }
       }
 
