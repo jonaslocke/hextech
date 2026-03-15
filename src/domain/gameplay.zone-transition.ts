@@ -11,6 +11,13 @@ import {
   resolveHiddenCapacityForBattlefield,
   ZONE_PRIVACY_BY_ZONE,
 } from "./gameplay";
+import {
+  resolveConstraintBounds,
+  type CardType,
+  type ZonePolicy,
+  type ZonePolicyId,
+  ZONE_POLICY_LIST,
+} from "./zone-policy";
 
 type PlayerScopedZone = Exclude<keyof PlayerZoneBuckets, "base">;
 
@@ -27,6 +34,7 @@ export interface MoveCardBetweenZonesInput {
   source: GameplayZoneRef;
   destination: GameplayZoneRef;
   cardControllerId: string;
+  cardType?: CardType;
   cardOwnerId?: string;
   battlefieldControllerById?: Record<string, string | null>;
 }
@@ -35,8 +43,13 @@ export interface PlaceCardIntoZoneInput {
   cardId: string;
   destination: GameplayZoneRef;
   cardControllerId: string;
+  cardType?: CardType;
   battlefieldControllerById?: Record<string, string | null>;
 }
+
+const ZONE_POLICY_BY_ID = new Map<ZonePolicyId, ZonePolicy>(
+  ZONE_POLICY_LIST.map((policy) => [policy.id, policy]),
+);
 
 export function moveCardBetweenZones(
   gameplay: GameplayRuntime,
@@ -66,7 +79,7 @@ export function moveCardBetweenZones(
     throw new ValidationError("Card is not present in the source zone.");
   }
 
-  enforceDestinationRules(next, input);
+  enforceDestinationRules(next, input, destinationBucket);
   next = appendRevealEventForFacedownToNonPublicMove(next, input);
 
   sourceBucket.splice(sourceIndex, 1);
@@ -105,6 +118,7 @@ export function placeCardIntoZone(
   const destinationRulesInput: MoveCardBetweenZonesInput = {
     cardId,
     cardControllerId,
+    ...(input.cardType ? { cardType: input.cardType } : {}),
     source: input.destination,
     destination: input.destination,
   };
@@ -112,7 +126,7 @@ export function placeCardIntoZone(
     destinationRulesInput.battlefieldControllerById =
       input.battlefieldControllerById;
   }
-  enforceDestinationRules(next, destinationRulesInput);
+  enforceDestinationRules(next, destinationRulesInput, destinationBucket);
 
   destinationBucket.push(cardId);
 
@@ -127,7 +141,10 @@ export function placeCardIntoZone(
 function enforceDestinationRules(
   gameplay: GameplayRuntime,
   input: MoveCardBetweenZonesInput,
+  destinationBucket: string[],
 ): void {
+  enforceZonePolicyForDestination(input, destinationBucket);
+
   const { destination, cardControllerId } = input;
 
   if (
@@ -162,12 +179,58 @@ function enforceDestinationRules(
     );
   }
 
-  const destinationBucket = resolveZoneBucket(gameplay, destination);
   const maxHiddenCapacity = resolveHiddenCapacityForBattlefield(gameplay, battlefieldId);
   if (destinationBucket.length + 1 > maxHiddenCapacity) {
     throw new ValidationError(
       `Facedown zone capacity exceeded for battlefield (max: ${maxHiddenCapacity}).`,
     );
+  }
+}
+
+function enforceZonePolicyForDestination(
+  input: MoveCardBetweenZonesInput,
+  destinationBucket: string[],
+): void {
+  const zonePolicyId = toZonePolicyId(input.destination);
+  const zonePolicy = ZONE_POLICY_BY_ID.get(zonePolicyId);
+
+  if (!zonePolicy) {
+    throw new ValidationError(`Missing zone policy for destination "${zonePolicyId}".`);
+  }
+
+  if (input.cardType) {
+    if (zonePolicy.prohibitedCardTypes.includes(input.cardType)) {
+      throw new ValidationError(
+        `Card type "${input.cardType}" cannot be placed in zone "${zonePolicyId}".`,
+      );
+    }
+
+    if (!zonePolicy.allowedCardTypes.includes(input.cardType)) {
+      throw new ValidationError(
+        `Card type "${input.cardType}" is not allowed in zone "${zonePolicyId}".`,
+      );
+    }
+  }
+
+  for (const constraint of zonePolicy.capacityConstraints) {
+    if (constraint.scope !== "zone") {
+      continue;
+    }
+
+    if (constraint.appliesToCardTypes || constraint.appliesToStateTags) {
+      continue;
+    }
+
+    const bounds = resolveConstraintBounds(constraint, []);
+    if (bounds.max === null) {
+      continue;
+    }
+
+    if (destinationBucket.length + 1 > bounds.max) {
+      throw new ValidationError(
+        `Zone capacity exceeded for "${zonePolicyId}" (constraint: ${constraint.id}, max: ${bounds.max}).`,
+      );
+    }
   }
 }
 
@@ -272,6 +335,36 @@ function appendRevealEventForFacedownToNonPublicMove(
 function resolveZoneRefPrivacy(zoneRef: GameplayZoneRef): ZonePrivacy {
   const canonicalZone = toCanonicalZone(zoneRef);
   return ZONE_PRIVACY_BY_ZONE[canonicalZone];
+}
+
+function toZonePolicyId(zoneRef: GameplayZoneRef): ZonePolicyId {
+  switch (zoneRef.kind) {
+    case "player_zone":
+      switch (zoneRef.zone) {
+        case "mainDeck":
+          return "main_deck";
+        case "hand":
+          return "hand";
+        case "trash":
+          return "trash";
+        case "banishment":
+          return "banishment";
+        case "runeDeck":
+          return "rune_deck";
+        case "championZone":
+          return "champion_zone";
+        case "legendZone":
+          return "legend_zone";
+      }
+    case "base_cards":
+    case "base_runes":
+      return "base";
+    case "battlefield":
+    case "facedown":
+      return "battlefield";
+    case "chain":
+      return "chain";
+  }
 }
 
 function toCanonicalZone(zoneRef: GameplayZoneRef): CanonicalCardZone {

@@ -10,6 +10,7 @@ import type { Game } from "../../domain/game";
 import type { MatchView } from "../match.view";
 import type { GameRepository } from "../../domain/game.repository";
 import type { MatchRepository } from "../../domain/match.repository";
+import type { CardType } from "../../domain/zone-policy";
 import { MatchViewLoader } from "./match-view.loader";
 import { placeCardIntoZone, moveCardBetweenZones } from "../../domain/gameplay.zone-transition";
 import { cleanupHiddenCardsAfterControlChange } from "../../domain/gameplay.cleanup";
@@ -29,10 +30,16 @@ export class DebugGameplayZonesService {
   async placeCard(input: DebugPlaceCardRequestDto): Promise<MatchView> {
     const match = await this.matchViewLoader.getMatch(input.matchId);
     const game = await this.getReadyCurrentGame(match.id);
+    const resolvedCardType = this.resolveCardTypeForGameplayCard(
+      game,
+      input.cardId,
+      input.cardType,
+    );
 
     const placeInput = {
       cardId: input.cardId,
       cardControllerId: input.cardControllerId,
+      ...(resolvedCardType ? { cardType: resolvedCardType } : {}),
       destination: input.destination,
       ...(input.battlefieldControllerById
         ? { battlefieldControllerById: input.battlefieldControllerById }
@@ -48,10 +55,16 @@ export class DebugGameplayZonesService {
   async moveCard(input: DebugMoveCardRequestDto): Promise<MatchView> {
     const match = await this.matchViewLoader.getMatch(input.matchId);
     const game = await this.getReadyCurrentGame(match.id);
+    const resolvedCardType = this.resolveCardTypeForGameplayCard(
+      game,
+      input.cardId,
+      input.cardType,
+    );
 
     const moveInput = {
       cardId: input.cardId,
       cardControllerId: input.cardControllerId,
+      ...(resolvedCardType ? { cardType: resolvedCardType } : {}),
       source: input.source,
       destination: input.destination,
       ...(input.cardOwnerId ? { cardOwnerId: input.cardOwnerId } : {}),
@@ -141,5 +154,45 @@ export class DebugGameplayZonesService {
     };
 
     await this.gameRepository.save(updated);
+  }
+
+  private resolveCardTypeForGameplayCard(
+    game: Game,
+    cardId: string,
+    cardTypeInput: CardType | undefined,
+  ): CardType | undefined {
+    if (cardTypeInput) {
+      return cardTypeInput;
+    }
+
+    const normalizedCardId = cardId.trim();
+    if (!normalizedCardId) {
+      return undefined;
+    }
+
+    if (normalizedCardId.startsWith("setup:legend:")) {
+      return "legend";
+    }
+
+    if (normalizedCardId.startsWith("setup:battlefield:")) {
+      return "battlefield";
+    }
+
+    for (const deckState of Object.values(game.deckStateByPlayer)) {
+      const allKnownCards = [
+        ...deckState.mainLibrary,
+        ...deckState.runeLibrary,
+        ...deckState.hand,
+        ...deckState.trash,
+      ];
+
+      for (const card of allKnownCards) {
+        if (card.id === normalizedCardId) {
+          return card.cardType;
+        }
+      }
+    }
+
+    return undefined;
   }
 }

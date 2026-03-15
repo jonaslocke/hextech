@@ -43,6 +43,7 @@ export function hydrateGameplayForReadySetup(match: Match, game: Game): Gameplay
       gameplay = placeCardIntoZone(gameplay, {
         cardId: card.id,
         cardControllerId: playerId,
+        cardType: card.cardType,
         destination: { kind: "player_zone", playerId, zone: "mainDeck" },
       });
     }
@@ -51,6 +52,7 @@ export function hydrateGameplayForReadySetup(match: Match, game: Game): Gameplay
       gameplay = placeCardIntoZone(gameplay, {
         cardId: card.id,
         cardControllerId: playerId,
+        cardType: card.cardType,
         destination: { kind: "player_zone", playerId, zone: "runeDeck" },
       });
     }
@@ -58,12 +60,14 @@ export function hydrateGameplayForReadySetup(match: Match, game: Game): Gameplay
     gameplay = placeCardIntoZone(gameplay, {
       cardId: chosenChampionCardId,
       cardControllerId: playerId,
+      cardType: chosenChampionCard.cardType,
       destination: { kind: "player_zone", playerId, zone: "championZone" },
     });
 
     gameplay = placeCardIntoZone(gameplay, {
       cardId: buildSetupObjectId("legend", playerId, deckState.registrationRef),
       cardControllerId: playerId,
+      cardType: "legend",
       destination: { kind: "player_zone", playerId, zone: "legendZone" },
     });
 
@@ -81,6 +85,7 @@ export function hydrateGameplayForReadySetup(match: Match, game: Game): Gameplay
     gameplay = placeCardIntoZone(gameplay, {
       cardId: battlefieldId,
       cardControllerId: playerId,
+      cardType: "battlefield",
       destination: { kind: "battlefield" },
     });
 

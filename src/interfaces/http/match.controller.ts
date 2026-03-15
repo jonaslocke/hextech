@@ -140,6 +140,7 @@ export class MatchController {
         matchId: matchId ?? "",
         cardId: req.body?.cardId,
         cardControllerId: req.body?.cardControllerId,
+        cardType: req.body?.cardType,
         destination: req.body?.destination,
         battlefieldControllerById: req.body?.battlefieldControllerById,
       });
@@ -163,6 +164,7 @@ export class MatchController {
         matchId: matchId ?? "",
         cardId: req.body?.cardId,
         cardControllerId: req.body?.cardControllerId,
+        cardType: req.body?.cardType,
         cardOwnerId: req.body?.cardOwnerId,
         source: req.body?.source,
         destination: req.body?.destination,

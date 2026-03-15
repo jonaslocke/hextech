@@ -1,9 +1,11 @@
 import type { GameplayZoneRef } from "../../domain/gameplay.zone-transition";
+import type { CardType } from "../../domain/zone-policy";
 
 export interface DebugPlaceCardRequestDto {
   matchId: string;
   cardId: string;
   cardControllerId: string;
+  cardType?: CardType;
   destination: GameplayZoneRef;
   battlefieldControllerById?: Record<string, string | null>;
 }
@@ -12,6 +14,7 @@ export interface DebugMoveCardRequestDto {
   matchId: string;
   cardId: string;
   cardControllerId: string;
+  cardType?: CardType;
   cardOwnerId?: string;
   source: GameplayZoneRef;
   destination: GameplayZoneRef;

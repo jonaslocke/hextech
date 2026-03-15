@@ -211,4 +211,39 @@ describe("Gameplay zone transition primitive", () => {
         error.message === "Facedown zone for battlefield does not exist.",
     );
   });
+  test("rejects prohibited card type for destination zone policy", () => {
+    const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+
+    assert.throws(
+      () =>
+        placeCardIntoZone(gameplay, {
+          cardId: "card_rune_001",
+          cardControllerId: "p1",
+          cardType: "rune",
+          destination: { kind: "chain" },
+        }),
+      (error: unknown) =>
+        error instanceof ValidationError &&
+        error.message === 'Card type "rune" cannot be placed in zone "chain".',
+    );
+  });
+
+  test("rejects zone policy capacity overflow for champion zone", () => {
+    const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
+    gameplay.zones.players.p1!.championZone.push("champion_001");
+
+    assert.throws(
+      () =>
+        placeCardIntoZone(gameplay, {
+          cardId: "unit_001",
+          cardControllerId: "p1",
+          cardType: "unit",
+          destination: { kind: "player_zone", playerId: "p1", zone: "championZone" },
+        }),
+      (error: unknown) =>
+        error instanceof ValidationError &&
+        error.message ===
+          'Zone capacity exceeded for "champion_zone" (constraint: total_cards, max: 1).',
+    );
+  });
 });
