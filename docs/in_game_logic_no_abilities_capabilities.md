@@ -24,6 +24,8 @@ Scope policy: implement the core engine without card ability logic for now, whil
 | `Completed` | Manual zone testing API | Added debug endpoints for manual Postman-like validation of zone behaviors (`place`, `move`, `cleanup-hidden`, `reveal-game-end`, `rules`). |
 | `Completed` | Manual zone smoke document | Added manual testing document for ready-game zone validation flow. |
 | `Completed` | Automated zone smoke test | Added end-to-end smoke test that mirrors the manual zone testing flow. |
+| `Completed` | Zone policy matrix contract (PR1) | Added canonical zone policy model in `src/domain/zone-policy.ts` with typed capacities, typed modifier chains, and source-traceable runtime modifiers. |
+| `Completed` | Zone policy contract tests and spec doc (PR1) | Added dedicated contract tests and source-of-truth matrix in `tests/zone-policy.contract.test.ts` and `docs/zone_policy_matrix.md`. |
 | `Pending` | PR9 foundation: gameplay intent API (non-debug) | Add production gameplay intent endpoint/service with a server-authoritative intent router. Clients submit high-level intents (not raw zone mutations), and the server derives legality, ownership, and resulting transitions. |
 | `Pending` | PR9 foundation: intent validation and authorization gates | Centralize legality checks (match/game status, actor membership, turn/timing eligibility placeholders, ownership/controller constraints) before mutating gameplay state. |
 | `Pending` | PR9 foundation: deterministic intent execution contract | Define ordered intent processing and deterministic execution guarantees so future seeded RNG and replay consistency are enforceable at one entrypoint. |
@@ -50,3 +52,4 @@ Scope policy: implement the core engine without card ability logic for now, whil
 - Enforce legality/authorization at a single server entrypoint before any zone transition.
 - Make deterministic execution and replay feasible by sequencing all actions through one pipeline.
 - Prepare a stable contract for upcoming turn/timing/priority/chain systems without coupling clients to internal zone maps.
+
