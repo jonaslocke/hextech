@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Match Setup (Manual)</title>
+    <title>Manual API Flows</title>
     <style>
       body {
         font-family: sans-serif;
@@ -24,6 +24,28 @@
         min-width: 280px;
         position: sticky;
         top: 16px;
+        font-size: 13px;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .tab-button {
+        border: 1px solid #ccc;
+        background: #f5f5f5;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+      .tab-button.active {
+        background: #e7f0ff;
+        border-color: #9eb9f5;
+      }
+      .tab-panel {
+        display: none;
+      }
+      .tab-panel.active {
+        display: block;
       }
       section {
         border: 1px solid #ccc;
@@ -81,6 +103,40 @@
       .summary.not-ready {
         color: #b00020;
       }
+      .flow-note {
+        margin: 6px 0 0;
+      }
+      .side section {
+        margin: 6px 0;
+        padding: 8px;
+      }
+      .side h2 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+      .side label {
+        display: block;
+        margin-top: 4px;
+        margin-bottom: 2px;
+      }
+      .side input {
+        font-size: 12px;
+        padding: 4px 6px;
+      }
+      .side .checklist li {
+        margin: 3px 0;
+      }
+      .side .summary {
+        margin-top: 6px;
+        font-size: 12px;
+      }
+      #lastResponse {
+        height: 190px;
+        max-height: 190px;
+        overflow: auto;
+        font-size: 12px;
+        line-height: 1.25;
+      }
       @media (max-width: 900px) {
         .layout {
           flex-direction: column;
@@ -94,72 +150,30 @@
     </style>
   </head>
   <body>
-    <h1>Create One Match to Ready (Manual)</h1>
+    <h1>Manual API Flows</h1>
 
     <div class="layout">
       <div class="main">
-        <section>
-          <h2>1) Optional: Validate Deck</h2>
-          <code>POST /decks/validate</code>
-          <textarea id="payload-validate"></textarea>
-          <button data-step-id="validate">Run Step 1</button>
-          <p class="feedback" id="feedback-validate">Not executed yet.</p>
-        </section>
+        <div class="tabs">
+          <button class="tab-button active" data-tab="setup">Match Setup Flow</button>
+          <button class="tab-button" data-tab="zones">Zones Smoke Flow</button>
+        </div>
 
-        <section>
-          <h2>2) Create Match (setup_pending)</h2>
-          <code>POST /matches</code>
-          <textarea id="payload-create"></textarea>
-          <button data-step-id="create">Run Step 2</button>
-          <p class="feedback" id="feedback-create">Not executed yet.</p>
-        </section>
+        <div class="tab-panel active" id="tab-setup">
+          <section>
+            <strong>Goal:</strong> Create one match and reach <code>ready</code>.<br />
+            <span class="flow-note">Use Step 2 to generate <code>match_id</code>, then continue manually.</span>
+          </section>
+          <div id="setup-steps"></div>
+        </div>
 
-        <section>
-          <h2>3) Select Champion (p1)</h2>
-          <code>POST /matches/{{match_id}}/setup/champion</code>
-          <textarea id="payload-champion-p1"></textarea>
-          <button data-step-id="championP1">Run Step 3</button>
-          <p class="feedback" id="feedback-championP1">Not executed yet.</p>
-        </section>
-
-        <section>
-          <h2>4) Select Champion (p2)</h2>
-          <code>POST /matches/{{match_id}}/setup/champion</code>
-          <textarea id="payload-champion-p2"></textarea>
-          <button data-step-id="championP2">Run Step 4</button>
-          <p class="feedback" id="feedback-championP2">Not executed yet.</p>
-        </section>
-
-        <section>
-          <h2>5) Select Battlefield (p1)</h2>
-          <code>POST /matches/{{match_id}}/setup/battlefield</code>
-          <textarea id="payload-battlefield-p1"></textarea>
-          <button data-step-id="battlefieldP1">Run Step 5</button>
-          <p class="feedback" id="feedback-battlefieldP1">Not executed yet.</p>
-        </section>
-
-        <section>
-          <h2>6) Select Battlefield (p2)</h2>
-          <code>POST /matches/{{match_id}}/setup/battlefield</code>
-          <textarea id="payload-battlefield-p2"></textarea>
-          <button data-step-id="battlefieldP2">Run Step 6</button>
-          <p class="feedback" id="feedback-battlefieldP2">Not executed yet.</p>
-        </section>
-
-        <section>
-          <h2>7) Select Starting Player (chooser only)</h2>
-          <code>POST /matches/{{match_id}}/setup/starting-player</code>
-          <textarea id="payload-starting-player"></textarea>
-          <button data-step-id="startingPlayer">Run Step 7</button>
-          <p class="feedback" id="feedback-startingPlayer">Not executed yet.</p>
-        </section>
-
-        <section>
-          <h2>8) Verify Final Match State</h2>
-          <code>GET /matches/{{match_id}}</code>
-          <button data-step-id="verify">Run Step 8</button>
-          <p class="feedback" id="feedback-verify">Not executed yet.</p>
-        </section>
+        <div class="tab-panel" id="tab-zones">
+          <section>
+            <strong>Goal:</strong> Run zone debug smoke against a ready match.<br />
+            <span class="flow-note">Bridge: reuses <code>match_id</code> from setup flow. Run Zones Step 1 to auto-fill battlefield ids.</span>
+          </section>
+          <div id="zones-steps"></div>
+        </div>
       </div>
 
       <aside class="side">
@@ -173,17 +187,23 @@
 
           <label for="chooserId">chooser_id</label>
           <input id="chooserId" placeholder="filled from create match response" />
+
+          <label for="p1BattlefieldId">p1_battlefield_id</label>
+          <input id="p1BattlefieldId" placeholder="filled from zones step 1" />
+
+          <label for="p2BattlefieldId">p2_battlefield_id</label>
+          <input id="p2BattlefieldId" placeholder="filled from zones step 1" />
         </section>
 
         <section>
           <h2>Mandatory Checklist (Ready)</h2>
           <ul class="checklist">
-            <li><label><input id="check-create" type="checkbox" disabled /> Step 2: Create Match</label></li>
-            <li><label><input id="check-championP1" type="checkbox" disabled /> Step 3: Champion p1</label></li>
-            <li><label><input id="check-championP2" type="checkbox" disabled /> Step 4: Champion p2</label></li>
-            <li><label><input id="check-battlefieldP1" type="checkbox" disabled /> Step 5: Battlefield p1</label></li>
-            <li><label><input id="check-battlefieldP2" type="checkbox" disabled /> Step 6: Battlefield p2</label></li>
-            <li><label><input id="check-startingPlayer" type="checkbox" disabled /> Step 7: Starting Player</label></li>
+            <li><label><input id="check-setup_create" type="checkbox" disabled /> Step 2: Create Match</label></li>
+            <li><label><input id="check-setup_champion_p1" type="checkbox" disabled /> Step 3: Champion p1</label></li>
+            <li><label><input id="check-setup_champion_p2" type="checkbox" disabled /> Step 4: Champion p2</label></li>
+            <li><label><input id="check-setup_battlefield_p1" type="checkbox" disabled /> Step 5: Battlefield p1</label></li>
+            <li><label><input id="check-setup_battlefield_p2" type="checkbox" disabled /> Step 6: Battlefield p2</label></li>
+            <li><label><input id="check-setup_starting_player" type="checkbox" disabled /> Step 7: Starting Player</label></li>
           </ul>
           <div class="summary not-ready" id="readySummary">Ready checklist incomplete.</div>
         </section>
@@ -240,88 +260,483 @@ Sideboard:
 1 Unchecked Power
 1 Fox-Fire`;
 
-      const MANDATORY_STEPS = [
-        "create",
-        "championP1",
-        "championP2",
-        "battlefieldP1",
-        "battlefieldP2",
-        "startingPlayer",
+      const MANDATORY_SETUP_STEPS = [
+        "setup_create",
+        "setup_champion_p1",
+        "setup_champion_p2",
+        "setup_battlefield_p1",
+        "setup_battlefield_p2",
+        "setup_starting_player",
       ];
 
-      const state = {
-        done: {
-          create: false,
-          championP1: false,
-          championP2: false,
-          battlefieldP1: false,
-          battlefieldP2: false,
-          startingPlayer: false,
-          verify: false,
+      const setupSteps = [
+        {
+          id: "setup_validate",
+          order: 1,
+          title: "Optional: Validate Deck",
+          method: "POST",
+          endpoint: "/decks/validate",
+          payload: { deckList: DECK_LIST },
+          expectedStatus: [200],
         },
+        {
+          id: "setup_create",
+          order: 2,
+          title: "Create Match (setup_pending)",
+          method: "POST",
+          endpoint: "/matches",
+          payload: {
+            format: "best-of-3",
+            players: [
+              { id: "p1", displayName: "Alice" },
+              { id: "p2", displayName: "Bob" },
+            ],
+            decksByPlayer: {
+              p1: DECK_LIST,
+              p2: DECK_LIST,
+            },
+          },
+          expectedStatus: [201],
+          mandatory: true,
+        },
+        {
+          id: "setup_champion_p1",
+          order: 3,
+          title: "Select Champion (p1)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/setup/champion",
+          payload: { playerId: "p1" },
+          expectedStatus: [201],
+          mandatory: true,
+        },
+        {
+          id: "setup_champion_p2",
+          order: 4,
+          title: "Select Champion (p2)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/setup/champion",
+          payload: { playerId: "p2" },
+          expectedStatus: [201],
+          mandatory: true,
+        },
+        {
+          id: "setup_battlefield_p1",
+          order: 5,
+          title: "Select Battlefield (p1)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/setup/battlefield",
+          payload: { playerId: "p1", battlefield: "Fortified Position" },
+          expectedStatus: [201],
+          mandatory: true,
+        },
+        {
+          id: "setup_battlefield_p2",
+          order: 6,
+          title: "Select Battlefield (p2)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/setup/battlefield",
+          payload: { playerId: "p2", battlefield: "Grove of the God-Willow" },
+          expectedStatus: [201],
+          mandatory: true,
+        },
+        {
+          id: "setup_starting_player",
+          order: 7,
+          title: "Select Starting Player (chooser only)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/setup/starting-player",
+          payload: { playerId: "{{chooser_id}}", startingPlayerId: "p1" },
+          expectedStatus: [201],
+          mandatory: true,
+        },
+        {
+          id: "setup_verify",
+          order: 8,
+          title: "Verify Final Match State",
+          method: "GET",
+          endpoint: "/matches/{{match_id}}",
+          expectedStatus: [200],
+        },
+      ];
+
+      const zonesSteps = [
+        {
+          id: "zones_read_ready",
+          order: 1,
+          title: "Read Current Ready Game and Capture Battlefield IDs",
+          method: "GET",
+          endpoint: "/matches/{{match_id}}",
+          expectedStatus: [200],
+        },
+        {
+          id: "zones_place_unit_battlefield",
+          order: 2,
+          title: "Place Unit in Battlefield Zone (should pass)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_unit_001",
+            cardControllerId: "p1",
+            destination: { kind: "battlefield" },
+          },
+          expectedStatus: [201],
+        },
+        {
+          id: "zones_place_same_again",
+          order: 3,
+          title: "Place Same Card Again (should fail)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_unit_001",
+            cardControllerId: "p1",
+            destination: { kind: "chain" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_move_unit_base_cards",
+          order: 4,
+          title: "Move Unit Battlefield -> Own Base Cards (should pass)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "manual_unit_001",
+            cardControllerId: "p1",
+            source: { kind: "battlefield" },
+            destination: { kind: "base_cards", playerId: "p1" },
+          },
+          expectedStatus: [201],
+        },
+        {
+          id: "zones_place_rune_own_base",
+          order: 5,
+          title: "Place Rune in Own Base Runes (should pass)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_rune_001",
+            cardControllerId: "p1",
+            destination: { kind: "base_runes", playerId: "p1" },
+          },
+          expectedStatus: [201],
+        },
+        {
+          id: "zones_place_card_opponent_base",
+          order: 6,
+          title: "Place Card in Opponent Base Cards (should fail)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_unit_002",
+            cardControllerId: "p1",
+            destination: { kind: "base_cards", playerId: "p2" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_place_rune_opponent_base",
+          order: 7,
+          title: "Place Rune in Opponent Base Runes (should fail)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_rune_002",
+            cardControllerId: "p1",
+            destination: { kind: "base_runes", playerId: "p2" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_place_unknown_player_zone",
+          order: 8,
+          title: "Place Card in Unknown Player Zone (should fail)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_spell_001",
+            cardControllerId: "p1",
+            destination: { kind: "player_zone", playerId: "ghost", zone: "hand" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_place_chain",
+          order: 9,
+          title: "Place Card in Chain Zone (should pass)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_spell_002",
+            cardControllerId: "p1",
+            destination: { kind: "chain" },
+          },
+          expectedStatus: [201],
+        },
+        {
+          id: "zones_move_same_zone",
+          order: 10,
+          title: "Move Card to Same Source/Destination Zone (should fail)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "manual_spell_002",
+            cardControllerId: "p1",
+            source: { kind: "chain" },
+            destination: { kind: "chain" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_move_missing_card",
+          order: 11,
+          title: "Move Missing Card from Source (should fail)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "manual_missing_001",
+            cardControllerId: "p1",
+            source: { kind: "battlefield" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "trash" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_place_hidden_unresolved",
+          order: 12,
+          title: "Place Hidden with Unresolved Battlefield Variable (should fail)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_hidden_unknown_001",
+            cardControllerId: "p1",
+            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
+            battlefieldControllerById: { "{{p1_battlefield_id}}": "p1" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_override_hidden_unresolved",
+          order: 13,
+          title: "Override Hidden Capacity with Unresolved Battlefield Variable (should fail)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/rules",
+          payload: {
+            hiddenCapacityByBattlefield: { "{{p1_battlefield_id}}": 2 },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_place_hidden_missing_map",
+          order: 14,
+          title: "Place Hidden Without Battlefield Controller Map (should fail)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_hidden_missing_map_001",
+            cardControllerId: "p1",
+            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
+          },
+          expectedStatus: [400],
+          resolvePayloadVars: true,
+        },
+        {
+          id: "zones_place_hidden_wrong_controller",
+          order: 15,
+          title: "Place Hidden with Wrong Battlefield Controller (should fail)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_hidden_wrong_controller_001",
+            cardControllerId: "p1",
+            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
+            battlefieldControllerById: { "{{p1_battlefield_id}}": "p2" },
+          },
+          expectedStatus: [400],
+          resolvePayloadVars: true,
+        },
+        {
+          id: "zones_place_first_hidden_real",
+          order: 16,
+          title: "Place First Hidden with Real Battlefield ID (should pass)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_hidden_001",
+            cardControllerId: "p1",
+            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
+            battlefieldControllerById: { "{{p1_battlefield_id}}": "p1" },
+          },
+          expectedStatus: [201],
+          resolvePayloadVars: true,
+        },
+        {
+          id: "zones_place_second_hidden_without_override",
+          order: 17,
+          title: "Place Second Hidden Without Override (should fail)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_hidden_002",
+            cardControllerId: "p1",
+            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
+            battlefieldControllerById: { "{{p1_battlefield_id}}": "p1" },
+          },
+          expectedStatus: [400],
+          resolvePayloadVars: true,
+        },
+        {
+          id: "zones_override_hidden_capacity_2",
+          order: 18,
+          title: "Override Hidden Capacity to 2 (should pass)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/rules",
+          payload: {
+            hiddenCapacityByBattlefield: { "{{p1_battlefield_id}}": 2 },
+          },
+          expectedStatus: [201],
+          resolvePayloadVars: true,
+        },
+        {
+          id: "zones_place_second_hidden_again",
+          order: 19,
+          title: "Place Second Hidden Again (should pass)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_hidden_002",
+            cardControllerId: "p1",
+            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
+            battlefieldControllerById: { "{{p1_battlefield_id}}": "p1" },
+          },
+          expectedStatus: [201],
+          resolvePayloadVars: true,
+        },
+        {
+          id: "zones_move_hidden_to_hand",
+          order: 20,
+          title: "Synthetic Reveal Probe: Move Hidden -> Hand (should pass and reveal)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "manual_hidden_002",
+            cardControllerId: "p1",
+            cardOwnerId: "p1",
+            source: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "hand" },
+          },
+          expectedStatus: [201],
+          resolvePayloadVars: true,
+        },
+        {
+          id: "zones_cleanup_hidden",
+          order: 21,
+          title: "Cleanup Hidden on Control Loss (should pass)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/cleanup-hidden",
+          payload: {
+            battlefieldControllerById: { "{{p1_battlefield_id}}": "p2" },
+            cardControllerById: { manual_hidden_001: "p1" },
+            cardOwnerById: { manual_hidden_001: "p1" },
+          },
+          expectedStatus: [201],
+          resolvePayloadVars: true,
+        },
+        {
+          id: "zones_place_hidden_game_end",
+          order: 22,
+          title: "Place New Hidden Card for Game-End Reveal (should pass)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          payload: {
+            cardId: "manual_hidden_003",
+            cardControllerId: "p1",
+            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
+            battlefieldControllerById: { "{{p1_battlefield_id}}": "p1" },
+          },
+          expectedStatus: [201],
+          resolvePayloadVars: true,
+        },
+        {
+          id: "zones_reveal_game_end",
+          order: 23,
+          title: "Reveal Facedown Cards on Game End (should pass)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/reveal-game-end",
+          payload: {
+            cardOwnerById: { manual_hidden_003: "p1" },
+          },
+          expectedStatus: [201],
+        },
+      ];
+
+      const allSteps = [...setupSteps, ...zonesSteps];
+      const stepById = Object.fromEntries(allSteps.map((step) => [step.id, step]));
+      const elementsByStepId = {};
+
+      const state = {
+        done: Object.fromEntries(MANDATORY_SETUP_STEPS.map((id) => [id, false])),
       };
 
       const el = {
+        setupSteps: document.getElementById("setup-steps"),
+        zonesSteps: document.getElementById("zones-steps"),
         baseUrl: document.getElementById("baseUrl"),
         matchId: document.getElementById("matchId"),
         chooserId: document.getElementById("chooserId"),
+        p1BattlefieldId: document.getElementById("p1BattlefieldId"),
+        p2BattlefieldId: document.getElementById("p2BattlefieldId"),
         lastResponse: document.getElementById("lastResponse"),
         readySummary: document.getElementById("readySummary"),
-        payloads: {
-          validate: document.getElementById("payload-validate"),
-          create: document.getElementById("payload-create"),
-          championP1: document.getElementById("payload-champion-p1"),
-          championP2: document.getElementById("payload-champion-p2"),
-          battlefieldP1: document.getElementById("payload-battlefield-p1"),
-          battlefieldP2: document.getElementById("payload-battlefield-p2"),
-          startingPlayer: document.getElementById("payload-starting-player"),
-        },
       };
 
-      const steps = {
-        validate: {
-          method: "POST",
-          endpoint: "/decks/validate",
-          payloadElId: "validate",
-        },
-        create: {
-          method: "POST",
-          endpoint: "/matches",
-          payloadElId: "create",
-        },
-        championP1: {
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/setup/champion",
-          payloadElId: "championP1",
-        },
-        championP2: {
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/setup/champion",
-          payloadElId: "championP2",
-        },
-        battlefieldP1: {
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/setup/battlefield",
-          payloadElId: "battlefieldP1",
-        },
-        battlefieldP2: {
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/setup/battlefield",
-          payloadElId: "battlefieldP2",
-        },
-        startingPlayer: {
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/setup/starting-player",
-          payloadElId: "startingPlayer",
-        },
-        verify: {
-          method: "GET",
-          endpoint: "/matches/{{match_id}}",
-        },
-      };
+      function renderSteps(flowSteps, container) {
+        flowSteps.forEach((step) => {
+          const section = document.createElement("section");
+
+          const h2 = document.createElement("h2");
+          h2.textContent = `${step.order}) ${step.title}`;
+          section.appendChild(h2);
+
+          const code = document.createElement("code");
+          code.textContent = `${step.method} ${step.endpoint}`;
+          section.appendChild(code);
+
+          let textarea = null;
+          if (step.payload !== undefined) {
+            textarea = document.createElement("textarea");
+            textarea.id = `payload-${step.id}`;
+            textarea.value = JSON.stringify(step.payload, null, 2);
+            section.appendChild(textarea);
+          }
+
+          const runButton = document.createElement("button");
+          runButton.type = "button";
+          runButton.textContent = `Run Step ${step.order}`;
+          runButton.setAttribute("data-step-id", step.id);
+          section.appendChild(runButton);
+
+          const feedback = document.createElement("p");
+          feedback.className = "feedback";
+          feedback.id = `feedback-${step.id}`;
+          feedback.textContent = "Not executed yet.";
+          section.appendChild(feedback);
+
+          container.appendChild(section);
+          elementsByStepId[step.id] = { payloadEl: textarea, feedbackEl: feedback };
+        });
+      }
 
       function replaceEndpointVariables(text) {
         return text.replaceAll("{{match_id}}", el.matchId.value.trim());
+      }
+
+      function replaceRuntimeVariables(text) {
+        return text
+          .replaceAll("{{match_id}}", el.matchId.value.trim())
+          .replaceAll("{{chooser_id}}", el.chooserId.value.trim())
+          .replaceAll("{{p1_battlefield_id}}", el.p1BattlefieldId.value.trim())
+          .replaceAll("{{p2_battlefield_id}}", el.p2BattlefieldId.value.trim());
       }
 
       function buildUrl(endpoint) {
@@ -330,7 +745,7 @@ Sideboard:
       }
 
       function setFeedback(stepId, ok, message) {
-        const feedbackEl = document.getElementById(`feedback-${stepId}`);
+        const feedbackEl = elementsByStepId[stepId]?.feedbackEl;
         if (!feedbackEl) return;
 
         feedbackEl.textContent = message;
@@ -339,14 +754,14 @@ Sideboard:
       }
 
       function updateChecklist() {
-        MANDATORY_STEPS.forEach((stepId) => {
+        MANDATORY_SETUP_STEPS.forEach((stepId) => {
           const checkEl = document.getElementById(`check-${stepId}`);
           if (checkEl) {
             checkEl.checked = !!state.done[stepId];
           }
         });
 
-        const allDone = MANDATORY_STEPS.every((stepId) => state.done[stepId]);
+        const allDone = MANDATORY_SETUP_STEPS.every((stepId) => state.done[stepId]);
         el.readySummary.textContent = allDone
           ? "All mandatory steps complete. Match should be ready."
           : "Ready checklist incomplete.";
@@ -358,127 +773,123 @@ Sideboard:
         return path.split(".").reduce((acc, part) => (acc == null ? undefined : acc[part]), obj);
       }
 
-      function evaluateStep(stepId, response, parsedBody) {
-        if (!response.ok) {
-          return { ok: false, message: `HTTP ${response.status}` };
+      function captureBridgeValues(stepId, parsedBody) {
+        if (!parsedBody || !parsedBody.data) {
+          return;
         }
 
-        if (stepId === "create") {
+        if (stepId === "setup_create") {
+          if (parsedBody.data.id) {
+            el.matchId.value = parsedBody.data.id;
+          }
+          if (parsedBody.data.startingPlayerChooserId) {
+            el.chooserId.value = parsedBody.data.startingPlayerChooserId;
+          }
+        }
+
+        if (stepId === "zones_read_ready") {
+          const battlefieldIds = getValue(parsedBody, "data.currentGame.gameplay.zones.shared.battlefield") || [];
+          const p1 = battlefieldIds.find((id) => typeof id === "string" && id.includes("setup:battlefield:p1:"));
+          const p2 = battlefieldIds.find((id) => typeof id === "string" && id.includes("setup:battlefield:p2:"));
+
+          if (p1) {
+            el.p1BattlefieldId.value = p1;
+          }
+          if (p2) {
+            el.p2BattlefieldId.value = p2;
+          }
+        }
+      }
+
+      function evaluateStep(step, response, parsedBody) {
+        if (!step.expectedStatus.includes(response.status)) {
+          return {
+            ok: false,
+            message: `HTTP ${response.status} (expected ${step.expectedStatus.join(" or ")})`,
+          };
+        }
+
+        if (step.id === "setup_create") {
           const hasId = !!getValue(parsedBody, "data.id");
           const setupPending = getValue(parsedBody, "data.status") === "setup_pending";
           if (!hasId || !setupPending) {
-            return { ok: false, message: `HTTP ${response.status} but payload shape/status unexpected` };
+            return { ok: false, message: `HTTP ${response.status} but create response is missing expected fields` };
           }
-          return { ok: true, message: `Success (HTTP ${response.status})` };
         }
 
-        if (stepId === "championP1") {
+        if (step.id === "setup_champion_p1") {
           const chosen = getValue(parsedBody, "data.currentGame.chosenChampionByPlayer.p1");
-          return chosen
-            ? { ok: true, message: `Success (HTTP ${response.status})` }
-            : { ok: false, message: `HTTP ${response.status} but p1 champion not set` };
+          if (!chosen) {
+            return { ok: false, message: `HTTP ${response.status} but p1 champion not set` };
+          }
         }
 
-        if (stepId === "championP2") {
+        if (step.id === "setup_champion_p2") {
           const chosen = getValue(parsedBody, "data.currentGame.chosenChampionByPlayer.p2");
-          return chosen
-            ? { ok: true, message: `Success (HTTP ${response.status})` }
-            : { ok: false, message: `HTTP ${response.status} but p2 champion not set` };
+          if (!chosen) {
+            return { ok: false, message: `HTTP ${response.status} but p2 champion not set` };
+          }
         }
 
-        if (stepId === "battlefieldP1") {
-          const value = getValue(parsedBody, "data.currentGame.selectedBattlefieldsByPlayer.p1");
-          return value
-            ? { ok: true, message: `Success (HTTP ${response.status})` }
-            : { ok: false, message: `HTTP ${response.status} but p1 battlefield not set` };
+        if (step.id === "setup_battlefield_p1") {
+          const selected = getValue(parsedBody, "data.currentGame.selectedBattlefieldsByPlayer.p1");
+          if (!selected) {
+            return { ok: false, message: `HTTP ${response.status} but p1 battlefield not set` };
+          }
         }
 
-        if (stepId === "battlefieldP2") {
-          const value = getValue(parsedBody, "data.currentGame.selectedBattlefieldsByPlayer.p2");
-          return value
-            ? { ok: true, message: `Success (HTTP ${response.status})` }
-            : { ok: false, message: `HTTP ${response.status} but p2 battlefield not set` };
+        if (step.id === "setup_battlefield_p2") {
+          const selected = getValue(parsedBody, "data.currentGame.selectedBattlefieldsByPlayer.p2");
+          if (!selected) {
+            return { ok: false, message: `HTTP ${response.status} but p2 battlefield not set` };
+          }
         }
 
-        if (stepId === "startingPlayer") {
-          const statusReady = getValue(parsedBody, "data.status") === "ready";
+        if (step.id === "setup_starting_player") {
+          const ready = getValue(parsedBody, "data.status") === "ready";
           const startingPlayerId = getValue(parsedBody, "data.currentGame.startingPlayerId");
-          return statusReady && startingPlayerId
-            ? { ok: true, message: `Success (HTTP ${response.status})` }
-            : { ok: false, message: `HTTP ${response.status} but match is not ready` };
+          if (!ready || !startingPlayerId) {
+            return { ok: false, message: `HTTP ${response.status} but match is not ready` };
+          }
         }
 
-        if (stepId === "verify") {
-          const statusReady = getValue(parsedBody, "data.status") === "ready";
-          return statusReady
-            ? { ok: true, message: `Success (HTTP ${response.status}) match is ready` }
-            : { ok: false, message: `HTTP ${response.status} status is not ready` };
+        if (step.id === "setup_verify") {
+          const ready = getValue(parsedBody, "data.status") === "ready";
+          if (!ready) {
+            return { ok: false, message: `HTTP ${response.status} but match status is not ready` };
+          }
         }
 
-        return { ok: true, message: `Success (HTTP ${response.status})` };
-      }
+        if (step.id === "zones_read_ready") {
+          const ready = getValue(parsedBody, "data.currentGame.status") === "ready";
+          const battlefieldCount = (getValue(parsedBody, "data.currentGame.gameplay.zones.shared.battlefield") || []).length;
+          if (!ready || battlefieldCount !== 2) {
+            return { ok: false, message: `HTTP ${response.status} but game is not ready or battlefields were not found` };
+          }
+        }
 
-      function setDefaults() {
-        el.payloads.validate.value = JSON.stringify(
-          { deckList: DECK_LIST },
-          null,
-          2,
-        );
-
-        el.payloads.create.value = JSON.stringify(
-          {
-            format: "best-of-3",
-            players: [
-              { id: "p1", displayName: "Alice" },
-              { id: "p2", displayName: "Bob" },
-            ],
-            decksByPlayer: {
-              p1: DECK_LIST,
-              p2: DECK_LIST,
-            },
-          },
-          null,
-          2,
-        );
-
-        el.payloads.championP1.value = JSON.stringify({ playerId: "p1" }, null, 2);
-        el.payloads.championP2.value = JSON.stringify({ playerId: "p2" }, null, 2);
-        el.payloads.battlefieldP1.value = JSON.stringify(
-          { playerId: "p1", battlefield: "Fortified Position" },
-          null,
-          2,
-        );
-        el.payloads.battlefieldP2.value = JSON.stringify(
-          { playerId: "p2", battlefield: "Grove of the God-Willow" },
-          null,
-          2,
-        );
-        el.payloads.startingPlayer.value = JSON.stringify(
-          { playerId: "{{chooser_id}}", startingPlayerId: "p1" },
-          null,
-          2,
-        );
-
-        updateChecklist();
+        return { ok: true, message: `Expected HTTP ${response.status}` };
       }
 
       async function runStep(stepId) {
-        const step = steps[stepId];
+        const step = stepById[stepId];
         if (!step) return;
 
         const url = buildUrl(step.endpoint);
         const init = { method: step.method, headers: {} };
 
         if (step.method !== "GET") {
-          const payloadRaw = el.payloads[step.payloadElId].value;
+          const payloadEl = elementsByStepId[step.id]?.payloadEl;
+          const payloadRaw = payloadEl ? payloadEl.value : "{}";
+          const preparedPayload = step.resolvePayloadVars ? replaceRuntimeVariables(payloadRaw) : payloadRaw;
           let payload;
 
           try {
-            payload = JSON.parse(payloadRaw);
+            payload = JSON.parse(preparedPayload);
           } catch (error) {
-            setFeedback(stepId, false, `Failed: invalid JSON (${error.message})`);
-            if (MANDATORY_STEPS.includes(stepId)) {
-              state.done[stepId] = false;
+            setFeedback(step.id, false, `Failed: invalid JSON (${error.message})`);
+            if (step.mandatory) {
+              state.done[step.id] = false;
               updateChecklist();
             }
             return;
@@ -492,51 +903,69 @@ Sideboard:
           const response = await fetch(url, init);
           const raw = await response.text();
 
-          console.log(`[${stepId}] ${step.method} ${url}`);
-          console.log(`[${stepId}] status`, response.status);
-          console.log(`[${stepId}] raw response`, raw);
+          console.log(`[${step.id}] ${step.method} ${url}`);
+          console.log(`[${step.id}] status`, response.status);
+          console.log(`[${step.id}] raw response`, raw);
 
           el.lastResponse.textContent = `${step.method} ${url}\nstatus: ${response.status}\n\n${raw}`;
 
-          let parsed;
+          let parsed = null;
           try {
             parsed = JSON.parse(raw);
           } catch {
             parsed = null;
           }
 
-          if (stepId === "create" && parsed && parsed.data) {
-            if (parsed.data.id) {
-              el.matchId.value = parsed.data.id;
-            }
-            if (parsed.data.startingPlayerChooserId) {
-              el.chooserId.value = parsed.data.startingPlayerChooserId;
-            }
-          }
+          captureBridgeValues(step.id, parsed);
 
-          const evaluation = evaluateStep(stepId, response, parsed);
-          setFeedback(stepId, evaluation.ok, `${evaluation.ok ? "OK" : "Failed"}: ${evaluation.message}`);
+          const evaluation = evaluateStep(step, response, parsed);
+          setFeedback(step.id, evaluation.ok, `${evaluation.ok ? "OK" : "Failed"}: ${evaluation.message}`);
 
-          if (MANDATORY_STEPS.includes(stepId)) {
-            state.done[stepId] = evaluation.ok;
+          if (step.mandatory) {
+            state.done[step.id] = evaluation.ok;
           }
           updateChecklist();
         } catch (error) {
-          console.log(`[${stepId}] request failed`, error);
+          console.log(`[${step.id}] request failed`, error);
           el.lastResponse.textContent = `Request failed: ${error.message}`;
-          setFeedback(stepId, false, `Failed: ${error.message}`);
-          if (MANDATORY_STEPS.includes(stepId)) {
-            state.done[stepId] = false;
+          setFeedback(step.id, false, `Failed: ${error.message}`);
+          if (step.mandatory) {
+            state.done[step.id] = false;
           }
           updateChecklist();
         }
       }
 
-      document.querySelectorAll("button[data-step-id]").forEach((button) => {
-        button.addEventListener("click", () => runStep(button.dataset.stepId));
-      });
+      function initTabs() {
+        const tabButtons = document.querySelectorAll(".tab-button");
+        const tabPanels = document.querySelectorAll(".tab-panel");
 
-      setDefaults();
+        tabButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const target = button.getAttribute("data-tab");
+
+            tabButtons.forEach((btn) => btn.classList.remove("active"));
+            tabPanels.forEach((panel) => panel.classList.remove("active"));
+
+            button.classList.add("active");
+            document.getElementById(`tab-${target}`)?.classList.add("active");
+          });
+        });
+      }
+
+      function initStepButtons() {
+        document.body.addEventListener("click", (event) => {
+          const button = event.target.closest("button[data-step-id]");
+          if (!button) return;
+          runStep(button.getAttribute("data-step-id"));
+        });
+      }
+
+      renderSteps(setupSteps, el.setupSteps);
+      renderSteps(zonesSteps, el.zonesSteps);
+      initTabs();
+      initStepButtons();
+      updateChecklist();
     </script>
   </body>
 </html>
