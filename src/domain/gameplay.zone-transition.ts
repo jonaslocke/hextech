@@ -102,13 +102,17 @@ export function placeCardIntoZone(
   }
 
   const destinationBucket = resolveZoneBucket(next, input.destination);
-  enforceDestinationRules(next, {
+  const destinationRulesInput: MoveCardBetweenZonesInput = {
     cardId,
     cardControllerId,
     source: input.destination,
     destination: input.destination,
-    battlefieldControllerById: input.battlefieldControllerById,
-  });
+  };
+  if (input.battlefieldControllerById) {
+    destinationRulesInput.battlefieldControllerById =
+      input.battlefieldControllerById;
+  }
+  enforceDestinationRules(next, destinationRulesInput);
 
   destinationBucket.push(cardId);
 
@@ -158,7 +162,7 @@ function enforceDestinationRules(
     );
   }
 
-  const destinationBucket = resolveZoneBucket(gameplay, destination, true);
+  const destinationBucket = resolveZoneBucket(gameplay, destination);
   const maxHiddenCapacity = resolveHiddenCapacityForBattlefield(gameplay, battlefieldId);
   if (destinationBucket.length + 1 > maxHiddenCapacity) {
     throw new ValidationError(

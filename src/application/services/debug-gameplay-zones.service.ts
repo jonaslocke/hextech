@@ -30,12 +30,16 @@ export class DebugGameplayZonesService {
     const match = await this.matchViewLoader.getMatch(input.matchId);
     const game = await this.getReadyCurrentGame(match.id);
 
-    const nextGameplay = placeCardIntoZone(game.gameplay, {
+    const placeInput = {
       cardId: input.cardId,
       cardControllerId: input.cardControllerId,
       destination: input.destination,
-      battlefieldControllerById: input.battlefieldControllerById,
-    });
+      ...(input.battlefieldControllerById
+        ? { battlefieldControllerById: input.battlefieldControllerById }
+        : {}),
+    };
+
+    const nextGameplay = placeCardIntoZone(game.gameplay, placeInput);
 
     await this.saveUpdatedGame(game, nextGameplay);
     return this.matchViewLoader.build(match);
@@ -45,14 +49,18 @@ export class DebugGameplayZonesService {
     const match = await this.matchViewLoader.getMatch(input.matchId);
     const game = await this.getReadyCurrentGame(match.id);
 
-    const nextGameplay = moveCardBetweenZones(game.gameplay, {
+    const moveInput = {
       cardId: input.cardId,
       cardControllerId: input.cardControllerId,
-      cardOwnerId: input.cardOwnerId,
       source: input.source,
       destination: input.destination,
-      battlefieldControllerById: input.battlefieldControllerById,
-    });
+      ...(input.cardOwnerId ? { cardOwnerId: input.cardOwnerId } : {}),
+      ...(input.battlefieldControllerById
+        ? { battlefieldControllerById: input.battlefieldControllerById }
+        : {}),
+    };
+
+    const nextGameplay = moveCardBetweenZones(game.gameplay, moveInput);
 
     await this.saveUpdatedGame(game, nextGameplay);
     return this.matchViewLoader.build(match);
@@ -62,11 +70,13 @@ export class DebugGameplayZonesService {
     const match = await this.matchViewLoader.getMatch(input.matchId);
     const game = await this.getReadyCurrentGame(match.id);
 
-    const result = cleanupHiddenCardsAfterControlChange(game.gameplay, {
+    const cleanupInput = {
       battlefieldControllerById: input.battlefieldControllerById,
       cardControllerById: input.cardControllerById,
-      cardOwnerById: input.cardOwnerById,
-    });
+      ...(input.cardOwnerById ? { cardOwnerById: input.cardOwnerById } : {}),
+    };
+
+    const result = cleanupHiddenCardsAfterControlChange(game.gameplay, cleanupInput);
 
     await this.saveUpdatedGame(game, result.gameplay);
     return this.matchViewLoader.build(match);

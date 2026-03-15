@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { resolveCatalogCardByName } from "./card-catalog";
+import type { CardType } from "./zone-policy";
 import { ValidationError } from "../shared/errors";
 
 export interface ValidatedDeck {
@@ -17,6 +19,8 @@ export interface DeckValidationResult {
 export interface RuntimeDeckCardInstance {
   id: string;
   name: string;
+  publicCode: string;
+  cardType: CardType;
   source: "main_deck" | "rune_deck";
 }
 
@@ -456,10 +460,19 @@ export class DeckValidator {
     let sequence = 1;
 
     for (const entry of entries) {
+      const resolvedCard = resolveCatalogCardByName(entry.name);
+      if (!resolvedCard) {
+        throw new ValidationError(
+          `Card "${entry.name}" was not found in local set data.`,
+        );
+      }
+
       for (let copy = 0; copy < entry.quantity; copy += 1) {
         expanded.push({
           id: `${registrationRef}:${playerId}:${source}:${String(sequence).padStart(3, "0")}`,
           name: entry.name,
+          publicCode: resolvedCard.publicCode,
+          cardType: resolvedCard.cardType,
           source,
         });
         sequence += 1;

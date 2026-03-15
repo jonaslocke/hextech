@@ -1,4 +1,5 @@
 import type { GameplayRuntime } from "./gameplay";
+import type { CardType } from "./zone-policy";
 
 export type GameStatus =
   | "setup_pending"
@@ -10,6 +11,8 @@ export type DeckCardSource = "main_deck" | "rune_deck";
 export interface DeckCardInstance {
   id: string;
   name: string;
+  publicCode: string;
+  cardType: CardType;
   source: DeckCardSource;
 }
 
