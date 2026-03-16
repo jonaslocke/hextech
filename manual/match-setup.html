@@ -156,7 +156,7 @@
       <div class="main">
         <div class="tabs">
           <button class="tab-button active" data-tab="setup">Match Setup Flow</button>
-          <button class="tab-button" data-tab="zones">Zones Smoke Flow</button>
+          <button class="tab-button" data-tab="zones">Zones Policy Flow</button>
         </div>
 
         <div class="tab-panel active" id="tab-setup">
@@ -169,8 +169,8 @@
 
         <div class="tab-panel" id="tab-zones">
           <section>
-            <strong>Goal:</strong> Run zone debug smoke against a ready match.<br />
-            <span class="flow-note">Bridge: reuses <code>match_id</code> from setup flow. Run Zones Step 1 to auto-fill battlefield ids.</span>
+            <strong>Goal:</strong> Validate zone-change policy using move-only checks against a ready match.<br />
+            <span class="flow-note">Bridge: reuses <code>match_id</code> from setup flow. Run Zones Step 1 to capture battlefield and card ids.</span>
           </section>
           <div id="zones-steps"></div>
         </div>
@@ -363,310 +363,418 @@ Sideboard:
         {
           id: "zones_read_ready",
           order: 1,
-          title: "Read Current Ready Game and Capture Battlefield IDs",
+          title: "Read Current Ready Game and Capture Runtime Card IDs",
           method: "GET",
           endpoint: "/matches/{{match_id}}",
           expectedStatus: [200],
         },
         {
-          id: "zones_place_unit_battlefield",
+          id: "zones_main_deck_block_rune",
           order: 2,
-          title: "Place Unit in Battlefield Zone (should pass)",
+          title: "Policy: rune -> main_deck (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
           payload: {
-            cardId: "manual_unit_001",
+            cardId: "{{card_rune_01}}",
             cardControllerId: "p1",
-            destination: { kind: "battlefield" },
-          },
-          expectedStatus: [201],
-        },
-        {
-          id: "zones_place_same_again",
-          order: 3,
-          title: "Place Same Card Again (should fail)",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
-          payload: {
-            cardId: "manual_unit_001",
-            cardControllerId: "p1",
-            destination: { kind: "chain" },
+            cardType: "rune",
+            source: { kind: "player_zone", playerId: "p1", zone: "runeDeck" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
           },
           expectedStatus: [400],
         },
         {
-          id: "zones_move_unit_base_cards",
-          order: 4,
-          title: "Move Unit Battlefield -> Own Base Cards (should pass)",
+          id: "zones_main_deck_allow_spell",
+          order: 3,
+          title: "Policy: spell -> main_deck (allowed)",
           method: "POST",
           endpoint: "/matches/{{match_id}}/debug/zones/move",
           payload: {
-            cardId: "manual_unit_001",
+            cardId: "{{card_rune_01}}",
             cardControllerId: "p1",
-            source: { kind: "battlefield" },
+            cardType: "spell",
+            source: { kind: "player_zone", playerId: "p1", zone: "runeDeck" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+          },
+          expectedStatus: [201],
+        },
+        {
+          id: "zones_rune_deck_allow_rune",
+          order: 4,
+          title: "Policy: rune -> rune_deck (allowed)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_main_01}}",
+            cardControllerId: "p1",
+            cardType: "rune",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "runeDeck" },
+          },
+          expectedStatus: [201],
+        },
+        {
+          id: "zones_rune_deck_block_unit",
+          order: 5,
+          title: "Policy: unit -> rune_deck (blocked)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_main_02}}",
+            cardControllerId: "p1",
+            cardType: "unit",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "runeDeck" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_hand_allow_unit",
+          order: 6,
+          title: "Policy: unit -> hand (allowed)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_main_03}}",
+            cardControllerId: "p1",
+            cardType: "unit",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "hand" },
+          },
+          expectedStatus: [201],
+        },
+        {
+          id: "zones_hand_block_rune",
+          order: 7,
+          title: "Policy: rune -> hand (blocked)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_main_04}}",
+            cardControllerId: "p1",
+            cardType: "rune",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "hand" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_champion_to_base_allowed",
+          order: 8,
+          title: "Rule: chosen champion champion_zone -> base_cards (allowed)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_champion_01}}",
+            cardControllerId: "p1",
+            cardType: "unit",
+            source: { kind: "player_zone", playerId: "p1", zone: "championZone" },
             destination: { kind: "base_cards", playerId: "p1" },
           },
           expectedStatus: [201],
         },
         {
-          id: "zones_place_rune_own_base",
-          order: 5,
-          title: "Place Rune in Own Base Runes (should pass)",
+          id: "zones_champion_return_blocked",
+          order: 9,
+          title: "Rule: chosen champion base_cards -> champion_zone (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
           payload: {
-            cardId: "manual_rune_001",
+            cardId: "{{card_champion_01}}",
             cardControllerId: "p1",
+            cardType: "unit",
+            source: { kind: "base_cards", playerId: "p1" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "championZone" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_champion_regular_unit_blocked",
+          order: 10,
+          title: "Rule: regular unit -> champion_zone (blocked)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_main_05}}",
+            cardControllerId: "p1",
+            cardType: "unit",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "championZone" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_champion_block_spell",
+          order: 11,
+          title: "Policy: spell -> champion_zone (blocked)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_main_06}}",
+            cardControllerId: "p1",
+            cardType: "spell",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "championZone" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_champion_block_capacity",
+          order: 12,
+          title: "Rule: second regular unit -> champion_zone (blocked)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_main_07}}",
+            cardControllerId: "p1",
+            cardType: "unit",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "championZone" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_legend_block_out",
+          order: 13,
+          title: "Policy: legend_zone -> hand (blocked)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_legend_01}}",
+            cardControllerId: "p1",
+            cardType: "legend",
+            source: { kind: "player_zone", playerId: "p1", zone: "legendZone" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "hand" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_legend_block_unit",
+          order: 14,
+          title: "Policy: unit -> legend_zone (blocked)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_main_08}}",
+            cardControllerId: "p1",
+            cardType: "unit",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "legendZone" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_base_allow_unit",
+          order: 15,
+          title: "Policy: unit -> base_cards (allowed)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_main_09}}",
+            cardControllerId: "p1",
+            cardType: "unit",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "base_cards", playerId: "p1" },
+          },
+          expectedStatus: [201],
+        },
+        {
+          id: "zones_base_allow_rune",
+          order: 16,
+          title: "Policy: rune -> base_runes (allowed)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_rune_02}}",
+            cardControllerId: "p1",
+            cardType: "rune",
+            source: { kind: "player_zone", playerId: "p1", zone: "runeDeck" },
             destination: { kind: "base_runes", playerId: "p1" },
           },
           expectedStatus: [201],
         },
         {
-          id: "zones_place_card_opponent_base",
-          order: 6,
-          title: "Place Card in Opponent Base Cards (should fail)",
+          id: "zones_base_block_spell",
+          order: 17,
+          title: "Policy: spell -> base_cards (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
           payload: {
-            cardId: "manual_unit_002",
+            cardId: "{{card_main_10}}",
             cardControllerId: "p1",
+            cardType: "spell",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "base_cards", playerId: "p1" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_base_block_opponent",
+          order: 18,
+          title: "Ownership: unit -> opponent base_cards (blocked)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_main_11}}",
+            cardControllerId: "p1",
+            cardType: "unit",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
             destination: { kind: "base_cards", playerId: "p2" },
           },
           expectedStatus: [400],
         },
         {
-          id: "zones_place_rune_opponent_base",
-          order: 7,
-          title: "Place Rune in Opponent Base Runes (should fail)",
+          id: "zones_battlefield_allow_unit",
+          order: 19,
+          title: "Policy: unit -> battlefield (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
           payload: {
-            cardId: "manual_rune_002",
+            cardId: "{{card_main_12}}",
             cardControllerId: "p1",
-            destination: { kind: "base_runes", playerId: "p2" },
+            cardType: "unit",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "battlefield" },
+          },
+          expectedStatus: [201],
+        },
+        {
+          id: "zones_battlefield_block_rune",
+          order: 20,
+          title: "Policy: rune -> battlefield (blocked)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_main_13}}",
+            cardControllerId: "p1",
+            cardType: "rune",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "battlefield" },
           },
           expectedStatus: [400],
         },
         {
-          id: "zones_place_unknown_player_zone",
-          order: 8,
-          title: "Place Card in Unknown Player Zone (should fail)",
+          id: "zones_chain_allow_spell",
+          order: 21,
+          title: "Policy: spell -> chain (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
           payload: {
-            cardId: "manual_spell_001",
+            cardId: "{{card_main_16}}",
             cardControllerId: "p1",
-            destination: { kind: "player_zone", playerId: "ghost", zone: "hand" },
-          },
-          expectedStatus: [400],
-        },
-        {
-          id: "zones_place_chain",
-          order: 9,
-          title: "Place Card in Chain Zone (should pass)",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
-          payload: {
-            cardId: "manual_spell_002",
-            cardControllerId: "p1",
+            cardType: "spell",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
             destination: { kind: "chain" },
           },
           expectedStatus: [201],
         },
         {
-          id: "zones_move_same_zone",
-          order: 10,
-          title: "Move Card to Same Source/Destination Zone (should fail)",
+          id: "zones_chain_block_rune",
+          order: 22,
+          title: "Policy: rune -> chain (blocked)",
           method: "POST",
           endpoint: "/matches/{{match_id}}/debug/zones/move",
           payload: {
-            cardId: "manual_spell_002",
+            cardId: "{{card_main_17}}",
             cardControllerId: "p1",
-            source: { kind: "chain" },
+            cardType: "rune",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
             destination: { kind: "chain" },
           },
           expectedStatus: [400],
         },
         {
-          id: "zones_move_missing_card",
-          order: 11,
-          title: "Move Missing Card from Source (should fail)",
+          id: "zones_trash_allow_rune",
+          order: 23,
+          title: "Policy: rune -> trash (allowed)",
           method: "POST",
           endpoint: "/matches/{{match_id}}/debug/zones/move",
           payload: {
-            cardId: "manual_missing_001",
+            cardId: "{{card_main_20}}",
             cardControllerId: "p1",
-            source: { kind: "battlefield" },
+            cardType: "rune",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
             destination: { kind: "player_zone", playerId: "p1", zone: "trash" },
           },
-          expectedStatus: [400],
-        },
-        {
-          id: "zones_place_hidden_unresolved",
-          order: 12,
-          title: "Place Hidden with Unresolved Battlefield Variable (should fail)",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
-          payload: {
-            cardId: "manual_hidden_unknown_001",
-            cardControllerId: "p1",
-            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
-            battlefieldControllerById: { "{{p1_battlefield_id}}": "p1" },
-          },
-          expectedStatus: [400],
-        },
-        {
-          id: "zones_override_hidden_unresolved",
-          order: 13,
-          title: "Override Hidden Capacity with Unresolved Battlefield Variable (should fail)",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/rules",
-          payload: {
-            hiddenCapacityByBattlefield: { "{{p1_battlefield_id}}": 2 },
-          },
-          expectedStatus: [400],
-        },
-        {
-          id: "zones_place_hidden_missing_map",
-          order: 14,
-          title: "Place Hidden Without Battlefield Controller Map (should fail)",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
-          payload: {
-            cardId: "manual_hidden_missing_map_001",
-            cardControllerId: "p1",
-            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
-          },
-          expectedStatus: [400],
-          resolvePayloadVars: true,
-        },
-        {
-          id: "zones_place_hidden_wrong_controller",
-          order: 15,
-          title: "Place Hidden with Wrong Battlefield Controller (should fail)",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
-          payload: {
-            cardId: "manual_hidden_wrong_controller_001",
-            cardControllerId: "p1",
-            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
-            battlefieldControllerById: { "{{p1_battlefield_id}}": "p2" },
-          },
-          expectedStatus: [400],
-          resolvePayloadVars: true,
-        },
-        {
-          id: "zones_place_first_hidden_real",
-          order: 16,
-          title: "Place First Hidden with Real Battlefield ID (should pass)",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
-          payload: {
-            cardId: "manual_hidden_001",
-            cardControllerId: "p1",
-            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
-            battlefieldControllerById: { "{{p1_battlefield_id}}": "p1" },
-          },
           expectedStatus: [201],
-          resolvePayloadVars: true,
         },
         {
-          id: "zones_place_second_hidden_without_override",
-          order: 17,
-          title: "Place Second Hidden Without Override (should fail)",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
-          payload: {
-            cardId: "manual_hidden_002",
-            cardControllerId: "p1",
-            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
-            battlefieldControllerById: { "{{p1_battlefield_id}}": "p1" },
-          },
-          expectedStatus: [400],
-          resolvePayloadVars: true,
-        },
-        {
-          id: "zones_override_hidden_capacity_2",
-          order: 18,
-          title: "Override Hidden Capacity to 2 (should pass)",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/rules",
-          payload: {
-            hiddenCapacityByBattlefield: { "{{p1_battlefield_id}}": 2 },
-          },
-          expectedStatus: [201],
-          resolvePayloadVars: true,
-        },
-        {
-          id: "zones_place_second_hidden_again",
-          order: 19,
-          title: "Place Second Hidden Again (should pass)",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
-          payload: {
-            cardId: "manual_hidden_002",
-            cardControllerId: "p1",
-            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
-            battlefieldControllerById: { "{{p1_battlefield_id}}": "p1" },
-          },
-          expectedStatus: [201],
-          resolvePayloadVars: true,
-        },
-        {
-          id: "zones_move_hidden_to_hand",
-          order: 20,
-          title: "Synthetic Reveal Probe: Move Hidden -> Hand (should pass and reveal)",
+          id: "zones_banish_allow_gear",
+          order: 24,
+          title: "Policy: gear -> banishment (allowed)",
           method: "POST",
           endpoint: "/matches/{{match_id}}/debug/zones/move",
           payload: {
-            cardId: "manual_hidden_002",
+            cardId: "{{card_main_18}}",
             cardControllerId: "p1",
-            cardOwnerId: "p1",
-            source: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
-            destination: { kind: "player_zone", playerId: "p1", zone: "hand" },
+            cardType: "gear",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "banishment" },
           },
           expectedStatus: [201],
-          resolvePayloadVars: true,
         },
         {
-          id: "zones_cleanup_hidden",
-          order: 21,
-          title: "Cleanup Hidden on Control Loss (should pass)",
+          id: "zones_banish_block_rune",
+          order: 25,
+          title: "Policy: rune -> banishment (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/cleanup-hidden",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
           payload: {
-            battlefieldControllerById: { "{{p1_battlefield_id}}": "p2" },
-            cardControllerById: { manual_hidden_001: "p1" },
-            cardOwnerById: { manual_hidden_001: "p1" },
-          },
-          expectedStatus: [201],
-          resolvePayloadVars: true,
-        },
-        {
-          id: "zones_place_hidden_game_end",
-          order: 22,
-          title: "Place New Hidden Card for Game-End Reveal (should pass)",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/place",
-          payload: {
-            cardId: "manual_hidden_003",
+            cardId: "{{card_main_19}}",
             cardControllerId: "p1",
+            cardType: "rune",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "player_zone", playerId: "p1", zone: "banishment" },
+          },
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_facedown_allow_battlefield",
+          order: 26,
+          title: "Facedown: battlefield -> facedown (allowed)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{p1_battlefield_id}}",
+            cardControllerId: "p1",
+            cardType: "battlefield",
+            source: { kind: "battlefield" },
             destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
             battlefieldControllerById: { "{{p1_battlefield_id}}": "p1" },
           },
           expectedStatus: [201],
-          resolvePayloadVars: true,
         },
         {
-          id: "zones_reveal_game_end",
-          order: 23,
-          title: "Reveal Facedown Cards on Game End (should pass)",
+          id: "zones_facedown_block_capacity",
+          order: 27,
+          title: "Facedown: second card exceeds default capacity (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/reveal-game-end",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
           payload: {
-            cardOwnerById: { manual_hidden_003: "p1" },
+            cardId: "{{card_main_14}}",
+            cardControllerId: "p1",
+            cardType: "unit",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
+            battlefieldControllerById: { "{{p1_battlefield_id}}": "p1" },
           },
-          expectedStatus: [201],
+          expectedStatus: [400],
+        },
+        {
+          id: "zones_facedown_block_controller",
+          order: 28,
+          title: "Facedown: wrong controller map (blocked)",
+          method: "POST",
+          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          payload: {
+            cardId: "{{card_main_15}}",
+            cardControllerId: "p1",
+            cardType: "unit",
+            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
+            destination: { kind: "facedown", battlefieldId: "{{p1_battlefield_id}}" },
+            battlefieldControllerById: { "{{p1_battlefield_id}}": "p2" },
+          },
+          expectedStatus: [400],
         },
       ];
 
@@ -676,6 +784,7 @@ Sideboard:
 
       const state = {
         done: Object.fromEntries(MANDATORY_SETUP_STEPS.map((id) => [id, false])),
+        runtime: {},
       };
 
       const el = {
@@ -732,11 +841,27 @@ Sideboard:
       }
 
       function replaceRuntimeVariables(text) {
-        return text
-          .replaceAll("{{match_id}}", el.matchId.value.trim())
-          .replaceAll("{{chooser_id}}", el.chooserId.value.trim())
-          .replaceAll("{{p1_battlefield_id}}", el.p1BattlefieldId.value.trim())
-          .replaceAll("{{p2_battlefield_id}}", el.p2BattlefieldId.value.trim());
+        const runtimeMap = {
+          match_id: el.matchId.value.trim(),
+          chooser_id: el.chooserId.value.trim(),
+          p1_battlefield_id: el.p1BattlefieldId.value.trim(),
+          p2_battlefield_id: el.p2BattlefieldId.value.trim(),
+          ...state.runtime,
+        };
+
+        return text.replace(/\{\{([^}]+)\}\}/g, (_match, rawKey) => {
+          const key = String(rawKey).trim();
+          if (!key) {
+            return _match;
+          }
+
+          const value = runtimeMap[key];
+          if (value === undefined || value === null || value === "") {
+            return _match;
+          }
+
+          return String(value);
+        });
       }
 
       function buildUrl(endpoint) {
@@ -798,6 +923,34 @@ Sideboard:
           if (p2) {
             el.p2BattlefieldId.value = p2;
           }
+
+          const p1MainDeck = getValue(parsedBody, "data.currentGame.gameplay.zones.players.p1.mainDeck") || [];
+          const p1RuneDeck = getValue(parsedBody, "data.currentGame.gameplay.zones.players.p1.runeDeck") || [];
+          const p1Champion = getValue(parsedBody, "data.currentGame.gameplay.zones.players.p1.championZone") || [];
+          const p1Legend = getValue(parsedBody, "data.currentGame.gameplay.zones.players.p1.legendZone") || [];
+
+          const runtime = {};
+          for (let index = 0; index < 20; index += 1) {
+            const cardId = p1MainDeck[index];
+            if (cardId) {
+              runtime[`card_main_${String(index + 1).padStart(2, "0")}`] = cardId;
+            }
+          }
+
+          if (p1RuneDeck[0]) {
+            runtime.card_rune_01 = p1RuneDeck[0];
+          }
+          if (p1RuneDeck[1]) {
+            runtime.card_rune_02 = p1RuneDeck[1];
+          }
+          if (p1Champion[0]) {
+            runtime.card_champion_01 = p1Champion[0];
+          }
+          if (p1Legend[0]) {
+            runtime.card_legend_01 = p1Legend[0];
+          }
+
+          state.runtime = runtime;
         }
       }
 
@@ -881,7 +1034,8 @@ Sideboard:
         if (step.method !== "GET") {
           const payloadEl = elementsByStepId[step.id]?.payloadEl;
           const payloadRaw = payloadEl ? payloadEl.value : "{}";
-          const preparedPayload = step.resolvePayloadVars ? replaceRuntimeVariables(payloadRaw) : payloadRaw;
+          const shouldResolveVars = step.resolvePayloadVars !== false;
+          const preparedPayload = shouldResolveVars ? replaceRuntimeVariables(payloadRaw) : payloadRaw;
           let payload;
 
           try {
@@ -969,3 +1123,7 @@ Sideboard:
     </script>
   </body>
 </html>
+
+
+
+
