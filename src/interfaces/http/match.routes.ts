@@ -5,6 +5,7 @@ import { GetMatchService } from "../../application/services/get-match.service";
 import { RecordGameResultService } from "../../application/services/record-game-result.service";
 import { SubmitSetupIntentService } from "../../application/services/submit-setup-intent.service";
 import { DebugGameplayZonesService } from "../../application/services/debug-gameplay-zones.service";
+import { SubmitGameplayIntentService } from "../../application/services/submit-gameplay-intent.service";
 import { InMemoryGameRepository } from "../../infrastructure/repositories/in-memory-game.repository";
 import { InMemoryMatchRepository } from "../../infrastructure/repositories/in-memory-match.repository";
 
@@ -26,12 +27,18 @@ const debugGameplayZonesService = new DebugGameplayZonesService(
   matchRepository,
   gameRepository,
 );
+const submitGameplayIntentService = new SubmitGameplayIntentService(
+  matchRepository,
+  gameRepository,
+  debugGameplayZonesService,
+);
 const matchController = new MatchController(
   createMatchService,
   getMatchService,
   recordGameResultService,
   submitSetupIntentService,
   debugGameplayZonesService,
+  submitGameplayIntentService,
 );
 
 router.post("/matches", matchController.create);
@@ -43,6 +50,7 @@ router.post(
   matchController.selectStartingPlayer,
 );
 router.post("/matches/:id/games", matchController.recordGame);
+router.post("/matches/:id/gameplay/intents", matchController.submitGameplayIntent);
 router.post("/matches/:id/debug/zones/change", matchController.debugZoneChangeCard);
 
 export { router as matchRoutes };
