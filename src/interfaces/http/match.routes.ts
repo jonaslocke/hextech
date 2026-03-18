@@ -43,16 +43,6 @@ router.post(
   matchController.selectStartingPlayer,
 );
 router.post("/matches/:id/games", matchController.recordGame);
-router.post("/matches/:id/debug/zones/place", matchController.debugPlaceZoneCard);
-router.post("/matches/:id/debug/zones/move", matchController.debugMoveZoneCard);
-router.post(
-  "/matches/:id/debug/zones/cleanup-hidden",
-  matchController.debugCleanupHidden,
-);
-router.post(
-  "/matches/:id/debug/zones/reveal-game-end",
-  matchController.debugRevealGameEnd,
-);
-router.post("/matches/:id/debug/zones/rules", matchController.debugUpdateZoneRules);
+router.post("/matches/:id/debug/zones/change", matchController.debugZoneChangeCard);
 
 export { router as matchRoutes };

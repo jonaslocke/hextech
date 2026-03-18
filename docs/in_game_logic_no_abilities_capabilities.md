@@ -21,11 +21,14 @@ Scope policy: implement the core engine without card ability logic for now, whil
 | `Completed` | Facedown reveal on non-public move | Added reveal event emission when facedown cards move to private/secret zones. |
 | `Completed` | Facedown reveal on game end | Added reveal event emission for all facedown cards when game end reveal is invoked. |
 | `Completed` | Gameplay event appending | Added event append helper and event detail payload support for zone/reveal workflows. |
-| `Completed` | Manual zone testing API | Added debug endpoints for manual Postman-like validation of zone behaviors (`place`, `move`, `cleanup-hidden`, `reveal-game-end`, `rules`). |
+| `Completed` | Manual zone testing API | Added debug endpoint for manual Postman-like validation of zone behavior (`ZONE_CHANGE` via `/debug/zones/change`). |
 | `Completed` | Manual zone smoke document | Added manual testing document for ready-game zone validation flow. |
 | `Completed` | Automated zone smoke test | Added end-to-end smoke test that mirrors the manual zone testing flow. |
 | `Completed` | Zone policy matrix contract (PR1) | Added canonical zone policy model in `src/domain/zone-policy.ts` with typed capacities, typed modifier chains, and source-traceable runtime modifiers. |
 | `Completed` | Zone policy contract tests and spec doc (PR1) | Added dedicated contract tests and source-of-truth matrix in `tests/zone-policy.contract.test.ts` and `docs/zone_policy_matrix.md`. |
+| `Pending` | PR5.1 zone-cutover: single mutation entrypoint (`ZONE_CHANGE`) | Remove duplicated mutation surfaces so all post-setup zone mutations flow through one intent/action path. Deprecate non-essential debug mutators (`place`, `cleanup-hidden`, `reveal-game-end`, `rules`) and keep one canonical mutation contract for this phase. |
+| `Pending` | PR5.1 zone-cutover: event semantics unification | Standardize zone mutation event emission so transitions are observable through one consistent event shape and avoid ad-hoc event-only special cases. |
+| `Pending` | PR5.1 zone-cutover: strict card-type authority | For known gameplay card ids, derive `cardType` from server runtime/catalog and reject payload overrides to prevent parallel rule paths during manual/debug flows. |
 | `Pending` | PR9 foundation: gameplay intent API (non-debug) | Add production gameplay intent endpoint/service with a server-authoritative intent router. Clients submit high-level intents (not raw zone mutations), and the server derives legality, ownership, and resulting transitions. |
 | `Pending` | PR9 foundation: intent validation and authorization gates | Centralize legality checks (match/game status, actor membership, turn/timing eligibility placeholders, ownership/controller constraints) before mutating gameplay state. |
 | `Pending` | PR9 foundation: deterministic intent execution contract | Define ordered intent processing and deterministic execution guarantees so future seeded RNG and replay consistency are enforceable at one entrypoint. |

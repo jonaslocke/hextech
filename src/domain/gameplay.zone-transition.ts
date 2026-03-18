@@ -80,10 +80,11 @@ export function moveCardBetweenZones(
   }
 
   enforceDestinationRules(next, input, destinationBucket);
-  next = appendRevealEventForFacedownToNonPublicMove(next, input);
 
   sourceBucket.splice(sourceIndex, 1);
   destinationBucket.push(cardId);
+  next = appendZoneChangedEvent(next, input);
+  next = appendRevealEventForFacedownToNonPublicMove(next, input);
 
   const invariantViolations = collectGameplayZoneInvariantViolations(next);
   if (invariantViolations.length > 0) {
@@ -329,6 +330,31 @@ function appendRevealEventForFacedownToNonPublicMove(
       destination: describeZoneRef(input.destination),
       revealedByPlayerId: rawOwnerId,
     },
+  });
+}
+
+function appendZoneChangedEvent(
+  gameplay: GameplayRuntime,
+  input: MoveCardBetweenZonesInput,
+): GameplayRuntime {
+  const details: Record<string, string> = {
+    cardId: input.cardId.trim(),
+    cardControllerId: input.cardControllerId.trim(),
+    source: describeZoneRef(input.source),
+    destination: describeZoneRef(input.destination),
+  };
+
+  if (input.cardType) {
+    details.cardType = input.cardType;
+  }
+
+  if (input.cardOwnerId?.trim()) {
+    details.cardOwnerId = input.cardOwnerId.trim();
+  }
+
+  return appendGameplayEvent(gameplay, {
+    type: "zone_changed",
+    details,
   });
 }
 

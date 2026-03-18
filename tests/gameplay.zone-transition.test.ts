@@ -21,6 +21,14 @@ describe("Gameplay zone transition primitive", () => {
 
     assert.deepEqual(next.zones.players.p1!.hand, []);
     assert.deepEqual(next.zones.players.p1!.trash, ["card_001"]);
+    assert.equal(next.events.length, 1);
+    assert.equal(next.events[0]?.type, "zone_changed");
+    assert.deepEqual(next.events[0]?.details, {
+      cardId: "card_001",
+      cardControllerId: "p1",
+      source: "player_zone:p1:hand",
+      destination: "player_zone:p1:trash",
+    });
   });
 
   test("rejects moving a card missing from source zone", () => {
@@ -167,9 +175,17 @@ describe("Gameplay zone transition primitive", () => {
 
     assert.deepEqual(next.zones.shared.facedownByBattlefield.bf_1, []);
     assert.deepEqual(next.zones.players.p2!.hand, ["card_hidden_001"]);
-    assert.equal(next.events.length, 1);
-    assert.equal(next.events[0]?.type, "facedown_card_revealed");
+    assert.equal(next.events.length, 2);
+    assert.equal(next.events[0]?.type, "zone_changed");
     assert.deepEqual(next.events[0]?.details, {
+      cardId: "card_hidden_001",
+      cardControllerId: "p1",
+      cardOwnerId: "p2",
+      source: "facedown:bf_1",
+      destination: "player_zone:p2:hand",
+    });
+    assert.equal(next.events[1]?.type, "facedown_card_revealed");
+    assert.deepEqual(next.events[1]?.details, {
       reason: "move_to_non_public_zone",
       cardId: "card_hidden_001",
       battlefieldId: "bf_1",
@@ -192,7 +208,8 @@ describe("Gameplay zone transition primitive", () => {
     });
 
     assert.deepEqual(next.zones.players.p1!.trash, ["card_hidden_001"]);
-    assert.equal(next.events.length, 0);
+    assert.equal(next.events.length, 1);
+    assert.equal(next.events[0]?.type, "zone_changed");
   });
 
   test("rejects facedown placement for unknown battlefield id", () => {

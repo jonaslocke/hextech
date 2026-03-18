@@ -127,7 +127,7 @@ export class MatchController {
     }
   };
 
-  debugPlaceZoneCard = async (
+  debugZoneChangeCard = async (
     req: Request,
     res: Response,
     next: NextFunction,
@@ -136,31 +136,7 @@ export class MatchController {
       const matchId = Array.isArray(req.params.id)
         ? req.params.id[0]
         : req.params.id;
-      const match = await this.debugGameplayZonesService.placeCard({
-        matchId: matchId ?? "",
-        cardId: req.body?.cardId,
-        cardControllerId: req.body?.cardControllerId,
-        cardType: req.body?.cardType,
-        destination: req.body?.destination,
-        battlefieldControllerById: req.body?.battlefieldControllerById,
-      });
-
-      return res.status(201).json({ data: match });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  debugMoveZoneCard = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const matchId = Array.isArray(req.params.id)
-        ? req.params.id[0]
-        : req.params.id;
-      const match = await this.debugGameplayZonesService.moveCard({
+      const match = await this.debugGameplayZonesService.applyZoneChange({
         matchId: matchId ?? "",
         cardId: req.body?.cardId,
         cardControllerId: req.body?.cardControllerId,
@@ -169,70 +145,6 @@ export class MatchController {
         source: req.body?.source,
         destination: req.body?.destination,
         battlefieldControllerById: req.body?.battlefieldControllerById,
-      });
-
-      return res.status(201).json({ data: match });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  debugCleanupHidden = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const matchId = Array.isArray(req.params.id)
-        ? req.params.id[0]
-        : req.params.id;
-      const match = await this.debugGameplayZonesService.cleanupHiddenCards({
-        matchId: matchId ?? "",
-        battlefieldControllerById: req.body?.battlefieldControllerById,
-        cardControllerById: req.body?.cardControllerById,
-        cardOwnerById: req.body?.cardOwnerById,
-      });
-
-      return res.status(201).json({ data: match });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  debugRevealGameEnd = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const matchId = Array.isArray(req.params.id)
-        ? req.params.id[0]
-        : req.params.id;
-      const match = await this.debugGameplayZonesService.revealFacedownCardsOnGameEnd({
-        matchId: matchId ?? "",
-        cardOwnerById: req.body?.cardOwnerById,
-      });
-
-      return res.status(201).json({ data: match });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  debugUpdateZoneRules = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const matchId = Array.isArray(req.params.id)
-        ? req.params.id[0]
-        : req.params.id;
-      const match = await this.debugGameplayZonesService.updateZoneRules({
-        matchId: matchId ?? "",
-        defaultHiddenCapacityPerBattlefield:
-          req.body?.defaultHiddenCapacityPerBattlefield,
-        hiddenCapacityByBattlefield: req.body?.hiddenCapacityByBattlefield,
       });
 
       return res.status(201).json({ data: match });

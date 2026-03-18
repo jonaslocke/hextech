@@ -373,7 +373,7 @@ Sideboard:
           order: 2,
           title: "Policy: rune -> main_deck (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_rune_01}}",
             cardControllerId: "p1",
@@ -388,7 +388,7 @@ Sideboard:
           order: 3,
           title: "Policy: spell -> main_deck (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_rune_01}}",
             cardControllerId: "p1",
@@ -403,7 +403,7 @@ Sideboard:
           order: 4,
           title: "Policy: rune -> rune_deck (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_01}}",
             cardControllerId: "p1",
@@ -418,7 +418,7 @@ Sideboard:
           order: 5,
           title: "Policy: unit -> rune_deck (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_02}}",
             cardControllerId: "p1",
@@ -433,7 +433,7 @@ Sideboard:
           order: 6,
           title: "Policy: unit -> hand (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_03}}",
             cardControllerId: "p1",
@@ -448,7 +448,7 @@ Sideboard:
           order: 7,
           title: "Policy: rune -> hand (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_04}}",
             cardControllerId: "p1",
@@ -463,7 +463,7 @@ Sideboard:
           order: 8,
           title: "Rule: chosen champion champion_zone -> base_cards (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_champion_01}}",
             cardControllerId: "p1",
@@ -478,7 +478,7 @@ Sideboard:
           order: 9,
           title: "Rule: chosen champion base_cards -> champion_zone (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_champion_01}}",
             cardControllerId: "p1",
@@ -493,7 +493,7 @@ Sideboard:
           order: 10,
           title: "Rule: regular unit -> champion_zone (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_05}}",
             cardControllerId: "p1",
@@ -508,7 +508,7 @@ Sideboard:
           order: 11,
           title: "Policy: spell -> champion_zone (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_06}}",
             cardControllerId: "p1",
@@ -523,7 +523,7 @@ Sideboard:
           order: 12,
           title: "Rule: second regular unit -> champion_zone (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_07}}",
             cardControllerId: "p1",
@@ -538,7 +538,7 @@ Sideboard:
           order: 13,
           title: "Policy: legend_zone -> hand (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_legend_01}}",
             cardControllerId: "p1",
@@ -553,7 +553,7 @@ Sideboard:
           order: 14,
           title: "Policy: unit -> legend_zone (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_08}}",
             cardControllerId: "p1",
@@ -568,7 +568,7 @@ Sideboard:
           order: 15,
           title: "Policy: unit -> base_cards (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_09}}",
             cardControllerId: "p1",
@@ -583,7 +583,7 @@ Sideboard:
           order: 16,
           title: "Policy: rune -> base_runes (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_rune_02}}",
             cardControllerId: "p1",
@@ -598,7 +598,7 @@ Sideboard:
           order: 17,
           title: "Policy: spell -> base_cards (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_10}}",
             cardControllerId: "p1",
@@ -613,7 +613,7 @@ Sideboard:
           order: 18,
           title: "Ownership: unit -> opponent base_cards (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_11}}",
             cardControllerId: "p1",
@@ -628,7 +628,7 @@ Sideboard:
           order: 19,
           title: "Policy: unit -> battlefield (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_12}}",
             cardControllerId: "p1",
@@ -643,7 +643,7 @@ Sideboard:
           order: 20,
           title: "Policy: rune -> battlefield (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_13}}",
             cardControllerId: "p1",
@@ -658,7 +658,7 @@ Sideboard:
           order: 21,
           title: "Policy: spell -> chain (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_16}}",
             cardControllerId: "p1",
@@ -673,7 +673,7 @@ Sideboard:
           order: 22,
           title: "Policy: rune -> chain (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_17}}",
             cardControllerId: "p1",
@@ -688,7 +688,7 @@ Sideboard:
           order: 23,
           title: "Policy: rune -> trash (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_20}}",
             cardControllerId: "p1",
@@ -703,7 +703,7 @@ Sideboard:
           order: 24,
           title: "Policy: gear -> banishment (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_18}}",
             cardControllerId: "p1",
@@ -718,7 +718,7 @@ Sideboard:
           order: 25,
           title: "Policy: rune -> banishment (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_19}}",
             cardControllerId: "p1",
@@ -733,7 +733,7 @@ Sideboard:
           order: 26,
           title: "Facedown: battlefield -> facedown (allowed)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{p1_battlefield_id}}",
             cardControllerId: "p1",
@@ -749,7 +749,7 @@ Sideboard:
           order: 27,
           title: "Facedown: second card exceeds default capacity (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_14}}",
             cardControllerId: "p1",
@@ -765,7 +765,7 @@ Sideboard:
           order: 28,
           title: "Facedown: wrong controller map (blocked)",
           method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/move",
+          endpoint: "/matches/{{match_id}}/debug/zones/change",
           payload: {
             cardId: "{{card_main_15}}",
             cardControllerId: "p1",
@@ -1123,6 +1123,7 @@ Sideboard:
     </script>
   </body>
 </html>
+
 
 
 

@@ -1,9 +1,9 @@
-# Postman Zone Movement Flow: Policy + Capacity Validation (`/debug/zones/move`)
+# Postman Zone Movement Flow: Policy + Capacity Validation (`/debug/zones/change`)
 
 This guide documents manual Postman testing for zone movement policy enforcement.
 It is intentionally focused on `ZONE_CHANGE` behavior through:
 
-- `POST /api/matches/{matchId}/debug/zones/move`
+- `POST /api/matches/{matchId}/debug/zones/change`
 
 It validates:
 - Allowed/prohibited card types per destination zone
@@ -67,7 +67,7 @@ Expected:
 
 All requests below:
 
-`POST {{base_url}}/matches/{{match_id}}/debug/zones/move`
+`POST {{base_url}}/matches/{{match_id}}/debug/zones/change`
 
 ### 4.1 rune -> mainDeck (blocked)
 
@@ -454,3 +454,4 @@ Pass criteria:
   - [Riftbound Core Rules v1.2.txt:132](/c:/wplace/hextech/docs/rules/Riftbound Core Rules v1.2.txt:132)
   - [Riftbound Core Rules v1.2.txt:134](/c:/wplace/hextech/docs/rules/Riftbound Core Rules v1.2.txt:134)
   - [Riftbound Core Rules v1.2.txt:1190](/c:/wplace/hextech/docs/rules/Riftbound Core Rules v1.2.txt:1190)
+
