@@ -83,6 +83,7 @@ export function moveCardBetweenZones(
 
   sourceBucket.splice(sourceIndex, 1);
   destinationBucket.push(cardId);
+  next = syncKernelScaffoldingAfterZoneChange(next);
   next = appendZoneChangedEvent(next, input);
   next = appendRevealEventForFacedownToNonPublicMove(next, input);
 
@@ -92,6 +93,23 @@ export function moveCardBetweenZones(
   }
 
   return next;
+}
+
+function syncKernelScaffoldingAfterZoneChange(gameplay: GameplayRuntime): GameplayRuntime {
+  const chainDepth = gameplay.zones.shared.chain.length;
+  const chainState = chainDepth > 0 ? "open" : "idle";
+
+  return {
+    ...gameplay,
+    kernel: {
+      ...gameplay.kernel,
+      chain: {
+        ...gameplay.kernel.chain,
+        state: chainState,
+        depth: chainDepth,
+      },
+    },
+  };
 }
 
 export function placeCardIntoZone(

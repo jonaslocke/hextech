@@ -4,6 +4,7 @@ export type GameplayIntentType = "ZONE_CHANGE";
 
 export interface ZoneChangeGameplayIntent {
   type: "ZONE_CHANGE";
+  expectedSequence?: number;
   payload: Omit<DebugZoneChangeRequestDto, "matchId">;
 }
 
@@ -14,4 +15,3 @@ export interface SubmitGameplayIntentRequestDto {
   actorPlayerId: string;
   intent: GameplayIntentRequest;
 }
-

@@ -5,6 +5,7 @@ import type {
 import type { DebugZoneChangeRequestDto } from "../dto/debug-zones.dto";
 import type { MatchRepository } from "../../domain/match.repository";
 import type { GameRepository } from "../../domain/game.repository";
+import type { Game } from "../../domain/game";
 import { MatchViewLoader } from "./match-view.loader";
 import type { MatchView } from "../match.view";
 import { ValidationError } from "../../shared/errors";
@@ -47,6 +48,8 @@ export class SubmitGameplayIntentService {
       throw new ValidationError(`Unsupported gameplay intent type "${input.intent.type}".`);
     }
 
+    this.assertKernelIntentGate(game, actorPlayerId, input.intent.expectedSequence);
+
     return this.executeZoneChangeIntent(input.matchId, actorPlayerId, input.intent);
   }
 
@@ -86,6 +89,44 @@ export class SubmitGameplayIntentService {
 
     return this.debugGameplayZonesService.applyZoneChange(request, {
       viewerPlayerId: actorPlayerId,
+      deterministicIntent: {
+        intentType: "ZONE_CHANGE",
+        actorPlayerId,
+      },
     });
+  }
+
+  private assertKernelIntentGate(
+    game: Game,
+    actorPlayerId: string,
+    expectedSequence: number | undefined,
+  ): void {
+    if (game.gameplay.kernel.phase === "setup") {
+      throw new ValidationError("Gameplay kernel is still in setup phase.");
+    }
+
+    if (game.gameplay.kernel.timing !== "open") {
+      throw new ValidationError("Gameplay timing window is closed for intents.");
+    }
+
+    const priorityPlayerId = game.gameplay.kernel.priority.playerId;
+    if (priorityPlayerId && priorityPlayerId !== actorPlayerId) {
+      throw new ValidationError("Only the priority player can submit gameplay intents.");
+    }
+
+    if (expectedSequence === undefined) {
+      return;
+    }
+
+    if (!Number.isInteger(expectedSequence) || expectedSequence < 1) {
+      throw new ValidationError("expectedSequence must be a positive integer when provided.");
+    }
+
+    const nextSequence = game.gameplay.kernel.execution.nextIntentSequence;
+    if (expectedSequence !== nextSequence) {
+      throw new ValidationError(
+        `Intent sequence mismatch. Expected ${nextSequence}, received ${expectedSequence}.`,
+      );
+    }
   }
 }

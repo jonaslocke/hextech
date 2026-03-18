@@ -9,9 +9,14 @@ import type { MatchRepository } from "../../domain/match.repository";
 import type { CardType } from "../../domain/zone-policy";
 import { MatchViewLoader } from "./match-view.loader";
 import { moveCardBetweenZones } from "../../domain/gameplay.zone-transition";
+import { commitDeterministicIntent } from "../../domain/gameplay";
 
 interface ZoneChangeViewOptions {
   viewerPlayerId?: string | null;
+  deterministicIntent?: {
+    intentType: string;
+    actorPlayerId: string;
+  };
 }
 
 export class DebugGameplayZonesService {
@@ -48,7 +53,13 @@ export class DebugGameplayZonesService {
         : {}),
     };
 
-    const nextGameplay = moveCardBetweenZones(game.gameplay, moveInput);
+    let nextGameplay = moveCardBetweenZones(game.gameplay, moveInput);
+    if (options.deterministicIntent) {
+      nextGameplay = commitDeterministicIntent(nextGameplay, {
+        intentType: options.deterministicIntent.intentType,
+        actorPlayerId: options.deterministicIntent.actorPlayerId,
+      });
+    }
 
     await this.saveUpdatedGame(game, nextGameplay);
     if (options.viewerPlayerId === undefined) {

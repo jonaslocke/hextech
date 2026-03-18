@@ -57,6 +57,46 @@ export interface GameplayRuleParameters {
   hiddenCapacityByBattlefield: Record<string, number>;
 }
 
+export const GAMEPLAY_PHASES = ["setup", "neutral", "showdown"] as const;
+export type GameplayPhase = (typeof GAMEPLAY_PHASES)[number];
+
+export const GAMEPLAY_TIMING_STATES = ["open", "closed"] as const;
+export type GameplayTimingState = (typeof GAMEPLAY_TIMING_STATES)[number];
+
+export const GAMEPLAY_CHAIN_STATES = ["idle", "open", "resolving"] as const;
+export type GameplayChainState = (typeof GAMEPLAY_CHAIN_STATES)[number];
+
+export interface GameplayTurnState {
+  number: number;
+  activePlayerId: string | null;
+}
+
+export interface GameplayPriorityState {
+  playerId: string | null;
+  passCount: number;
+}
+
+export interface GameplayChainRuntime {
+  state: GameplayChainState;
+  depth: number;
+}
+
+export interface GameplayExecutionState {
+  nextIntentSequence: number;
+  lastAppliedIntentSequence: number;
+  lastAppliedIntentType: string | null;
+  lastAppliedActorPlayerId: string | null;
+}
+
+export interface GameplayKernelState {
+  phase: GameplayPhase;
+  timing: GameplayTimingState;
+  turn: GameplayTurnState;
+  priority: GameplayPriorityState;
+  chain: GameplayChainRuntime;
+  execution: GameplayExecutionState;
+}
+
 export interface GameplayZoneState {
   players: Record<string, PlayerZoneBuckets>;
   shared: SharedZoneBuckets;
@@ -72,6 +112,7 @@ export interface GameplayEvent {
 export interface GameplayRuntime {
   schemaVersion: 1;
   zones: GameplayZoneState;
+  kernel: GameplayKernelState;
   ruleParameters: GameplayRuleParameters;
   events: GameplayEvent[];
 }
@@ -127,11 +168,60 @@ export function createEmptyGameplayRuntime(playerIds: string[]): GameplayRuntime
         facedownByBattlefield: {},
       },
     },
+    kernel: {
+      phase: "setup",
+      timing: "closed",
+      turn: {
+        number: 0,
+        activePlayerId: null,
+      },
+      priority: {
+        playerId: null,
+        passCount: 0,
+      },
+      chain: {
+        state: "idle",
+        depth: 0,
+      },
+      execution: {
+        nextIntentSequence: 1,
+        lastAppliedIntentSequence: 0,
+        lastAppliedIntentType: null,
+        lastAppliedActorPlayerId: null,
+      },
+    },
     ruleParameters: {
       defaultHiddenCapacityPerBattlefield: 1,
       hiddenCapacityByBattlefield: {},
     },
     events: [],
+  };
+}
+
+export function activateGameplayKernelForReadyState(
+  gameplay: GameplayRuntime,
+  startingPlayerId: string,
+): GameplayRuntime {
+  return {
+    ...gameplay,
+    kernel: {
+      ...gameplay.kernel,
+      phase: "neutral",
+      timing: "open",
+      turn: {
+        number: 1,
+        activePlayerId: startingPlayerId,
+      },
+      priority: {
+        playerId: startingPlayerId,
+        passCount: 0,
+      },
+      chain: {
+        ...gameplay.kernel.chain,
+        state: gameplay.zones.shared.chain.length > 0 ? "open" : "idle",
+        depth: gameplay.zones.shared.chain.length,
+      },
+    },
   };
 }
 
@@ -151,6 +241,41 @@ export function appendGameplayEvent(
     ...gameplay,
     events: [...gameplay.events, event],
   };
+}
+
+interface CommitDeterministicIntentInput {
+  intentType: string;
+  actorPlayerId: string;
+}
+
+export function commitDeterministicIntent(
+  gameplay: GameplayRuntime,
+  input: CommitDeterministicIntentInput,
+): GameplayRuntime {
+  const sequence = gameplay.kernel.execution.nextIntentSequence;
+
+  const next = {
+    ...gameplay,
+    kernel: {
+      ...gameplay.kernel,
+      execution: {
+        ...gameplay.kernel.execution,
+        nextIntentSequence: sequence + 1,
+        lastAppliedIntentSequence: sequence,
+        lastAppliedIntentType: input.intentType,
+        lastAppliedActorPlayerId: input.actorPlayerId,
+      },
+    },
+  };
+
+  return appendGameplayEvent(next, {
+    type: "intent_resolved",
+    details: {
+      intentType: input.intentType,
+      actorPlayerId: input.actorPlayerId,
+      sequence: String(sequence),
+    },
+  });
 }
 
 export function resolveHiddenCapacityForBattlefield(

@@ -54,6 +54,13 @@ describe("Gameplay setup hydration", () => {
     assert.equal(hydrated.zones.players.p2?.legendZone.length, 1);
     assert.equal(hydrated.zones.shared.battlefield.length, 2);
     assert.equal(Object.keys(hydrated.zones.shared.facedownByBattlefield).length, 2);
+
+    assert.equal(hydrated.kernel.phase, "neutral");
+    assert.equal(hydrated.kernel.timing, "open");
+    assert.equal(hydrated.kernel.turn.number, 1);
+    assert.equal(hydrated.kernel.turn.activePlayerId, "p1");
+    assert.equal(hydrated.kernel.priority.playerId, "p1");
+    assert.equal(hydrated.kernel.execution.nextIntentSequence, 1);
   });
 
   test("throws when setup is incomplete for hydration", () => {

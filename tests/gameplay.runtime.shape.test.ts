@@ -21,6 +21,28 @@ describe("Gameplay runtime shape", () => {
       chain: [],
       facedownByBattlefield: {},
     });
+    assert.deepEqual(game.gameplay.kernel, {
+      phase: "setup",
+      timing: "closed",
+      turn: {
+        number: 0,
+        activePlayerId: null,
+      },
+      priority: {
+        playerId: null,
+        passCount: 0,
+      },
+      chain: {
+        state: "idle",
+        depth: 0,
+      },
+      execution: {
+        nextIntentSequence: 1,
+        lastAppliedIntentSequence: 0,
+        lastAppliedIntentType: null,
+        lastAppliedActorPlayerId: null,
+      },
+    });
     assert.deepEqual(game.gameplay.ruleParameters, {
       defaultHiddenCapacityPerBattlefield: 1,
       hiddenCapacityByBattlefield: {},
@@ -70,6 +92,8 @@ describe("Gameplay runtime shape", () => {
       cards: [],
       runes: [],
     });
+    assert.equal(serialized.gameplay.kernel.phase, "setup");
+    assert.equal(serialized.gameplay.kernel.execution.nextIntentSequence, 1);
     assert.equal(serialized.gameplay.ruleParameters.defaultHiddenCapacityPerBattlefield, 1);
     assert.deepEqual(serialized.gameplay.events, []);
   });

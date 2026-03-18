@@ -1,10 +1,19 @@
 import { ValidationError } from "../shared/errors";
 import type { Game } from "./game";
 import type { Match } from "./match";
-import { createEmptyGameplayRuntime, type GameplayRuntime } from "./gameplay";
+import {
+  activateGameplayKernelForReadyState,
+  createEmptyGameplayRuntime,
+  type GameplayRuntime,
+} from "./gameplay";
 import { placeCardIntoZone } from "./gameplay.zone-transition";
 
 export function hydrateGameplayForReadySetup(match: Match, game: Game): GameplayRuntime {
+  const startingPlayerId = game.startingPlayerId?.trim();
+  if (!startingPlayerId) {
+    throw new ValidationError("Starting player is required for setup hydration.");
+  }
+
   const playerIds = match.players.map((player) => player.id);
   let gameplay = createEmptyGameplayRuntime(playerIds);
 
@@ -94,7 +103,7 @@ export function hydrateGameplayForReadySetup(match: Match, game: Game): Gameplay
     }
   }
 
-  return gameplay;
+  return activateGameplayKernelForReadyState(gameplay, startingPlayerId);
 }
 
 function buildSetupObjectId(

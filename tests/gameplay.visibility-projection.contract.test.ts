@@ -9,7 +9,7 @@ const app = createApp();
 describe("Gameplay visibility projection contract", () => {
   test("hides secret and private_owner card identities for spectator match view", async () => {
     const created = await createMatch(app, "best-of-3");
-    const ready = await setupMatchToReady(app, created.id, "best-of-3");
+    const ready = await setupMatchToReady(app, created.id, "best-of-3", { startingPlayerId: "p1" });
     const movedCardId = ready.currentGame.gameplay.zones.players.p1.mainDeck[0] ?? null;
     assert.ok(movedCardId);
 
@@ -40,7 +40,7 @@ describe("Gameplay visibility projection contract", () => {
 
   test("shows private_owner hand only to owning viewer", async () => {
     const created = await createMatch(app, "best-of-3");
-    const ready = await setupMatchToReady(app, created.id, "best-of-3");
+    const ready = await setupMatchToReady(app, created.id, "best-of-3", { startingPlayerId: "p1" });
 
     const p1CardId = ready.currentGame.gameplay.zones.players.p1.mainDeck[0] ?? null;
     const p2CardId = ready.currentGame.gameplay.zones.players.p2.mainDeck[0] ?? null;
@@ -77,7 +77,7 @@ describe("Gameplay visibility projection contract", () => {
 
   test("projects gameplay intent response with actor viewer visibility", async () => {
     const created = await createMatch(app, "best-of-3");
-    const ready = await setupMatchToReady(app, created.id, "best-of-3");
+    const ready = await setupMatchToReady(app, created.id, "best-of-3", { startingPlayerId: "p1" });
     const cardId = ready.currentGame.gameplay.zones.players.p1.mainDeck[0] ?? null;
     assert.ok(cardId);
 
@@ -103,6 +103,7 @@ describe("Gameplay visibility projection contract", () => {
     assert.ok(zones.mainDeck.every((entry: string) => entry === "hidden_card"));
 
     const events = response.body.data.currentGame.gameplay.events;
-    assert.equal(events[events.length - 1]?.details?.cardId, cardId);
+    assert.equal(events[events.length - 2]?.details?.cardId, cardId);
+    assert.equal(events[events.length - 1]?.type, "intent_resolved");
   });
 });
