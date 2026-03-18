@@ -13,8 +13,8 @@ export class GetMatchService {
     this.matchViewLoader = new MatchViewLoader(matchRepository, gameRepository);
   }
 
-  async execute(matchId: string): Promise<MatchView> {
+  async execute(matchId: string, viewerPlayerId: string | null = null): Promise<MatchView> {
     const match = await this.matchViewLoader.getMatch(matchId);
-    return this.matchViewLoader.build(match);
+    return this.matchViewLoader.build(match, { viewerPlayerId });
   }
 }

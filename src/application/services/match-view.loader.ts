@@ -2,7 +2,11 @@ import type { GameRepository } from "../../domain/game.repository";
 import type { Match } from "../../domain/match";
 import type { MatchRepository } from "../../domain/match.repository";
 import { NotFoundError, ValidationError } from "../../shared/errors";
-import { toMatchView, type MatchView } from "../match.view";
+import {
+  toMatchView,
+  type MatchView,
+  type MatchViewProjectionOptions,
+} from "../match.view";
 
 export class MatchViewLoader {
   constructor(
@@ -40,8 +44,11 @@ export class MatchViewLoader {
     return game;
   }
 
-  async build(match: Match): Promise<MatchView> {
+  async build(
+    match: Match,
+    options: MatchViewProjectionOptions = {},
+  ): Promise<MatchView> {
     const orderedGames = await this.gameRepository.findByIds(match.gameIds);
-    return toMatchView(match, orderedGames);
+    return toMatchView(match, orderedGames, options);
   }
 }

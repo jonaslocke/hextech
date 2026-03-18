@@ -5,6 +5,7 @@ import { RecordGameResultService } from "../../application/services/record-game-
 import { SubmitSetupIntentService } from "../../application/services/submit-setup-intent.service";
 import { DebugGameplayZonesService } from "../../application/services/debug-gameplay-zones.service";
 import { SubmitGameplayIntentService } from "../../application/services/submit-gameplay-intent.service";
+import { normalizeViewerPlayerId } from "../../application/match.view";
 
 export class MatchController {
   constructor(
@@ -51,7 +52,8 @@ export class MatchController {
       const matchId = Array.isArray(req.params.id)
         ? req.params.id[0]
         : req.params.id;
-      const match = await this.getMatchService.execute(matchId ?? "");
+      const viewerPlayerId = normalizeViewerPlayerId(req.query?.viewerPlayerId);
+      const match = await this.getMatchService.execute(matchId ?? "", viewerPlayerId);
 
       return res.status(200).json({
         data: match,

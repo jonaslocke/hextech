@@ -84,6 +84,8 @@ export class SubmitGameplayIntentService {
       request.battlefieldControllerById = intent.payload.battlefieldControllerById;
     }
 
-    return this.debugGameplayZonesService.applyZoneChange(request);
+    return this.debugGameplayZonesService.applyZoneChange(request, {
+      viewerPlayerId: actorPlayerId,
+    });
   }
 }

@@ -10,6 +10,10 @@ import type { CardType } from "../../domain/zone-policy";
 import { MatchViewLoader } from "./match-view.loader";
 import { moveCardBetweenZones } from "../../domain/gameplay.zone-transition";
 
+interface ZoneChangeViewOptions {
+  viewerPlayerId?: string | null;
+}
+
 export class DebugGameplayZonesService {
   private readonly matchViewLoader: MatchViewLoader;
 
@@ -20,7 +24,10 @@ export class DebugGameplayZonesService {
     this.matchViewLoader = new MatchViewLoader(matchRepository, gameRepository);
   }
 
-  async applyZoneChange(input: DebugZoneChangeRequestDto): Promise<MatchView> {
+  async applyZoneChange(
+    input: DebugZoneChangeRequestDto,
+    options: ZoneChangeViewOptions = {},
+  ): Promise<MatchView> {
     const match = await this.matchViewLoader.getMatch(input.matchId);
     const game = await this.getReadyCurrentGame(match.id);
     const resolvedCardType = this.resolveCardTypeForGameplayCard(
@@ -44,7 +51,11 @@ export class DebugGameplayZonesService {
     const nextGameplay = moveCardBetweenZones(game.gameplay, moveInput);
 
     await this.saveUpdatedGame(game, nextGameplay);
-    return this.matchViewLoader.build(match);
+    if (options.viewerPlayerId === undefined) {
+      return this.matchViewLoader.build(match);
+    }
+
+    return this.matchViewLoader.build(match, { viewerPlayerId: options.viewerPlayerId });
   }
 
   private async getReadyCurrentGame(matchId: string): Promise<Game> {
