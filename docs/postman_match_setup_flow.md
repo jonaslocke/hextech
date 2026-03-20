@@ -190,6 +190,13 @@ Save:
 }
 ```
 
+Optional (new capability): send `deckList` here to reconfigure for game 2.
+Rules:
+- Allowed only in `best-of-3` game 2+.
+- Not allowed in game 1.
+- Reconfiguration can only swap cards among `Champion`, `MainDeck`, and `Sideboard`.
+- `Legend`, `Runes`, and `Battlefields` must remain unchanged from registration.
+
 ## 12. (Best-of-3) Setup Game 2: Select Chosen Champion (p2)
 
 `POST {{base_url}}/matches/{{match_id}}/setup/champion`
@@ -271,6 +278,7 @@ Expected:
 - Do not send `nextGameSelectedBattlefieldsByPlayer` in `POST /matches/{id}/games`; game setup always happens through `/setup/*`.
 - Setup intents are one-shot per player per setup step.
 - For `best-of-1`, use the same `/setup/battlefield` endpoint, but battlefield is randomly resolved by the server.
+- Deck reconfiguration via `setup/champion` is rejected in game 1 of `best-of-3` and accepted from game 2 onward.
 - Internal deck tracking is authoritative and not visible in public API responses.
 - To verify internal tracking exists, run the test suite and confirm this subtest passes:
   `game factory builds per-player runtime deck state from deck registrations`.

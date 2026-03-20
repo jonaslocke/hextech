@@ -45,10 +45,19 @@ Behavior:
 - `playerId` must be one of match players.
 - Can be sent only once per player.
 - If `deckList` is not provided, champion value is resolved from the player's registered deck (`DeckValidator.validate(...).chosenChampion`).
-- `deckList` reconfiguration is allowed only for `best-of-3` from game 2 onward.
+- `deckList` reconfiguration is allowed only for `best-of-3` from game 2 onward (`currentGame.number >= 2`).
 - Reconfiguration may only swap cards among `Champion`, `MainDeck`, and `Sideboard`.
 - `Legend`, `Runes`, and `Battlefields` sections must remain exactly the same as registered.
 - Reconfigured deck must still pass deck validation rules.
+
+Reconfiguration policy examples:
+
+- Game 1 (`best-of-3`) + `deckList`:
+  - Rejected with `400 VALIDATION_ERROR`
+  - Message: `Setup deck reconfiguration is only allowed from game 2 onward in best-of-3 matches.`
+- Game 2+ (`best-of-3`) + valid `deckList`:
+  - Accepted with `201`
+  - `chosenChampionByPlayer[playerId]` reflects the reconfigured `Champion` slot.
 
 ### 2) Select Battlefield
 
