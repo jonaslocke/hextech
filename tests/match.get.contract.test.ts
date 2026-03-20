@@ -10,7 +10,7 @@ describe("Get match contract", () => {
   test("returns match by id", async () => {
     const created = await createMatch(app, "best-of-3");
 
-    const response = await request(app).get(`/api/matches/${created.id}`);
+    const response = await request(app).get(`/api/matches/${created.id}?viewerPlayerId=p1`);
 
     assert.equal(response.status, 200);
     assert.equal(response.body.data.id, created.id);
@@ -19,9 +19,11 @@ describe("Get match contract", () => {
   });
 
   test("returns not found for unknown match id", async () => {
-    const response = await request(app).get("/api/matches/match_does_not_exist");
+    const response = await request(app).get("/api/matches/match_does_not_exist?viewerPlayerId=p1");
 
     assert.equal(response.status, 404);
     assert.equal(response.body?.error?.code, "NOT_FOUND");
   });
 });
+
+

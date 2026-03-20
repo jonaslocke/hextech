@@ -14,7 +14,7 @@ describe("Battlefield history across games", () => {
     const reported = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
     assert.equal(reported.status, 201);
 
@@ -39,7 +39,7 @@ describe("Battlefield history across games", () => {
     const first = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
 
     assert.equal(first.status, 201);
@@ -57,3 +57,4 @@ describe("Battlefield history across games", () => {
     });
   });
 });
+

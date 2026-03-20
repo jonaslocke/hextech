@@ -121,7 +121,7 @@ export async function setupMatchToReady(
     assert.equal(battlefieldP2.status, 201);
   }
 
-  const fetched = await request(app).get(`/api/matches/${matchId}`);
+  const fetched = await request(app).get(`/api/matches/${matchId}?viewerPlayerId=p1`);
   assert.equal(fetched.status, 200);
   const chooserId = fetched.body.data.startingPlayerChooserId as TestPlayerId;
 
@@ -136,4 +136,28 @@ export async function setupMatchToReady(
   assert.equal(startingPlayer.body.data.status, "ready");
 
   return startingPlayer.body.data;
+}
+
+
+
+export function deriveRuntimeCardId(
+  readyMatchView: Record<string, any>,
+  playerId: TestPlayerId,
+  source: "main_deck" | "rune_deck",
+  sequence: number,
+): string {
+  const championCardId =
+    readyMatchView?.currentGame?.gameplay?.zones?.players?.[playerId]?.championZone?.[0] ?? "";
+
+  if (typeof championCardId !== "string" || !championCardId.trim()) {
+    throw new Error(`Cannot derive runtime card id for ${playerId}: champion card id missing.`);
+  }
+
+  const registrationRef = championCardId.split(":")[0];
+  if (!registrationRef) {
+    throw new Error(`Cannot derive runtime card id for ${playerId}: invalid champion card id.`);
+  }
+
+  const normalizedSequence = String(sequence).padStart(3, "0");
+  return `${registrationRef}:${playerId}:${source}:${normalizedSequence}`;
 }

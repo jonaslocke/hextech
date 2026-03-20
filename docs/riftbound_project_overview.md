@@ -1,11 +1,11 @@
-
-# Riftbound Simulator – Project Overview (Agent-Oriented Documentation)
+﻿
+# Riftbound Simulator â€“ Project Overview (Agent-Oriented Documentation)
 
 ## 1. Project Purpose
 
-This project aims to build a **server‑authoritative simulator engine** for the *Riftbound Trading Card Game*.
+This project aims to build a **serverâ€‘authoritative simulator engine** for the *Riftbound Trading Card Game*.
 
-The goal is **not to build a full game client**, but instead to implement a **deterministic, rules‑correct simulation engine** capable of executing Riftbound matches programmatically.
+The goal is **not to build a full game client**, but instead to implement a **deterministic, rulesâ€‘correct simulation engine** capable of executing Riftbound matches programmatically.
 
 The simulator will:
 
@@ -30,7 +30,7 @@ This engine will serve as the **foundation for multiple future use cases**, incl
 
 # 2. Core Design Philosophy
 
-The system follows a **server‑authoritative architecture**.
+The system follows a **serverâ€‘authoritative architecture**.
 
 Key principles:
 
@@ -173,7 +173,7 @@ A Riftbound game consists of:
 Players bring:
 
 - 1 Champion Legend
-- 1 Main Deck (≥40 cards)
+- 1 Main Deck (â‰¥40 cards)
 - 1 Rune Deck (12 runes)
 - Battlefields
 
@@ -266,7 +266,7 @@ This property enables:
 Because all actions are logged, the engine must support:
 
 ```
-initial_state + event_log → deterministic replay
+initial_state + event_log â†’ deterministic replay
 ```
 
 This allows reconstruction of any match from its log.
@@ -295,7 +295,6 @@ The **engine must never depend on UI or networking**.
 After Phase 1, the simulator can support:
 
 - multiplayer servers
-- spectator systems
 - replay viewers
 - deck testing
 - AI agents
@@ -316,3 +315,4 @@ This project builds a **deterministic Riftbound simulation engine** that:
 
 
 The engine is the **core infrastructure** upon which all Riftbound digital tooling can be built.
+

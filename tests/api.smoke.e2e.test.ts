@@ -14,7 +14,7 @@ describe("API smoke end-to-end", () => {
     const reported = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
 
     assert.equal(reported.status, 201);
@@ -31,7 +31,7 @@ describe("API smoke end-to-end", () => {
     const first = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
     assert.equal(first.status, 201);
     assert.equal(first.body.data.status, "setup_pending");
@@ -46,7 +46,7 @@ describe("API smoke end-to-end", () => {
     const second = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
     assert.equal(second.status, 201);
     assert.equal(second.body.data.decksByPlayer, undefined);
@@ -55,3 +55,4 @@ describe("API smoke end-to-end", () => {
     assert.equal(second.body.data.winnerPlayerId, "p1");
   });
 });
+

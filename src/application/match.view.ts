@@ -17,7 +17,7 @@ export interface MatchView extends PublicMatch {
 }
 
 export interface MatchViewProjectionOptions {
-  viewerPlayerId?: string | null;
+  viewerPlayerId?: string;
 }
 
 const HIDDEN_CARD_TOKEN = "hidden_card";
@@ -46,7 +46,7 @@ function getZoneVisibilityByPolicyId(policyId: ZonePolicyId): ZoneVisibility {
   return visibility;
 }
 
-function toPublicGame(game: Game, viewerPlayerId: string | null | undefined): PublicGame {
+function toPublicGame(game: Game, viewerPlayerId: string | undefined): PublicGame {
   const { deckStateByPlayer: _deckStateByPlayer, ...publicGame } = game;
 
   if (viewerPlayerId === undefined) {
@@ -63,12 +63,12 @@ function toPublicGame(game: Game, viewerPlayerId: string | null | undefined): Pu
 
 function projectGameplayForViewer(
   gameplay: GameplayRuntime,
-  viewerPlayerId: string | null,
+  viewerPlayerId: string,
 ): GameplayRuntime {
   const players: GameplayRuntime["zones"]["players"] = {};
 
   for (const [playerId, zones] of Object.entries(gameplay.zones.players)) {
-    const isOwner = viewerPlayerId !== null && viewerPlayerId === playerId;
+    const isOwner = viewerPlayerId === playerId;
     players[playerId] = {
       mainDeck: projectCardsByVisibility(
         zones.mainDeck,
@@ -124,10 +124,7 @@ function projectGameplayForViewer(
     Object.entries(gameplay.zones.shared.facedownByBattlefield).map(
       ([battlefieldId, cardIds]) => {
         const controllerId = resolveBattlefieldControllerId(battlefieldId);
-        const isController =
-          controllerId !== null &&
-          viewerPlayerId !== null &&
-          controllerId === viewerPlayerId;
+        const isController = controllerId !== null && controllerId === viewerPlayerId;
 
         return [battlefieldId, isController ? [...cardIds] : hideCardIds(cardIds)];
       },
@@ -157,7 +154,7 @@ function projectGameplayForViewer(
 
 function projectEventsForViewer(
   events: GameplayEvent[],
-  viewerPlayerId: string | null,
+  viewerPlayerId: string,
 ): GameplayEvent[] {
   return events.map((event) => {
     if (!event.details?.cardId) {
@@ -187,7 +184,7 @@ function projectEventsForViewer(
 
 function canViewerSeeZoneRef(
   zoneRef: string | undefined,
-  viewerPlayerId: string | null,
+  viewerPlayerId: string,
 ): boolean {
   if (!zoneRef) {
     return false;
@@ -202,10 +199,6 @@ function canViewerSeeZoneRef(
   }
 
   if (zoneRef.startsWith("facedown:")) {
-    if (viewerPlayerId === null) {
-      return false;
-    }
-
     const battlefieldId = zoneRef.slice("facedown:".length);
     const controllerId = resolveBattlefieldControllerId(battlefieldId);
     return controllerId !== null && controllerId === viewerPlayerId;
@@ -233,7 +226,7 @@ function canViewerSeeZoneRef(
   }
 
   if (visibility === "private_owner") {
-    return viewerPlayerId !== null && viewerPlayerId === playerId;
+    return viewerPlayerId === playerId;
   }
 
   return false;
@@ -278,17 +271,17 @@ function hideCardIds(cardIds: string[]): string[] {
   return cardIds.map(() => HIDDEN_CARD_TOKEN);
 }
 
-export function normalizeViewerPlayerId(input: unknown): string | null {
+export function normalizeViewerPlayerId(input: unknown): string | undefined {
   if (Array.isArray(input)) {
     return normalizeViewerPlayerId(input[0]);
   }
 
   if (typeof input !== "string") {
-    return null;
+    return undefined;
   }
 
   const trimmed = input.trim();
-  return trimmed.length > 0 ? trimmed : null;
+  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 export function toMatchView(
@@ -318,3 +311,4 @@ export function toMatchView(
     currentGameNumber,
   };
 }
+

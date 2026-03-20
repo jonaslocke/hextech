@@ -1,14 +1,10 @@
-import type { DebugZoneChangeRequestDto } from "./debug-zones.dto";
+export type GameplayIntentType = string;
 
-export type GameplayIntentType = "ZONE_CHANGE";
-
-export interface ZoneChangeGameplayIntent {
-  type: "ZONE_CHANGE";
+export interface GameplayIntentRequest {
+  type: GameplayIntentType;
   expectedSequence?: number;
-  payload: Omit<DebugZoneChangeRequestDto, "matchId">;
+  payload?: Record<string, unknown>;
 }
-
-export type GameplayIntentRequest = ZoneChangeGameplayIntent;
 
 export interface SubmitGameplayIntentRequestDto {
   matchId: string;

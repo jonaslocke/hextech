@@ -54,3 +54,4 @@ describe("Match creation contract", () => {
     assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
   });
 });
+

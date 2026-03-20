@@ -96,3 +96,4 @@ describe("Match creation validation", () => {
     assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
   });
 });
+

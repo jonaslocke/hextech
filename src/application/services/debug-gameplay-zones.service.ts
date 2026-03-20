@@ -12,7 +12,7 @@ import { moveCardBetweenZones } from "../../domain/gameplay.zone-transition";
 import { commitDeterministicIntent } from "../../domain/gameplay";
 
 interface ZoneChangeViewOptions {
-  viewerPlayerId?: string | null;
+  viewerPlayerId?: string;
   deterministicIntent?: {
     intentType: string;
     actorPlayerId: string;
@@ -34,6 +34,13 @@ export class DebugGameplayZonesService {
     options: ZoneChangeViewOptions = {},
   ): Promise<MatchView> {
     const match = await this.matchViewLoader.getMatch(input.matchId);
+    if (options.viewerPlayerId) {
+      const isViewerInMatch = match.players.some((player) => player.id === options.viewerPlayerId);
+      if (!isViewerInMatch) {
+        throw new ValidationError("viewerPlayerId must be one of the match players.");
+      }
+    }
+
     const game = await this.getReadyCurrentGame(match.id);
     const resolvedCardType = this.resolveCardTypeForGameplayCard(
       game,

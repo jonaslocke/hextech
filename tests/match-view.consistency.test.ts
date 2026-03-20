@@ -14,11 +14,11 @@ describe("Match view consistency", () => {
     const reported = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
     assert.equal(reported.status, 201);
 
-    const response = await request(app).get(`/api/matches/${ready.id}`);
+    const response = await request(app).get(`/api/matches/${ready.id}?viewerPlayerId=p1`);
     assert.equal(response.status, 200);
     const match = response.body.data;
 
@@ -39,3 +39,5 @@ describe("Match view consistency", () => {
     assert.deepEqual(match.score, projectedScore);
   });
 });
+
+

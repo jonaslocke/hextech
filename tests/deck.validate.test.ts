@@ -474,3 +474,4 @@ describe("Deck validation (Core Rules 101 - Deck Construction)", () => {
     "103.2.a.2 chosen champion tag matching legend and 103.2.d signature-card constraints require card metadata integration.",
   );
 });
+

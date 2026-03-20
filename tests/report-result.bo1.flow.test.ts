@@ -14,7 +14,7 @@ describe("Report result best-of-1 flow", () => {
     const response = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
 
     assert.equal(response.status, 201);
@@ -34,14 +34,14 @@ describe("Report result best-of-1 flow", () => {
     const first = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
     assert.equal(first.status, 201);
 
     const second = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
     assert.equal(second.status, 400);
     assert.equal(second.body?.error?.code, "VALIDATION_ERROR");
@@ -53,10 +53,11 @@ describe("Report result best-of-1 flow", () => {
     const response = await request(app)
       .post(`/api/matches/${created.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
 
     assert.equal(response.status, 400);
     assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
   });
 });
+

@@ -104,3 +104,4 @@ describe("Setup intents format policy", () => {
     assert.ok(facedownBattlefieldSlots.every((cards: string[]) => cards.length === 0));
   });
 });
+

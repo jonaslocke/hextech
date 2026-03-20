@@ -41,7 +41,7 @@ export class RecordGameResultService {
   }
 
   async execute(input: RecordGameResultRequestDto): Promise<MatchView> {
-    const { matchId, winnerPlayerId } = input;
+    const { matchId, winnerPlayerId, actorPlayerId } = input;
 
     if (!matchId) {
       throw new ValidationError("Match id is required.");
@@ -50,9 +50,17 @@ export class RecordGameResultService {
     if (!winnerPlayerId) {
       throw new ValidationError("Winner player id is required.");
     }
+    if (!actorPlayerId) {
+      throw new ValidationError("actorPlayerId is required.");
+    }
 
     const match = await this.matchViewLoader.getMatch(matchId);
     const currentGame = await this.matchViewLoader.getCurrentGameOrThrow(match);
+
+    const isActorInMatch = match.players.some((player) => player.id === actorPlayerId);
+    if (!isActorInMatch) {
+      throw new ValidationError("Actor must be one of the match players.");
+    }
 
     if (match.status === "setup_pending" || currentGame.status === "setup_pending") {
       throw new ValidationError("Match setup is pending.");
@@ -131,7 +139,7 @@ export class RecordGameResultService {
     }
     await this.matchRepository.save(updatedMatch);
 
-    return this.matchViewLoader.build(updatedMatch);
+    return this.matchViewLoader.build(updatedMatch, { viewerPlayerId: actorPlayerId });
   }
 
   private resolveNextStartingPlayerChooser(

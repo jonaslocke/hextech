@@ -14,7 +14,7 @@ describe("Report result best-of-3 flow", () => {
     const response = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
 
     assert.equal(response.status, 201);
@@ -37,7 +37,7 @@ describe("Report result best-of-3 flow", () => {
     const first = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
     assert.equal(first.status, 201);
 
@@ -52,7 +52,7 @@ describe("Report result best-of-3 flow", () => {
     const second = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
 
     assert.equal(second.status, 201);
@@ -71,17 +71,18 @@ describe("Report result best-of-3 flow", () => {
     const first = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
     assert.equal(first.status, 201);
 
     const response = await request(app)
       .post(`/api/matches/${ready.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
 
     assert.equal(response.status, 400);
     assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
   });
 });
+

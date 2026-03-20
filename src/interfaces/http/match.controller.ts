@@ -6,6 +6,7 @@ import { SubmitSetupIntentService } from "../../application/services/submit-setu
 import { DebugGameplayZonesService } from "../../application/services/debug-gameplay-zones.service";
 import { SubmitGameplayIntentService } from "../../application/services/submit-gameplay-intent.service";
 import { normalizeViewerPlayerId } from "../../application/match.view";
+import { ValidationError } from "../../shared/errors";
 
 export class MatchController {
   constructor(
@@ -37,6 +38,7 @@ export class MatchController {
       const match = await this.recordGameResultService.execute({
         matchId: matchId ?? "",
         winnerPlayerId: req.body?.winnerPlayerId,
+        actorPlayerId: req.body?.actorPlayerId,
       });
 
       return res.status(201).json({
@@ -53,6 +55,10 @@ export class MatchController {
         ? req.params.id[0]
         : req.params.id;
       const viewerPlayerId = normalizeViewerPlayerId(req.query?.viewerPlayerId);
+      if (!viewerPlayerId) {
+        throw new ValidationError("viewerPlayerId query parameter is required.");
+      }
+
       const match = await this.getMatchService.execute(matchId ?? "", viewerPlayerId);
 
       return res.status(200).json({
@@ -149,6 +155,8 @@ export class MatchController {
         source: req.body?.source,
         destination: req.body?.destination,
         battlefieldControllerById: req.body?.battlefieldControllerById,
+      }, {
+        viewerPlayerId: req.body?.cardControllerId,
       });
 
       return res.status(201).json({ data: match });

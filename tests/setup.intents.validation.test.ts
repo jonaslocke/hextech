@@ -84,3 +84,4 @@ describe("Setup intents validation matrix", () => {
     assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
   });
 });
+

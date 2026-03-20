@@ -37,3 +37,4 @@ describe("Gameplay zones contract", () => {
     assert.equal(ZONE_PRIVACY_BY_ZONE.chain, "public");
   });
 });
+

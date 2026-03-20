@@ -67,7 +67,7 @@ describe("Setup intents authorization and one-shot", () => {
     const result = await request(app)
       .post(`/api/matches/${match.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
     assert.equal(result.status, 201);
     assert.equal(result.body.data.status, "finished");
@@ -79,3 +79,4 @@ describe("Setup intents authorization and one-shot", () => {
     assert.equal(afterFinished.body?.error?.code, "VALIDATION_ERROR");
   });
 });
+

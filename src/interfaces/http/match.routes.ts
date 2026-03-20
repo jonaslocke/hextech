@@ -30,7 +30,6 @@ const debugGameplayZonesService = new DebugGameplayZonesService(
 const submitGameplayIntentService = new SubmitGameplayIntentService(
   matchRepository,
   gameRepository,
-  debugGameplayZonesService,
 );
 const matchController = new MatchController(
   createMatchService,

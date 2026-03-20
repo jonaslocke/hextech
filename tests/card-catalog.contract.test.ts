@@ -53,3 +53,4 @@ describe("Card catalog contract", () => {
     assert.equal(resolveCardType("Card That Does Not Exist"), null);
   });
 });
+

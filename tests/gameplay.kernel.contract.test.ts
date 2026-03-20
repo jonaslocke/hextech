@@ -68,3 +68,4 @@ describe("Gameplay kernel foundations", () => {
     assert.equal(event?.details?.actorPlayerId, "p1");
   });
 });
+

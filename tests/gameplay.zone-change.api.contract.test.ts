@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import request from "supertest";
 import { createApp } from "../src/app.js";
-import { createMatch, setupMatchToReady } from "./helpers/match-test-helpers.js";
+import {
+  createMatch,
+  deriveRuntimeCardId,
+  setupMatchToReady,
+} from "./helpers/match-test-helpers.js";
 
 const app = createApp();
 
@@ -24,11 +28,9 @@ describe("Zone change API cutover contract", () => {
 
   test("rejects card type override mismatch for known runtime card ids", async () => {
     const created = await createMatch(app, "best-of-3");
-    const ready = await setupMatchToReady(app, created.id, "best-of-3");
+    const ready = await setupMatchToReady(app, created.id, "best-of-3", { startingPlayerId: "p1" });
 
-    const runeCardId =
-      ready.currentGame.gameplay.zones.players.p1.runeDeck[0] ?? null;
-    assert.ok(runeCardId);
+    const runeCardId = deriveRuntimeCardId(ready, "p1", "rune_deck", 1);
 
     const response = await request(app)
       .post(`/api/matches/${ready.id}/debug/zones/change`)
@@ -47,11 +49,9 @@ describe("Zone change API cutover contract", () => {
 
   test("uses server-resolved card type when payload cardType is omitted", async () => {
     const created = await createMatch(app, "best-of-3");
-    const ready = await setupMatchToReady(app, created.id, "best-of-3");
+    const ready = await setupMatchToReady(app, created.id, "best-of-3", { startingPlayerId: "p1" });
 
-    const runeCardId =
-      ready.currentGame.gameplay.zones.players.p1.runeDeck[0] ?? null;
-    assert.ok(runeCardId);
+    const runeCardId = deriveRuntimeCardId(ready, "p1", "rune_deck", 1);
 
     const blocked = await request(app)
       .post(`/api/matches/${ready.id}/debug/zones/change`)
@@ -65,9 +65,7 @@ describe("Zone change API cutover contract", () => {
     assert.equal(blocked.status, 400);
     assert.equal(blocked.body.error.code, "VALIDATION_ERROR");
 
-    const mainCardId =
-      ready.currentGame.gameplay.zones.players.p1.mainDeck[0] ?? null;
-    assert.ok(mainCardId);
+    const mainCardId = deriveRuntimeCardId(ready, "p1", "main_deck", 2);
 
     const allowed = await request(app)
       .post(`/api/matches/${ready.id}/debug/zones/change`)

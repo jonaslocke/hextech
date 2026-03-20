@@ -89,10 +89,11 @@ describe("Persistence readiness repository contracts", () => {
     const reported = await request(app)
       .post(`/api/matches/${created.id}/games`)
       .send({
-        winnerPlayerId: "p1",
+        winnerPlayerId: "p1", actorPlayerId: "p1",
       });
     assert.equal(reported.status, 201);
     assert.ok(reported.body.data.version > ready.version);
     assert.ok(reported.body.data.currentGame.version > ready.currentGame.version);
   });
 });
+

@@ -1,4 +1,4 @@
-# Riftbound Engine --- Engine Boundaries
+﻿# Riftbound Engine --- Engine Boundaries
 
 This document defines the separation of responsibilities between:
 
@@ -140,7 +140,7 @@ This allows:
 
 -   replay
 -   debugging
--   spectator mode
 -   desync detection
 
 The event log must allow reconstruction of the game state.
+

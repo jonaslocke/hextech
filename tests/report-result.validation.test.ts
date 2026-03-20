@@ -25,7 +25,7 @@ describe("Report result validation matrix", () => {
 
     const response = await request(app)
       .post(`/api/matches/${ready.id}/games`)
-      .send({ winnerPlayerId: "p3" });
+      .send({ winnerPlayerId: "p3", actorPlayerId: "p1" });
 
     assert.equal(response.status, 400);
     assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
@@ -34,9 +34,11 @@ describe("Report result validation matrix", () => {
   test("returns not found when reporting result for unknown match", async () => {
     const response = await request(app)
       .post("/api/matches/match_does_not_exist/games")
-      .send({ winnerPlayerId: "p1" });
+      .send({ winnerPlayerId: "p1", actorPlayerId: "p1" });
 
     assert.equal(response.status, 404);
     assert.equal(response.body?.error?.code, "NOT_FOUND");
   });
 });
+
+

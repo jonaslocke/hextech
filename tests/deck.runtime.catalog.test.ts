@@ -40,3 +40,4 @@ describe("Runtime deck catalog enrichment", () => {
     );
   });
 });
+

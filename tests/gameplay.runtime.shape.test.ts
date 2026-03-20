@@ -98,3 +98,4 @@ describe("Gameplay runtime shape", () => {
     assert.deepEqual(serialized.gameplay.events, []);
   });
 });
+

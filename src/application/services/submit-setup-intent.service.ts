@@ -30,7 +30,7 @@ export class SubmitSetupIntentService {
 
     await this.gameRepository.save(updated.game);
     await this.matchRepository.save(updated.match);
-    return this.matchViewLoader.build(updated.match);
+    return this.matchViewLoader.build(updated.match, { viewerPlayerId: input.playerId });
   }
 
   async selectBattlefield(
@@ -48,7 +48,7 @@ export class SubmitSetupIntentService {
 
     await this.gameRepository.save(updated.game);
     await this.matchRepository.save(updated.match);
-    return this.matchViewLoader.build(updated.match);
+    return this.matchViewLoader.build(updated.match, { viewerPlayerId: input.playerId });
   }
 
   async selectStartingPlayer(
@@ -63,6 +63,6 @@ export class SubmitSetupIntentService {
 
     await this.gameRepository.save(updated.game);
     await this.matchRepository.save(updated.match);
-    return this.matchViewLoader.build(updated.match);
+    return this.matchViewLoader.build(updated.match, { viewerPlayerId: input.playerId });
   }
 }
