@@ -24,8 +24,11 @@ interface SetCardRaw {
   collector_number?: unknown;
   classification?: {
     type?: unknown;
+    supertype?: unknown;
+    domain?: unknown;
   };
   metadata?: CardMetadataRaw;
+  tags?: unknown;
   set?: {
     set_id?: unknown;
   };
@@ -46,6 +49,11 @@ export interface ResolvedCatalogCard {
   setId: string;
   cardType: CardType;
   classificationType: CatalogClassificationType;
+  supertype: string | null;
+  domains: readonly string[];
+  tags: readonly string[];
+  isChampionUnit: boolean;
+  isSignature: boolean;
   metadata: CatalogPrintMetadata;
 }
 
@@ -135,6 +143,7 @@ function buildCardCatalogIndex(): CardCatalogIndex {
       byPublicCode.set(normalizeLookupKey(card.publicCode), card);
       addLookupCandidate(cardsByNameLookup, card.name, card);
       addLookupCandidate(cardsByNameLookup, card.metadata.cleanName, card);
+      addLegendAliasLookupCandidates(cardsByNameLookup, card);
     }
   }
 
@@ -169,6 +178,31 @@ function addLookupCandidate(
   }
 
   cardsByLookup.set(lookupKey, [card]);
+}
+
+function addLegendAliasLookupCandidates(
+  cardsByLookup: Map<string, ResolvedCatalogCard[]>,
+  card: ResolvedCatalogCard,
+): void {
+  if (card.classificationType !== "Legend") {
+    return;
+  }
+
+  const cardNameLookup = normalizeLookupKey(card.name);
+
+  for (const tag of card.tags) {
+    const trimmedTag = tag.trim();
+    if (!trimmedTag) {
+      continue;
+    }
+
+    if (cardNameLookup.startsWith(`${normalizeLookupKey(trimmedTag)},`)) {
+      continue;
+    }
+
+    addLookupCandidate(cardsByLookup, `${trimmedTag}, ${card.name}`, card);
+    addLookupCandidate(cardsByLookup, `${trimmedTag}, ${card.metadata.cleanName}`, card);
+  }
 }
 
 function selectCanonicalPrint(
@@ -223,9 +257,14 @@ function parseCatalogCard(raw: SetCardRaw, filePath: string): ResolvedCatalogCar
   const setId = asNonEmptyString(raw.set?.set_id);
   const classificationType = asClassificationType(raw.classification?.type, filePath, name);
   const cardType = mapClassificationTypeToCardType(classificationType);
+  const supertype = asOptionalNonEmptyString(raw.classification?.supertype);
+  const domains = asStringArray(raw.classification?.domain);
+  const tags = asStringArray(raw.tags);
   const metadata = raw.metadata ?? {};
   const cleanName = asOptionalNonEmptyString(metadata.clean_name) ?? name;
   const collectorNumber = asCollectorNumber(raw.collector_number);
+
+  const normalizedSupertype = supertype?.toLowerCase() ?? "";
 
   return {
     id,
@@ -235,6 +274,11 @@ function parseCatalogCard(raw: SetCardRaw, filePath: string): ResolvedCatalogCar
     setId,
     cardType,
     classificationType,
+    supertype,
+    domains,
+    tags,
+    isChampionUnit: classificationType === "Unit" && normalizedSupertype === "champion",
+    isSignature: normalizedSupertype === "signature",
     metadata: {
       cleanName,
       alternateArt: Boolean(metadata.alternate_art),
@@ -290,6 +334,17 @@ function asCollectorNumber(value: unknown): number | null {
   }
 
   return null;
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((entry): entry is string => typeof entry === "string")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
 }
 
 function asOptionalNonEmptyString(value: unknown): string | null {

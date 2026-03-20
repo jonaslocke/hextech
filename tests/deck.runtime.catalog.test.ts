@@ -36,8 +36,9 @@ describe("Runtime deck catalog enrichment", () => {
       () => DeckValidator.buildRuntimeDeckSnapshot(invalidDeck, "p1"),
       (error: unknown) =>
         error instanceof ValidationError &&
-        error.message === 'Card "Card That Does Not Exist" was not found in local set data.',
+        error.message === 'Card "Card That Does Not Exist" was not found in card catalog.',
     );
   });
 });
+
 

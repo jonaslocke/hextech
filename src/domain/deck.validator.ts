@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto";
-import { resolveCatalogCardByName } from "./card-catalog";
+import {
+  resolveCatalogCardByName,
+  type ResolvedCatalogCard,
+} from "./card-catalog";
 import type { CardType } from "./zone-policy";
 import { ValidationError } from "../shared/errors";
 
@@ -12,8 +15,15 @@ export interface ValidatedDeck {
 export interface DeckValidationResult {
   isValid: boolean;
   reasons: string[];
+  violations: DeckValidationViolation[];
   chosenChampion: string | null;
   battlefields: string[];
+}
+
+export interface DeckValidationViolation {
+  code: string;
+  message: string;
+  rule?: string;
 }
 
 export interface RuntimeDeckCardInstance {
@@ -52,7 +62,162 @@ interface ParsedDeckSections {
   sideboard?: DeckSection;
 }
 
+interface ResolvedSectionEntry {
+  entry: DeckEntry;
+  card: ResolvedCatalogCard | null;
+}
+
+interface ResolvedDeckSections {
+  legend: ResolvedSectionEntry[];
+  champion: ResolvedSectionEntry[];
+  mainDeck: ResolvedSectionEntry[];
+  runeDeck: ResolvedSectionEntry[];
+  battlefields: ResolvedSectionEntry[];
+  sideboard: ResolvedSectionEntry[];
+}
+
+type DeckValidationRuleId =
+  | "legend_singleton"
+  | "champion_singleton"
+  | "main_deck_section"
+  | "rune_deck_section"
+  | "sideboard_section"
+  | "combined_copy_limit"
+  | "resolve_catalog_entries"
+  | "catalog_card_types"
+  | "champion_tag_constraint"
+  | "domain_identity_constraint"
+  | "signature_constraint"
+  | "battlefields_section";
+
+interface DeckValidationRuleContext {
+  sections: ParsedDeckSections;
+  chosenChampion: string | null;
+  reasons: string[];
+  resolved: ResolvedDeckSections | null;
+  validatedBattlefields: string[];
+  stop: boolean;
+}
+
+interface DeckValidationRuleDefinition {
+  id: DeckValidationRuleId;
+  run: (context: DeckValidationRuleContext) => void;
+}
+
 export class DeckValidator {
+  private static readonly RULE_SWITCHES: Readonly<Record<DeckValidationRuleId, boolean>> = {
+    legend_singleton: true,
+    champion_singleton: true,
+    main_deck_section: true,
+    rune_deck_section: true,
+    sideboard_section: true,
+    combined_copy_limit: true,
+    resolve_catalog_entries: true,
+    catalog_card_types: true,
+    champion_tag_constraint: true,
+    domain_identity_constraint: true,
+    signature_constraint: true,
+    battlefields_section: true,
+  };
+
+  private static readonly RULE_PIPELINE: ReadonlyArray<DeckValidationRuleDefinition> = [
+    {
+      id: "legend_singleton",
+      run: (context) =>
+        DeckValidator.validateSingletonSection(
+          context.sections.legend,
+          "Legend",
+          "Champion Legend",
+          context.reasons,
+        ),
+    },
+    {
+      id: "champion_singleton",
+      run: (context) =>
+        DeckValidator.validateSingletonSection(
+          context.sections.champion,
+          "Champion",
+          "Chosen Champion Unit",
+          context.reasons,
+        ),
+    },
+    {
+      id: "main_deck_section",
+      run: (context) =>
+        DeckValidator.validateMainDeckSection(
+          context.sections.mainDeck,
+          context.sections.champion,
+          context.reasons,
+        ),
+    },
+    {
+      id: "rune_deck_section",
+      run: (context) =>
+        DeckValidator.validateRuneDeckSection(context.sections.runeDeck, context.reasons),
+    },
+    {
+      id: "sideboard_section",
+      run: (context) =>
+        DeckValidator.validateSideboardSection(context.sections.sideboard, context.reasons),
+    },
+    {
+      id: "combined_copy_limit",
+      run: (context) =>
+        DeckValidator.validateCombinedCopyLimit(
+          context.sections.champion,
+          context.sections.mainDeck,
+          context.sections.sideboard,
+          context.reasons,
+        ),
+    },
+    {
+      id: "resolve_catalog_entries",
+      run: (context) => {
+        context.resolved = DeckValidator.resolveCatalogEntries(context.sections, context.reasons);
+      },
+    },
+    {
+      id: "catalog_card_types",
+      run: (context) => {
+        if (!context.resolved) {
+          return;
+        }
+        DeckValidator.validateCatalogCardTypes(context.resolved, context.reasons);
+      },
+    },
+    {
+      id: "champion_tag_constraint",
+      run: (context) => {
+        if (!context.resolved) {
+          return;
+        }
+        DeckValidator.validateChosenChampionTagConstraint(context.resolved, context.reasons);
+      },
+    },
+    {
+      id: "domain_identity_constraint",
+      run: (context) => {
+        if (!context.resolved) {
+          return;
+        }
+        DeckValidator.validateDomainIdentityConstraints(context.resolved, context.reasons);
+      },
+    },
+    {
+      id: "signature_constraint",
+      run: (context) => {
+        if (!context.resolved) {
+          return;
+        }
+        DeckValidator.validateSignatureConstraints(context.resolved, context.reasons);
+      },
+    },
+    {
+      id: "battlefields_section",
+      run: (context) => DeckValidator.validateBattlefieldsSection(context),
+    },
+  ];
+
   static validate(deckList: string): ValidatedDeck {
     const result = DeckValidator.validateWithReasons(deckList);
 
@@ -72,58 +237,248 @@ export class DeckValidator {
 
     if (typeof deckList !== "string" || deckList.trim().length === 0) {
       reasons.push("Deck must be provided.");
-      return { isValid: false, reasons, chosenChampion: null, battlefields: [] };
+      return {
+        isValid: false,
+        reasons,
+        violations: DeckValidator.buildViolations(reasons),
+        chosenChampion: null,
+        battlefields: [],
+      };
     }
 
     const raw = deckList.trim();
     const sections = DeckValidator.extractSections(raw);
-
-    DeckValidator.validateSingletonSection(
-      sections.legend,
-      "Legend",
-      "Champion Legend",
+    const context: DeckValidationRuleContext = {
+      sections,
+      chosenChampion: DeckValidator.resolveChosenChampionName(sections.champion),
       reasons,
-    );
-    DeckValidator.validateSingletonSection(
-      sections.champion,
-      "Champion",
-      "Chosen Champion Unit",
-      reasons,
-    );
-    DeckValidator.validateMainDeckSection(sections.mainDeck, sections.champion, reasons);
-    DeckValidator.validateRuneDeckSection(sections.runeDeck, reasons);
-    DeckValidator.validateSideboardSection(sections.sideboard, reasons);
-    DeckValidator.validateCombinedCopyLimit(
-      sections.champion,
-      sections.mainDeck,
-      sections.sideboard,
-      reasons,
-    );
+      resolved: null,
+      validatedBattlefields:
+        sections.battlefields?.entries.map((entry) => entry.name.trim()) ?? [],
+      stop: false,
+    };
 
-    const battlefieldsSection = sections.battlefields;
-    const chosenChampion = DeckValidator.resolveChosenChampionName(sections.champion);
-
-    if (!battlefieldsSection || battlefieldsSection.entries.length === 0) {
-      reasons.push("Deck must include a Battlefields section.");
-      return { isValid: false, reasons, chosenChampion, battlefields: [] };
-    }
-
-    if (battlefieldsSection.invalidEntries > 0) {
-      reasons.push("Deck must list a battlefield name for each battlefield entry.");
-    }
-
-    const validatedBattlefields = DeckValidator.validateBattlefields(
-      battlefieldsSection.entries.map((entry) => entry.name),
-      reasons,
-    );
+    DeckValidator.runValidationRules(context);
 
     return {
       isValid: reasons.length === 0,
       reasons,
-      chosenChampion,
-      battlefields: validatedBattlefields,
+      violations: DeckValidator.buildViolations(reasons),
+      chosenChampion: context.chosenChampion,
+      battlefields: context.validatedBattlefields,
     };
   }
+
+  private static runValidationRules(context: DeckValidationRuleContext): void {
+    for (const rule of DeckValidator.RULE_PIPELINE) {
+      if (!DeckValidator.RULE_SWITCHES[rule.id]) {
+        continue;
+      }
+
+      rule.run(context);
+
+      if (context.stop) {
+        return;
+      }
+    }
+  }
+
+  private static validateBattlefieldsSection(
+    context: DeckValidationRuleContext,
+  ): void {
+    const battlefieldsSection = context.sections.battlefields;
+
+    if (!battlefieldsSection || battlefieldsSection.entries.length === 0) {
+      context.reasons.push("Deck must include a Battlefields section.");
+      context.validatedBattlefields = [];
+      context.stop = true;
+      return;
+    }
+
+    if (battlefieldsSection.invalidEntries > 0) {
+      context.reasons.push("Deck must list a battlefield name for each battlefield entry.");
+    }
+
+    context.validatedBattlefields = DeckValidator.validateBattlefields(
+      battlefieldsSection.entries.map((entry) => entry.name),
+      context.reasons,
+    );
+  }
+
+  private static buildViolations(
+    reasons: string[],
+  ): DeckValidationViolation[] {
+    return reasons.map((message) => DeckValidator.toViolation(message));
+  }
+
+  private static toViolation(message: string): DeckValidationViolation {
+    const mapped = DeckValidator.REASON_VIOLATION_MAP.find((entry) =>
+      entry.pattern.test(message),
+    );
+
+    if (mapped) {
+      return {
+        code: mapped.code,
+        message,
+        ...(mapped.rule ? { rule: mapped.rule } : {}),
+      };
+    }
+
+    return {
+      code: DeckValidator.toViolationCode(message),
+      message,
+    };
+  }
+
+  private static toViolationCode(message: string): string {
+    const normalized = message
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+    return normalized.length > 0 ? normalized : "DECK_VALIDATION_ERROR";
+  }
+
+  private static readonly REASON_VIOLATION_MAP: ReadonlyArray<{
+    pattern: RegExp;
+    code: string;
+    rule?: string;
+  }> = [
+    { pattern: /^Deck must be provided\.$/, code: "DECK_REQUIRED" },
+    {
+      pattern: /^Deck must include exactly 1 Champion Legend\.$/,
+      code: "LEGEND_COUNT_INVALID",
+      rule: "103.1",
+    },
+    {
+      pattern: /^Deck must include exactly 1 Chosen Champion Unit\.$/,
+      code: "CHAMPION_COUNT_INVALID",
+      rule: "103.2",
+    },
+    {
+      pattern: /^[A-Za-z ]+ section must use "<count> <card name>" entries\.$/,
+      code: "SECTION_ENTRY_FORMAT_INVALID",
+    },
+    {
+      pattern: /^Deck must include a Main Deck section\.$/,
+      code: "MAIN_DECK_SECTION_REQUIRED",
+      rule: "103.2",
+    },
+    {
+      pattern: /^Main Deck card copies must be between 1 and 3\.$/,
+      code: "MAIN_DECK_COPY_COUNT_INVALID",
+      rule: "103.2.b",
+    },
+    {
+      pattern: /^Main Deck must not list the same card more than once\.$/,
+      code: "MAIN_DECK_DUPLICATE_CARD",
+    },
+    {
+      pattern: /^Main Deck must include at least 40 cards\.$/,
+      code: "MAIN_DECK_SIZE_INVALID",
+      rule: "103.2",
+    },
+    {
+      pattern: /^Deck must include a Rune Deck section\.$/,
+      code: "RUNE_DECK_SECTION_REQUIRED",
+      rule: "103.3",
+    },
+    {
+      pattern: /^Rune Deck section must use "<count> <card name>" entries\.$/,
+      code: "RUNE_DECK_ENTRY_FORMAT_INVALID",
+    },
+    {
+      pattern: /^Rune Deck must include exactly 12 cards\.$/,
+      code: "RUNE_DECK_SIZE_INVALID",
+      rule: "103.3.a",
+    },
+    {
+      pattern: /^Sideboard section must use "<count> <card name>" entries\.$/,
+      code: "SIDEBOARD_ENTRY_FORMAT_INVALID",
+    },
+    {
+      pattern: /^Sideboard must not list the same card more than once\.$/,
+      code: "SIDEBOARD_DUPLICATE_CARD",
+    },
+    {
+      pattern:
+        /^Chosen Champion, Main Deck, and Sideboard combined must not include more than 3 copies of the same card\.$/,
+      code: "COMBINED_COPY_LIMIT_EXCEEDED",
+      rule: "103.2.b.1",
+    },
+    {
+      pattern: /^Card ".+" was not found in card catalog\.$/,
+      code: "CARD_NOT_FOUND",
+    },
+    {
+      pattern: /^Champion Legend must reference a legend card\.$/,
+      code: "LEGEND_TYPE_INVALID",
+    },
+    {
+      pattern: /^Chosen Champion must reference a champion unit\.$/,
+      code: "CHAMPION_TYPE_INVALID",
+      rule: "103.2.a.2",
+    },
+    {
+      pattern: /^Main Deck can only contain unit, spell, or gear cards\.$/,
+      code: "MAIN_DECK_CARD_TYPE_INVALID",
+    },
+    {
+      pattern: /^Rune Deck can only contain rune cards\.$/,
+      code: "RUNE_DECK_CARD_TYPE_INVALID",
+    },
+    {
+      pattern: /^Battlefields section can only contain battlefield cards\.$/,
+      code: "BATTLEFIELD_CARD_TYPE_INVALID",
+    },
+    {
+      pattern: /^Chosen Champion must share a champion tag with Champion Legend\.$/,
+      code: "CHAMPION_TAG_MISMATCH",
+      rule: "103.2.a.2",
+    },
+    {
+      pattern:
+        /^Chosen Champion and Main Deck cards must match Champion Legend domain identity\.$/,
+      code: "MAIN_DECK_DOMAIN_IDENTITY_MISMATCH",
+      rule: "103.2.c",
+    },
+    {
+      pattern: /^Rune Deck cards must match Champion Legend domain identity\.$/,
+      code: "RUNE_DECK_DOMAIN_IDENTITY_MISMATCH",
+      rule: "103.3.a.1",
+    },
+    {
+      pattern: /^Battlefields must match Champion Legend domain identity when applicable\.$/,
+      code: "BATTLEFIELD_DOMAIN_IDENTITY_MISMATCH",
+    },
+    {
+      pattern: /^Deck must include a Battlefields section\.$/,
+      code: "BATTLEFIELDS_SECTION_REQUIRED",
+      rule: "103.4",
+    },
+    {
+      pattern: /^Deck must list a battlefield name for each battlefield entry\.$/,
+      code: "BATTLEFIELD_NAME_REQUIRED",
+    },
+    {
+      pattern: /^Deck may include at most 3 total Signature cards\.$/,
+      code: "SIGNATURE_COPY_LIMIT_EXCEEDED",
+      rule: "103.2.d.1",
+    },
+    {
+      pattern: /^All Signature cards must share the Champion Legend tag\.$/,
+      code: "SIGNATURE_TAG_MISMATCH",
+      rule: "103.2.d.2",
+    },
+    {
+      pattern: /^Deck must include exactly 3 battlefields\.$/,
+      code: "BATTLEFIELD_COUNT_INVALID",
+    },
+    {
+      pattern: /^Deck must not include duplicate battlefields\.$/,
+      code: "BATTLEFIELD_DUPLICATE",
+    },
+  ];
 
   static buildRuntimeDeckSnapshot(
     deckList: string,
@@ -423,6 +778,248 @@ export class DeckValidator {
         break;
       }
     }
+  }
+
+  private static resolveCatalogEntries(
+    sections: ParsedDeckSections,
+    reasons: string[],
+  ): ResolvedDeckSections {
+    const unknownNames = new Set<string>();
+
+    const resolveSection = (section: DeckSection | undefined): ResolvedSectionEntry[] => {
+      if (!section) {
+        return [];
+      }
+
+      const resolved: ResolvedSectionEntry[] = [];
+      for (const entry of section.entries) {
+        const card = resolveCatalogCardByName(entry.name);
+        if (!card) {
+          unknownNames.add(entry.name.trim());
+        }
+
+        resolved.push({ entry, card });
+      }
+
+      return resolved;
+    };
+
+    const resolvedSections: ResolvedDeckSections = {
+      legend: resolveSection(sections.legend),
+      champion: resolveSection(sections.champion),
+      mainDeck: resolveSection(sections.mainDeck),
+      runeDeck: resolveSection(sections.runeDeck),
+      battlefields: resolveSection(sections.battlefields),
+      sideboard: resolveSection(sections.sideboard),
+    };
+
+    for (const unknownName of unknownNames) {
+      if (!unknownName) {
+        continue;
+      }
+
+      reasons.push(`Card "${unknownName}" was not found in card catalog.`);
+    }
+
+    return resolvedSections;
+  }
+
+  private static validateCatalogCardTypes(
+    resolved: ResolvedDeckSections,
+    reasons: string[],
+  ): void {
+    if (resolved.legend.some((item) => item.card && item.card.cardType !== "legend")) {
+      reasons.push("Champion Legend must reference a legend card.");
+    }
+
+    if (
+      resolved.champion.some(
+        (item) =>
+          item.card &&
+          !(item.card.cardType === "unit" && item.card.isChampionUnit),
+      )
+    ) {
+      reasons.push("Chosen Champion must reference a champion unit.");
+    }
+
+    if (
+      resolved.mainDeck.some(
+        (item) =>
+          item.card &&
+          !(
+            item.card.cardType === "unit" ||
+            item.card.cardType === "spell" ||
+            item.card.cardType === "gear"
+          ),
+      )
+    ) {
+      reasons.push("Main Deck can only contain unit, spell, or gear cards.");
+    }
+
+    if (resolved.runeDeck.some((item) => item.card && item.card.cardType !== "rune")) {
+      reasons.push("Rune Deck can only contain rune cards.");
+    }
+
+    if (
+      resolved.battlefields.some(
+        (item) => item.card && item.card.cardType !== "battlefield",
+      )
+    ) {
+      reasons.push("Battlefields section can only contain battlefield cards.");
+    }
+  }
+
+  private static validateChosenChampionTagConstraint(
+    resolved: ResolvedDeckSections,
+    reasons: string[],
+  ): void {
+    const legendCard = DeckValidator.resolveSingletonCard(resolved.legend);
+    const championCard = DeckValidator.resolveSingletonCard(resolved.champion);
+
+    if (!legendCard || !championCard) {
+      return;
+    }
+
+    const legendTags = new Set(
+      legendCard.tags.map((tag) => tag.trim().toLowerCase()).filter(Boolean),
+    );
+    const championTags = championCard.tags
+      .map((tag) => tag.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (legendTags.size === 0 || championTags.length === 0) {
+      reasons.push("Chosen Champion must share a champion tag with Champion Legend.");
+      return;
+    }
+
+    const matchesTag = championTags.some((tag) => legendTags.has(tag));
+    if (!matchesTag) {
+      reasons.push("Chosen Champion must share a champion tag with Champion Legend.");
+    }
+  }
+
+  private static validateDomainIdentityConstraints(
+    resolved: ResolvedDeckSections,
+    reasons: string[],
+  ): void {
+    const legendCard = DeckValidator.resolveSingletonCard(resolved.legend);
+    if (!legendCard) {
+      return;
+    }
+
+    const legendDomains = new Set(
+      legendCard.domains
+        .map((domain) => domain.trim().toLowerCase())
+        .filter((domain) => domain && domain !== "colorless"),
+    );
+
+    const hasMainDeckDomainMismatch = [
+      ...resolved.champion,
+      ...resolved.mainDeck,
+    ].some(
+      (item) => item.card && !DeckValidator.isCardWithinDomainIdentity(item.card, legendDomains),
+    );
+
+    if (hasMainDeckDomainMismatch) {
+      reasons.push("Chosen Champion and Main Deck cards must match Champion Legend domain identity.");
+    }
+
+    const hasRuneDeckDomainMismatch = resolved.runeDeck.some(
+      (item) => item.card && !DeckValidator.isCardWithinDomainIdentity(item.card, legendDomains),
+    );
+
+    if (hasRuneDeckDomainMismatch) {
+      reasons.push("Rune Deck cards must match Champion Legend domain identity.");
+    }
+
+    const hasBattlefieldDomainMismatch = resolved.battlefields.some(
+      (item) =>
+        item.card &&
+        !DeckValidator.isCardWithinDomainIdentity(item.card, legendDomains) &&
+        !DeckValidator.isDomainNotApplicable(item.card),
+    );
+
+    if (hasBattlefieldDomainMismatch) {
+      reasons.push("Battlefields must match Champion Legend domain identity when applicable.");
+    }
+  }
+
+  private static validateSignatureConstraints(
+    resolved: ResolvedDeckSections,
+    reasons: string[],
+  ): void {
+    const legendCard = DeckValidator.resolveSingletonCard(resolved.legend);
+    const legendTags = new Set(
+      (legendCard?.tags ?? [])
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean),
+    );
+
+    const signatureEntries = [
+      ...resolved.champion,
+      ...resolved.mainDeck,
+      ...resolved.sideboard,
+    ].filter((item) => item.card?.isSignature === true);
+
+    const totalSignatureCopies = signatureEntries.reduce(
+      (sum, item) => sum + item.entry.quantity,
+      0,
+    );
+
+    if (totalSignatureCopies > 3) {
+      reasons.push("Deck may include at most 3 total Signature cards.");
+    }
+
+    if (signatureEntries.length === 0 || legendTags.size === 0) {
+      return;
+    }
+
+    const hasSignatureTagMismatch = signatureEntries.some((item) => {
+      const cardTags = item.card?.tags ?? [];
+      const normalizedCardTags = cardTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean);
+      return !normalizedCardTags.some((tag) => legendTags.has(tag));
+    });
+
+    if (hasSignatureTagMismatch) {
+      reasons.push("All Signature cards must share the Champion Legend tag.");
+    }
+  }
+
+  private static resolveSingletonCard(
+    entries: ResolvedSectionEntry[],
+  ): ResolvedCatalogCard | null {
+    if (entries.length !== 1) {
+      return null;
+    }
+
+    return entries[0]?.card ?? null;
+  }
+
+  private static isCardWithinDomainIdentity(
+    card: ResolvedCatalogCard,
+    legendDomains: ReadonlySet<string>,
+  ): boolean {
+    const cardDomains = card.domains
+      .map((domain) => domain.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (cardDomains.length === 0) {
+      return true;
+    }
+
+    if (cardDomains.every((domain) => domain === "colorless")) {
+      return true;
+    }
+
+    return cardDomains.every((domain) => legendDomains.has(domain));
+  }
+
+  private static isDomainNotApplicable(card: ResolvedCatalogCard): boolean {
+    const cardDomains = card.domains
+      .map((domain) => domain.trim().toLowerCase())
+      .filter(Boolean);
+
+    return cardDomains.length > 0 && cardDomains.every((domain) => domain === "colorless");
   }
 
   private static validateBattlefields(

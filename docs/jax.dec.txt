@@ -1,0 +1,43 @@
+Legend:
+1 Jax, Grandmaster at Arms
+
+Champion:
+1 Jax, Unmatched
+
+MainDeck:
+3 Clockwork Keeper
+3 Challenge
+3 Brutalizer
+3 Stellacorn Herder
+3 Guardian Angel
+3 Warmog's Armor
+3 Counter Strike
+2 Charm
+2 Defy
+2 First Mate
+2 Not So Fast
+2 Boneshiver
+1 Discipline
+1 Punch First
+1 Ruin Runner
+2 Lucian, Merciless
+2 Aphelios, Exalted
+1 Akshan, Mischievous
+
+Battlefields:
+1 Monastery of Hirana
+1 The Dreaming Tree
+1 Sunken Temple
+
+Runes:
+7 Calm Rune
+5 Body Rune
+
+Sideboard:
+2 Adaptatron
+1 Defy
+1 Wind Wall
+1 Zhonya's Hourglass
+1 Cannon Barrage
+1 Not So Fast
+1 Punch First

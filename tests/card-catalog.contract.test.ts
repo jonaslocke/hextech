@@ -27,6 +27,16 @@ describe("Card catalog contract", () => {
     assert.equal(fromPublicCode?.cardType, "battlefield");
   });
 
+  test("supports champion-prefixed legend aliases from decklists", () => {
+    const byAlias = resolveCatalogCardByName("Ahri, Nine-Tailed Fox");
+    assert.ok(byAlias);
+    assert.equal(byAlias?.cardType, "legend");
+
+    const canonical = resolveCatalogCardByName("Nine-Tailed Fox");
+    assert.ok(canonical);
+    assert.equal(byAlias?.publicCode, canonical?.publicCode);
+  });
+
   test("selects canonical print for duplicate names using default metadata flags", () => {
     const candidates = listCatalogCardsByExactName("Irelia, Fervent");
     assert.ok(candidates.length > 1);
@@ -53,4 +63,3 @@ describe("Card catalog contract", () => {
     assert.equal(resolveCardType("Card That Does Not Exist"), null);
   });
 });
-

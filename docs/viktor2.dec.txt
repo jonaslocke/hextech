@@ -1,0 +1,42 @@
+Legend:
+1 Viktor, Herald of the Arcane
+
+Champion:
+1 Viktor, Leader
+
+MainDeck:
+3 Stupefy
+3 Thousand-Tailed Watcher
+3 Cull the Weak
+3 Hidden Blade
+3 Wages of Pain
+3 Pickpocket
+3 Bellows Breath
+3 Honest Broker
+2 Singularity
+2 Faithful Manufactor
+2 Final Spark
+1 Riptide Rex
+1 Time Warp
+1 Salvage
+1 Vengeance
+1 Plundering Poro
+1 Glasc Mixologist
+3 Xin Zhao, Vigilant
+
+Battlefields:
+1 Void Gate
+1 Ravenbloom Conservatory
+1 Treasure Hoard
+
+Runes:
+6 Mind Rune
+6 Order Rune
+
+Sideboard:
+2 Salvage
+2 Glasc Mixologist
+1 Riptide Rex
+1 Faithful Manufactor
+1 Imperial Decree
+1 Card Sharp

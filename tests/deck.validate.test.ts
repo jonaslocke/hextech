@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import request from "supertest";
 import { createApp } from "../src/app.js";
 
@@ -87,6 +89,15 @@ const buildDeckList = (sections: DeckSections = {}): string => {
 const validateDeck = async (deckList: string | undefined) =>
   request(app).post("/api/decks/validate").send({ deckList });
 
+const hasViolationMessage = (
+  response: request.Response,
+  message: string,
+): boolean =>
+  Array.isArray(response.body?.data?.violations) &&
+  response.body.data.violations.some(
+    (violation: { message?: string }) => violation.message === message,
+  );
+
 describe("Deck validation (Core Rules 101 - Deck Construction)", () => {
   test("101/103 - accepts a legal deck list baseline", async () => {
     const response = await validateDeck(buildDeckList());
@@ -94,6 +105,7 @@ describe("Deck validation (Core Rules 101 - Deck Construction)", () => {
     assert.equal(response.status, 200);
     assert.equal(response.body.data.isValid, true);
     assert.deepEqual(response.body.data.reasons, []);
+    assert.deepEqual(response.body.data.violations, []);
     assert.deepEqual(response.body.data.battlefields, [
       "Fortified Position",
       "Grove of the God-Willow",
@@ -313,6 +325,56 @@ describe("Deck validation (Core Rules 101 - Deck Construction)", () => {
     );
   });
 
+  test("103.2.c - chosen champion and main deck obey domain identity", async () => {
+    const response = await validateDeck(
+      buildDeckList({
+        mainDeckEntries: baseMainDeckEntries.map((entry) =>
+          entry === "3 Defy" ? "3 Noxus Hopeful" : entry,
+        ),
+      }),
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Chosen Champion and Main Deck cards must match Champion Legend domain identity.",
+      ),
+    );
+  });
+
+  test("103.2.a.2 - chosen champion must be a champion unit with matching champion tag", async () => {
+    const response = await validateDeck(
+      buildDeckList({
+        championEntries: ["1 Jax, Unmatched"],
+      }),
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Chosen Champion must share a champion tag with Champion Legend.",
+      ),
+    );
+  });
+
+  test("103.2.a.2 / 103.2.d.3 - chosen champion cannot be a signature unit", async () => {
+    const response = await validateDeck(
+      buildDeckList({
+        championEntries: ["1 Tibbers"],
+      }),
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Chosen Champion must reference a champion unit.",
+      ),
+    );
+  });
+
   test("103.3 - requires Rune Deck section", async () => {
     const response = await validateDeck(
       buildDeckList({
@@ -339,6 +401,22 @@ describe("Deck validation (Core Rules 101 - Deck Construction)", () => {
     assert.ok(
       response.body.data.reasons.includes(
         "Rune Deck must include exactly 12 cards.",
+      ),
+    );
+  });
+
+  test("103.3.a.1 - rune deck obeys domain identity", async () => {
+    const response = await validateDeck(
+      buildDeckList({
+        runeEntries: ["7 Calm Rune", "5 Fury Rune"],
+      }),
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Rune Deck cards must match Champion Legend domain identity.",
       ),
     );
   });
@@ -409,6 +487,62 @@ describe("Deck validation (Core Rules 101 - Deck Construction)", () => {
     );
   });
 
+  test("103.2.d.1 - total signature cards cannot exceed 3", async () => {
+    const response = await validateDeck(
+      buildDeckList({
+        sideboardEntries: [
+          "1 Fox-Fire",
+          "1 Counter Strike",
+          "1 Noxian Guillotine",
+          "1 Stormbringer",
+          "1 Wind Wall",
+          "1 Retreat",
+          "1 Singularity",
+          "1 Rune Prison",
+        ],
+      }),
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "Deck may include at most 3 total Signature cards.",
+      ),
+    );
+  });
+
+  test("103.2.d.2 - all signature cards must match champion legend tag", async () => {
+    const response = await validateDeck(
+      buildDeckList({
+        sideboardEntries: [
+          "1 Counter Strike",
+          "1 Wind Wall",
+          "1 Blitzcrank, Impassive",
+          "1 Riptide Rex",
+          "1 Retreat",
+          "1 Singularity",
+          "1 Unchecked Power",
+          "1 Rune Prison",
+        ],
+      }),
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        "All Signature cards must share the Champion Legend tag.",
+      ),
+    );
+    assert.ok(
+      hasViolationMessage(
+        response,
+        "All Signature cards must share the Champion Legend tag.",
+      ),
+    );
+  });
+
   test("addition - requires unique card names per Sideboard section", async () => {
     const response = await validateDeck(
       buildDeckList({
@@ -459,19 +593,57 @@ describe("Deck validation (Core Rules 101 - Deck Construction)", () => {
     );
   });
 
+  test("rejects unknown cards using card catalog", async () => {
+    const response = await validateDeck(
+      buildDeckList({
+        mainDeckEntries: baseMainDeckEntries.map((entry) =>
+          entry === "3 Defy" ? "3 Not A Real Card" : entry,
+        ),
+      }),
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, false);
+    assert.ok(
+      response.body.data.reasons.includes(
+        'Card "Not A Real Card" was not found in card catalog.',
+      ),
+    );
+  });
+
+  test("accepts provided Draven deck list", async () => {
+    const deckList = readFileSync(path.join(process.cwd(), "docs", "draven.dec.txt"), "utf8");
+
+    const response = await validateDeck(deckList);
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, true);
+  });
+
+  test("accepts provided Jax deck list", async () => {
+    const deckList = readFileSync(path.join(process.cwd(), "docs", "jax.dec.txt"), "utf8");
+
+    const response = await validateDeck(deckList);
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, true);
+  });
+
+  test("accepts provided Irelia deck list", async () => {
+    const deckList = readFileSync(path.join(process.cwd(), "docs", "irelia.dec.txt"), "utf8");
+
+    const response = await validateDeck(deckList);
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.isValid, true);
+  });
+
   test("handles missing deck list payload", async () => {
     const response = await validateDeck(undefined);
 
     assert.equal(response.status, 200);
     assert.equal(response.body.data.isValid, false);
     assert.ok(response.body.data.reasons.includes("Deck must be provided."));
+    assert.ok(hasViolationMessage(response, "Deck must be provided."));
   });
-
-  test.todo(
-    "103.1.b / 103.2.c / 103.3.a.1 / 103.4.b domain identity constraints require card metadata integration.",
-  );
-  test.todo(
-    "103.2.a.2 chosen champion tag matching legend and 103.2.d signature-card constraints require card metadata integration.",
-  );
 });
-
