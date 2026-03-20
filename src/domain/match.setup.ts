@@ -6,6 +6,7 @@ import { ValidationError } from "../shared/errors";
 
 interface SelectChosenChampionIntent {
   playerId: string;
+  deckList?: string;
 }
 
 interface SelectBattlefieldIntent {
@@ -39,15 +40,43 @@ export class MatchSetup {
       );
     }
 
-    const chosenChampion = MatchSetup.resolveDeckChampion(
-      match.decksByPlayer[playerId] ?? "",
-    );
+    const registeredDeckList = match.decksByPlayer[playerId] ?? "";
+    const deckList = MatchSetup.normalizeOptionalDeckList(intent.deckList);
+
+    let chosenChampion: string;
+    let nextDeckStateByPlayer: Game["deckStateByPlayer"] | undefined;
+
+    if (deckList !== undefined) {
+      if (match.format !== "best-of-3") {
+        throw new ValidationError(
+          "Setup deck reconfiguration is only allowed for best-of-3 matches.",
+        );
+      }
+      if (game.number <= 1) {
+        throw new ValidationError(
+          "Setup deck reconfiguration is only allowed from game 2 onward in best-of-3 matches.",
+        );
+      }
+
+      const reconfiguredDeck = DeckValidator.validateSetupDeckReconfiguration(
+        registeredDeckList,
+        deckList,
+      );
+      chosenChampion = reconfiguredDeck.chosenChampion;
+      nextDeckStateByPlayer = {
+        ...game.deckStateByPlayer,
+        [playerId]: DeckValidator.buildRuntimeDeckSnapshot(reconfiguredDeck.raw, playerId),
+      };
+    } else {
+      chosenChampion = MatchSetup.resolveDeckChampion(registeredDeckList);
+    }
 
     return MatchSetup.withSetupProgress(match, game, {
       chosenChampionByPlayer: {
         ...game.chosenChampionByPlayer,
         [playerId]: chosenChampion,
       },
+      ...(nextDeckStateByPlayer ? { deckStateByPlayer: nextDeckStateByPlayer } : {}),
     });
   }
 
@@ -163,6 +192,7 @@ export class MatchSetup {
       chosenChampionByPlayer?: Record<string, string>;
       selectedBattlefieldsByPlayer?: Record<string, string>;
       startingPlayerId?: string;
+      deckStateByPlayer?: Game["deckStateByPlayer"];
       battlefieldPoolByPlayer?: Match["battlefieldPoolByPlayer"];
     },
   ): SetupTransitionResult {
@@ -175,6 +205,7 @@ export class MatchSetup {
         ? { selectedBattlefieldsByPlayer: patch.selectedBattlefieldsByPlayer }
         : {}),
       ...(patch.startingPlayerId ? { startingPlayerId: patch.startingPlayerId } : {}),
+      ...(patch.deckStateByPlayer ? { deckStateByPlayer: patch.deckStateByPlayer } : {}),
       updatedAt: new Date().toISOString(),
       version: game.version + 1,
     };
@@ -242,5 +273,22 @@ export class MatchSetup {
   private static resolveDeckChampion(deckList: string): string {
     const validatedDeck = DeckValidator.validate(deckList);
     return validatedDeck.chosenChampion;
+  }
+
+  private static normalizeOptionalDeckList(deckList: unknown): string | undefined {
+    if (deckList === undefined) {
+      return undefined;
+    }
+
+    if (typeof deckList !== "string") {
+      throw new ValidationError("Deck list must be a string.");
+    }
+
+    const normalized = deckList.trim();
+    if (!normalized) {
+      throw new ValidationError("Deck list must be provided.");
+    }
+
+    return normalized;
   }
 }

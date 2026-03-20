@@ -6,7 +6,7 @@ This document describes match setup exactly as implemented in code.
 
 Setup is the phase where both players:
 
-1. confirm chosen champion from their registered deck,
+1. confirm chosen champion (optionally with deck reconfiguration in best-of-3 from game 2 onward),
 2. select one battlefield for the current game,
 3. choose the starting player (by the designated chooser only).
 
@@ -35,7 +35,8 @@ Payload:
 
 ```json
 {
-  "playerId": "p1"
+  "playerId": "p1",
+  "deckList": "Legend:\n...\n"
 }
 ```
 
@@ -43,7 +44,11 @@ Behavior:
 
 - `playerId` must be one of match players.
 - Can be sent only once per player.
-- Champion value is resolved from the player's deck (`DeckValidator.validate(...).chosenChampion`).
+- If `deckList` is not provided, champion value is resolved from the player's registered deck (`DeckValidator.validate(...).chosenChampion`).
+- `deckList` reconfiguration is allowed only for `best-of-3` from game 2 onward.
+- Reconfiguration may only swap cards among `Champion`, `MainDeck`, and `Sideboard`.
+- `Legend`, `Runes`, and `Battlefields` sections must remain exactly the same as registered.
+- Reconfigured deck must still pass deck validation rules.
 
 ### 2) Select Battlefield
 
@@ -145,10 +150,13 @@ Typical setup validation errors (`400 VALIDATION_ERROR`):
 - Player id missing.
 - Player not in match.
 - Repeated one-shot intent (champion, battlefield, starting-player).
+- Deck reconfiguration sent in `best-of-1`.
+- Deck reconfiguration sent during game 1 setup.
+- Reconfigured deck changes immutable sections (`Legend`, `Runes`, `Battlefields`).
+- Reconfigured deck introduces/removes cards outside Champion/MainDeck/Sideboard swap pool.
 - Battlefield missing/invalid for best-of-3.
 - Battlefield already used by that player in this match.
 - Starting player selected by non-chooser.
 - Starting player id not in match.
 
 If match does not exist: `404 NOT_FOUND`.
-

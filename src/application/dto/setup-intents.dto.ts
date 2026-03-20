@@ -1,6 +1,7 @@
 export interface SelectChosenChampionIntentRequestDto {
   matchId: string;
   playerId: string;
+  deckList?: string;
 }
 
 export interface SelectBattlefieldIntentRequestDto {

@@ -79,6 +79,7 @@ export class MatchController {
       const match = await this.submitSetupIntentService.selectChosenChampion({
         matchId: matchId ?? "",
         playerId: req.body?.playerId,
+        deckList: req.body?.deckList,
       });
 
       return res.status(201).json({

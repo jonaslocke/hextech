@@ -269,6 +269,52 @@ export class DeckValidator {
     };
   }
 
+  static validateSetupDeckReconfiguration(
+    registeredDeckList: string,
+    reconfiguredDeckList: string,
+  ): ValidatedDeck {
+    const registeredDeck = DeckValidator.validate(registeredDeckList);
+    const reconfiguredDeck = DeckValidator.validate(reconfiguredDeckList);
+
+    const registeredSections = DeckValidator.extractSections(registeredDeck.raw);
+    const reconfiguredSections = DeckValidator.extractSections(reconfiguredDeck.raw);
+
+    DeckValidator.assertSectionUnchanged(
+      "Legend",
+      registeredSections.legend,
+      reconfiguredSections.legend,
+    );
+    DeckValidator.assertSectionUnchanged(
+      "Runes",
+      registeredSections.runeDeck,
+      reconfiguredSections.runeDeck,
+    );
+    DeckValidator.assertSectionUnchanged(
+      "Battlefields",
+      registeredSections.battlefields,
+      reconfiguredSections.battlefields,
+    );
+
+    const registeredConfigurablePool = DeckValidator.buildCardsPool([
+      registeredSections.champion,
+      registeredSections.mainDeck,
+      registeredSections.sideboard,
+    ]);
+    const reconfiguredPool = DeckValidator.buildCardsPool([
+      reconfiguredSections.champion,
+      reconfiguredSections.mainDeck,
+      reconfiguredSections.sideboard,
+    ]);
+
+    if (!DeckValidator.areCardsPoolsEqual(registeredConfigurablePool, reconfiguredPool)) {
+      throw new ValidationError(
+        "Setup deck reconfiguration can only swap cards among Chosen Champion, Main Deck, and Sideboard.",
+      );
+    }
+
+    return reconfiguredDeck;
+  }
+
   private static runValidationRules(context: DeckValidationRuleContext): void {
     for (const rule of DeckValidator.RULE_PIPELINE) {
       if (!DeckValidator.RULE_SWITCHES[rule.id]) {
@@ -1045,6 +1091,56 @@ export class DeckValidator {
     }
 
     return normalized;
+  }
+
+  private static assertSectionUnchanged(
+    sectionName: string,
+    registeredSection: DeckSection | undefined,
+    reconfiguredSection: DeckSection | undefined,
+  ): void {
+    const registeredPool = DeckValidator.buildCardsPool([registeredSection]);
+    const reconfiguredPool = DeckValidator.buildCardsPool([reconfiguredSection]);
+
+    if (!DeckValidator.areCardsPoolsEqual(registeredPool, reconfiguredPool)) {
+      throw new ValidationError(
+        `${sectionName} section cannot be changed during setup deck reconfiguration.`,
+      );
+    }
+  }
+
+  private static buildCardsPool(sections: ReadonlyArray<DeckSection | undefined>): Map<string, number> {
+    const pool = new Map<string, number>();
+
+    for (const section of sections) {
+      if (!section) {
+        continue;
+      }
+
+      for (const entry of section.entries) {
+        const key = entry.name.trim().toLowerCase();
+        const total = (pool.get(key) ?? 0) + entry.quantity;
+        pool.set(key, total);
+      }
+    }
+
+    return pool;
+  }
+
+  private static areCardsPoolsEqual(
+    left: ReadonlyMap<string, number>,
+    right: ReadonlyMap<string, number>,
+  ): boolean {
+    if (left.size !== right.size) {
+      return false;
+    }
+
+    for (const [cardName, leftCount] of left.entries()) {
+      if ((right.get(cardName) ?? 0) !== leftCount) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private static expandEntriesToInstances(

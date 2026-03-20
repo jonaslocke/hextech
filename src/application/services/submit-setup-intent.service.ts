@@ -26,6 +26,7 @@ export class SubmitSetupIntentService {
     const game = await this.matchViewLoader.getCurrentGameOrThrow(match);
     const updated = MatchSetup.applySelectChosenChampionIntent(match, game, {
       playerId: input.playerId,
+      deckList: input.deckList,
     });
 
     await this.gameRepository.save(updated.game);
