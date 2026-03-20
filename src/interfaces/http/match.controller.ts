@@ -4,7 +4,6 @@ import { GetMatchService } from "../../application/services/get-match.service";
 import { RecordGameResultService } from "../../application/services/record-game-result.service";
 import { SubmitSetupIntentService } from "../../application/services/submit-setup-intent.service";
 import { DebugGameplayZonesService } from "../../application/services/debug-gameplay-zones.service";
-import { SubmitGameplayIntentService } from "../../application/services/submit-gameplay-intent.service";
 import { normalizeViewerPlayerId } from "../../application/match.view";
 import { ValidationError } from "../../shared/errors";
 
@@ -15,7 +14,6 @@ export class MatchController {
     private readonly recordGameResultService: RecordGameResultService,
     private readonly submitSetupIntentService: SubmitSetupIntentService,
     private readonly debugGameplayZonesService: DebugGameplayZonesService,
-    private readonly submitGameplayIntentService: SubmitGameplayIntentService,
   ) {}
 
   create = async (req: Request, res: Response, next: NextFunction) => {
@@ -157,27 +155,6 @@ export class MatchController {
         battlefieldControllerById: req.body?.battlefieldControllerById,
       }, {
         viewerPlayerId: req.body?.cardControllerId,
-      });
-
-      return res.status(201).json({ data: match });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  submitGameplayIntent = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const matchId = Array.isArray(req.params.id)
-        ? req.params.id[0]
-        : req.params.id;
-      const match = await this.submitGameplayIntentService.execute({
-        matchId: matchId ?? "",
-        actorPlayerId: req.body?.actorPlayerId,
-        intent: req.body?.intent,
       });
 
       return res.status(201).json({ data: match });

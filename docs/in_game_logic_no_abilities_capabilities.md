@@ -1,4 +1,4 @@
-# In-Game Logic (No Card Abilities) - Capability Tracker
+﻿# In-Game Logic (No Card Abilities) - Capability Tracker
 
 Rules source policy: **Only `Riftbound Core Rules v1.2` is canonical**.
 
@@ -29,10 +29,6 @@ Scope policy: implement the core engine without card ability logic for now, whil
 | `Completed` | PR5.1 zone-cutover: single mutation entrypoint (`ZONE_CHANGE`) | Removed duplicated post-setup mutation surfaces and kept one canonical zone-change mutation contract for this phase. |
 | `Completed` | PR5.1 zone-cutover: event semantics unification | Zone transitions now append canonical `zone_changed` events, with reveal events as derived additions when needed. |
 | `Completed` | PR5.1 zone-cutover: strict card-type authority | Known gameplay card ids now resolve type from server runtime/catalog and reject conflicting payload overrides. |
-| `Pending` | PR9 foundation: gameplay intent API (non-debug) | Add production gameplay intent endpoint/service with a server-authoritative intent router. Clients submit high-level intents (not raw zone mutations), and the server derives legality, ownership, and resulting transitions. |
-| `Pending` | PR9 foundation: intent validation and authorization gates | Centralize legality checks (match/game status, actor membership, turn/timing eligibility placeholders, ownership/controller constraints) before mutating gameplay state. |
-| `Pending` | PR9 foundation: deterministic intent execution contract | Define ordered intent processing and deterministic execution guarantees so future seeded RNG and replay consistency are enforceable at one entrypoint. |
-| `Pending` | PR9 foundation: domain event envelope from intents | Standardize intent result payloads and event appending shape so gameplay projections and client sync do not depend on debug endpoints. |
 | `Pending` | Deterministic RNG policy | Add seeded RNG (derived from game identity) and route all gameplay randomness through intent execution paths. |
 | `Pending` | Turn kernel | Implement turn ownership, turn number, and phase progression states, enforced through intent gates rather than direct zone debug mutations. |
 | `Pending` | Timing states | Implement neutral/showdown + open/closed timing state model and transition checks in intent validation/resolution. |
@@ -46,14 +42,5 @@ Scope policy: implement the core engine without card ability logic for now, whil
 
 - Keep all rule decisions anchored to v1.2 only.
 - Preserve Golden Rule extensibility: avoid hardcoding constraints that cards may override later.
-- For new gameplay behavior, prefer extending the existing zone primitives behind gameplay intents instead of exposing direct state mutations.
-- Keep debug zone endpoints as test harness only; production clients should use gameplay intents.
-
-## PR9 Scope (Why It Is Necessary)
-
-- Replace debug-style low-level mutations with production high-level intents.
-- Enforce legality/authorization at a single server entrypoint before any zone transition.
-- Make deterministic execution and replay feasible by sequencing all actions through one pipeline.
-- Prepare a stable contract for upcoming turn/timing/priority/chain systems without coupling clients to internal zone maps.
-
-
+- For new gameplay behavior, validate architecture first; do not add gameplay intent APIs without explicit design approval.
+- Keep debug zone endpoints as test harness for this phase; production gameplay action API is deferred pending architecture validation.

@@ -45,7 +45,6 @@
       <div class="main">
         <div class="tabs">
           <button class="tab-button active" data-tab="core">Core Setup + Match Read</button>
-          <button class="tab-button" data-tab="intent">Gameplay Intent Guard</button>
           <button class="tab-button" data-tab="debug">Zone Engine (Debug)</button>
           <button class="tab-button" data-tab="result">Result Lifecycle</button>
         </div>
@@ -55,13 +54,8 @@
           <div id="core-steps"></div>
         </div>
 
-        <div class="tab-panel" id="tab-intent">
-          <section><strong>Goal:</strong> confirm `ZONE_CHANGE` is rejected as intent (architecture guard).</section>
-          <div id="intent-steps"></div>
-        </div>
-
         <div class="tab-panel" id="tab-debug">
-          <section><strong>Goal:</strong> validate zone engine action path via `/debug/zones/change`.</section>
+          <section><strong>Goal:</strong> validate zone engine action path via <code>/debug/zones/change</code>.</section>
           <div id="debug-steps"></div>
         </div>
 
@@ -112,7 +106,6 @@
         <section>
           <h2>Smoke Checklist</h2>
           <ul class="checklist">
-            <li><label><input id="check-intent_reject_zone_change" type="checkbox" disabled /> Intent guard</label></li>
             <li><label><input id="check-debug_allow" type="checkbox" disabled /> Zone engine allow</label></li>
             <li><label><input id="check-result_report" type="checkbox" disabled /> Report result</label></li>
           </ul>
@@ -181,7 +174,6 @@ Sideboard:
       ];
 
       const REQUIRED_SMOKE_STEPS = [
-        "intent_reject_zone_change",
         "debug_allow",
         "result_report",
       ];
@@ -197,42 +189,6 @@ Sideboard:
         { id: "core_get_p1", order: 8, title: "Read Match as p1", method: "GET", endpoint: "/matches/{{match_id}}?viewerPlayerId=p1", expectedStatus: [200] },
         { id: "core_get_p2", order: 9, title: "Read Match as p2", method: "GET", endpoint: "/matches/{{match_id}}?viewerPlayerId=p2", expectedStatus: [200] },
         { id: "core_get_without_viewer", order: 10, title: "Read Match without viewer (blocked)", method: "GET", endpoint: "/matches/{{match_id}}", expectedStatus: [400] },
-      ];
-
-      const intentSteps = [
-        {
-          id: "intent_reject_zone_change",
-          order: 1,
-          title: "Reject ZONE_CHANGE as intent",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/gameplay/intents",
-          payload: {
-            actorPlayerId: "p1",
-            intent: {
-              type: "ZONE_CHANGE",
-              payload: {
-                cardId: "{{p1_main_002}}",
-                cardControllerId: "p1",
-                source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
-                destination: { kind: "player_zone", playerId: "p1", zone: "hand" }
-              }
-            }
-          },
-          expectedStatus: [400],
-          requiredSmoke: true,
-        },
-        {
-          id: "intent_reject_unknown",
-          order: 2,
-          title: "Reject unsupported intent type",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/gameplay/intents",
-          payload: {
-            actorPlayerId: "p1",
-            intent: { type: "DRAW_CARD", payload: {} }
-          },
-          expectedStatus: [400],
-        },
       ];
 
       const debugSteps = [
@@ -290,7 +246,7 @@ Sideboard:
         },
       ];
 
-      const allSteps = [...coreSteps, ...intentSteps, ...debugSteps, ...resultSteps];
+      const allSteps = [...coreSteps, ...debugSteps, ...resultSteps];
       const stepById = Object.fromEntries(allSteps.map((step) => [step.id, step]));
       const elementsByStepId = {};
 
@@ -301,7 +257,6 @@ Sideboard:
 
       const el = {
         coreSteps: document.getElementById("core-steps"),
-        intentSteps: document.getElementById("intent-steps"),
         debugSteps: document.getElementById("debug-steps"),
         resultSteps: document.getElementById("result-steps"),
         baseUrl: document.getElementById("baseUrl"),
@@ -322,6 +277,7 @@ Sideboard:
           const h2 = document.createElement("h2");
           h2.textContent = `${step.order}) ${step.title}`;
           section.appendChild(h2);
+
           const code = document.createElement("code");
           code.textContent = `${step.method} ${step.endpoint}`;
           section.appendChild(code);
@@ -395,6 +351,7 @@ Sideboard:
           const checkbox = document.getElementById(`check-${stepId}`);
           if (checkbox) checkbox.checked = !!state.readyDone[stepId];
         });
+
         REQUIRED_SMOKE_STEPS.forEach((stepId) => {
           const checkbox = document.getElementById(`check-${stepId}`);
           if (checkbox) checkbox.checked = !!state.smokeDone[stepId];
@@ -447,13 +404,6 @@ Sideboard:
           const message = getValue(parsed, "error.message") || "";
           if (!String(message).includes("viewerPlayerId")) {
             return { ok: false, message: "Expected viewerPlayerId validation error." };
-          }
-        }
-
-        if (step.id === "intent_reject_zone_change") {
-          const message = getValue(parsed, "error.message") || "";
-          if (!String(message).includes("ZONE_CHANGE is an engine action")) {
-            return { ok: false, message: "Expected architecture guard error for ZONE_CHANGE intent." };
           }
         }
 
@@ -537,10 +487,9 @@ Sideboard:
         runStep(button.getAttribute("data-step-id"));
       });
 
-      renderSteps(coreSteps, document.getElementById("core-steps"));
-      renderSteps(intentSteps, document.getElementById("intent-steps"));
-      renderSteps(debugSteps, document.getElementById("debug-steps"));
-      renderSteps(resultSteps, document.getElementById("result-steps"));
+      renderSteps(coreSteps, el.coreSteps);
+      renderSteps(debugSteps, el.debugSteps);
+      renderSteps(resultSteps, el.resultSteps);
       initTabs();
       updateChecklist();
     </script>

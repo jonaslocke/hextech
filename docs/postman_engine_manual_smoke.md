@@ -1,11 +1,10 @@
-# Postman Manual Smoke: Engine Architecture-Correct Flow
+# Postman Manual Smoke: Engine Flow (No Gameplay Intent API)
 
-This smoke flow validates the current architecture and capabilities:
-- match setup + ready transition
-- player-view match projection (`viewerPlayerId` must be a match player)
-- gameplay intent guard (`ZONE_CHANGE` is not a gameplay intent)
+This smoke flow validates current capabilities:
+- match creation + setup to `ready`
+- match read access control (`viewerPlayerId` required and must be match player)
 - zone engine action path (`/debug/zones/change`)
-- result reporting lifecycle
+- result reporting and BO3 lifecycle transition
 
 Rules baseline: **Riftbound Core Rules v1.2**.
 
@@ -29,11 +28,9 @@ npm start
 3. Deck source:
 - `docs/ahri.dec.txt`
 
-## 2. Core Setup + Player Read
+## 2. Core Setup + Match Read
 
-### 2.1 Create + setup
-
-Run these requests in order:
+Run in order:
 1. `POST /matches`
 2. `POST /matches/{{match_id}}/setup/champion` with `p1`
 3. `POST /matches/{{match_id}}/setup/champion` with `p2`
@@ -48,9 +45,10 @@ Expected after step 6:
 Save:
 - `match_id`
 - `chooser_id`
-- `data.currentGame.gameplay.zones.players.p1.championZone[0]` and p2 champion id
+- `data.currentGame.gameplay.zones.players.p1.championZone[0]`
+- `data.currentGame.gameplay.zones.players.p2.championZone[0]`
 
-### 2.2 Derive hidden-zone card ids for tests
+## 3. Derive Runtime Card IDs
 
 From champion id format:
 
@@ -62,44 +60,18 @@ Derive:
 - `p2_main_002` = `<registration_ref_of_p2>:p2:main_deck:002`
 - `p1_rune_001` = `<registration_ref_of_p1>:p1:rune_deck:001`
 
-### 2.3 Match read access and projection
+## 4. Match Read Access + Visibility
 
 1. `GET /matches/{{match_id}}?viewerPlayerId=p1` -> expect `200`
 2. `GET /matches/{{match_id}}?viewerPlayerId=p2` -> expect `200`
 3. `GET /matches/{{match_id}}` -> expect `400` with `viewerPlayerId` required
 
-## 3. Gameplay Intent Guard (Architecture)
+Optional cutover check:
+- `POST /matches/{{match_id}}/gameplay/intents` -> expect `404` (endpoint removed)
 
-### 3.1 Reject `ZONE_CHANGE` as intent
+## 5. Zone Engine Smoke (`/debug/zones/change`)
 
-`POST /matches/{{match_id}}/gameplay/intents`
-
-```json
-{
-  "actorPlayerId": "p1",
-  "intent": {
-    "type": "ZONE_CHANGE",
-    "payload": {
-      "cardId": "{{p1_main_002}}",
-      "cardControllerId": "p1",
-      "source": { "kind": "player_zone", "playerId": "p1", "zone": "mainDeck" },
-      "destination": { "kind": "player_zone", "playerId": "p1", "zone": "hand" }
-    }
-  }
-}
-```
-
-Expected:
-- `400`
-- message contains `ZONE_CHANGE is an engine action, not a gameplay intent`
-
-### 3.2 Reject unsupported intent type
-
-Use `DRAW_CARD` (or any unsupported high-level intent) and expect `400` unsupported.
-
-## 4. Zone Engine Smoke (`/debug/zones/change`)
-
-### 4.1 Allowed move
+### 5.1 Allowed move
 
 `POST /matches/{{match_id}}/debug/zones/change`
 
@@ -115,7 +87,7 @@ Use `DRAW_CARD` (or any unsupported high-level intent) and expect `400` unsuppor
 
 Expected: `201`
 
-### 4.2 Blocked move
+### 5.2 Blocked move
 
 Try rune -> chain:
 
@@ -131,9 +103,9 @@ Try rune -> chain:
 
 Expected: `400`
 
-## 5. Report Result Lifecycle
+## 6. Report Result Lifecycle
 
-### 5.1 Report game
+### 6.1 Report game
 
 `POST /matches/{{match_id}}/games`
 
@@ -148,21 +120,19 @@ Expected:
 - `201`
 - `data.status = "setup_pending"`
 - `data.currentGame.status = "setup_pending"`
-- best-of-3 advances to next game setup
 
-### 5.2 Verify state
+### 6.2 Verify
 
 `GET /matches/{{match_id}}?viewerPlayerId=p1`
 
 Expected:
-- still `setup_pending`
-- next setup can begin
+- returns `setup_pending`
+- next game setup can start
 
-## 6. Pass Criteria
+## 7. Pass Criteria
 
 Smoke passes when:
 1. setup reaches `ready`
-2. match read requires `viewerPlayerId` and rejects missing viewer
-3. `ZONE_CHANGE` is rejected as intent
-4. debug zone engine allows one legal move and blocks one illegal move
-5. result reporting transitions match lifecycle correctly
+2. match read enforces player viewer
+3. zone debug change allows legal movement and blocks illegal movement
+4. result reporting transitions match lifecycle correctly
