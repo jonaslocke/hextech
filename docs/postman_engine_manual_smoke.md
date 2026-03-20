@@ -1,4 +1,4 @@
-# Postman Manual Smoke: Engine Flow (No Gameplay Intent API)
+﻿# Postman Manual Smoke: Engine Flow (No Gameplay Intent API)
 
 This smoke flow validates current capabilities:
 - match creation + setup to `ready`
@@ -67,7 +67,6 @@ Derive:
 3. `GET /matches/{{match_id}}` -> expect `400` with `viewerPlayerId` required
 
 Optional cutover check:
-- `POST /matches/{{match_id}}/gameplay/intents` -> expect `404` (endpoint removed)
 
 ## 5. Zone Engine Smoke (`/debug/zones/change`)
 
@@ -136,3 +135,4 @@ Smoke passes when:
 2. match read enforces player viewer
 3. zone debug change allows legal movement and blocks illegal movement
 4. result reporting transitions match lifecycle correctly
+

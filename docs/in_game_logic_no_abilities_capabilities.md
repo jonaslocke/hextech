@@ -42,5 +42,5 @@ Scope policy: implement the core engine without card ability logic for now, whil
 
 - Keep all rule decisions anchored to v1.2 only.
 - Preserve Golden Rule extensibility: avoid hardcoding constraints that cards may override later.
-- For new gameplay behavior, validate architecture first; do not add gameplay intent APIs without explicit design approval.
 - Keep debug zone endpoints as test harness for this phase; production gameplay action API is deferred pending architecture validation.
+
