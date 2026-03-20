@@ -1,0 +1,173 @@
+{
+  "endpoint": "/api/decks/validate",
+  "rule_payloads": {
+    "legend_singleton": {
+      "valid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\r\n1 Ahri, Nine-Tailed Fox\r\n\r\nChampion:\r\n1 Ahri, Inquisitive\r\n\r\nMainDeck:\r\n3 Defy\r\n3 En Garde\r\n3 Stalwart Poro\r\n3 Discipline\r\n3 Stupefy\r\n3 Ravenbloom Student\r\n3 Sprite Mother\r\n3 Thousand-Tailed Watcher\r\n2 Charm\r\n2 Clockwork Keeper\r\n2 Rune Prison\r\n2 Tasty Faefolk\r\n2 Retreat\r\n1 Find Your Center\r\n2 Wind Wall\r\n1 Sona, Harmonious\r\n1 Ahri, Alluring\r\n\r\nBattlefields:\r\n1 Fortified Position\r\n1 Grove of the God-Willow\r\n1 The Dreaming Tree\r\n\r\nRunes:\r\n7 Calm Rune\r\n5 Mind Rune\r\n\r\nSideboard:\r\n1 Rune Prison\r\n1 Wind Wall\r\n1 Blitzcrank, Impassive\r\n1 Riptide Rex\r\n1 Retreat\r\n1 Singularity\r\n1 Unchecked Power\r\n1 Fox-Fire\r\n"
+        }
+      },
+      "invalid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\n2 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire\n"
+        }
+      }
+    },
+    "champion_singleton": {
+      "valid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\r\n1 Ahri, Nine-Tailed Fox\r\n\r\nChampion:\r\n1 Ahri, Inquisitive\r\n\r\nMainDeck:\r\n3 Defy\r\n3 En Garde\r\n3 Stalwart Poro\r\n3 Discipline\r\n3 Stupefy\r\n3 Ravenbloom Student\r\n3 Sprite Mother\r\n3 Thousand-Tailed Watcher\r\n2 Charm\r\n2 Clockwork Keeper\r\n2 Rune Prison\r\n2 Tasty Faefolk\r\n2 Retreat\r\n1 Find Your Center\r\n2 Wind Wall\r\n1 Sona, Harmonious\r\n1 Ahri, Alluring\r\n\r\nBattlefields:\r\n1 Fortified Position\r\n1 Grove of the God-Willow\r\n1 The Dreaming Tree\r\n\r\nRunes:\r\n7 Calm Rune\r\n5 Mind Rune\r\n\r\nSideboard:\r\n1 Rune Prison\r\n1 Wind Wall\r\n1 Blitzcrank, Impassive\r\n1 Riptide Rex\r\n1 Retreat\r\n1 Singularity\r\n1 Unchecked Power\r\n1 Fox-Fire\r\n"
+        }
+      },
+      "invalid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n2 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire\n"
+        }
+      }
+    },
+    "main_deck_section": {
+      "valid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\r\n1 Ahri, Nine-Tailed Fox\r\n\r\nChampion:\r\n1 Ahri, Inquisitive\r\n\r\nMainDeck:\r\n3 Defy\r\n3 En Garde\r\n3 Stalwart Poro\r\n3 Discipline\r\n3 Stupefy\r\n3 Ravenbloom Student\r\n3 Sprite Mother\r\n3 Thousand-Tailed Watcher\r\n2 Charm\r\n2 Clockwork Keeper\r\n2 Rune Prison\r\n2 Tasty Faefolk\r\n2 Retreat\r\n1 Find Your Center\r\n2 Wind Wall\r\n1 Sona, Harmonious\r\n1 Ahri, Alluring\r\n\r\nBattlefields:\r\n1 Fortified Position\r\n1 Grove of the God-Willow\r\n1 The Dreaming Tree\r\n\r\nRunes:\r\n7 Calm Rune\r\n5 Mind Rune\r\n\r\nSideboard:\r\n1 Rune Prison\r\n1 Wind Wall\r\n1 Blitzcrank, Impassive\r\n1 Riptide Rex\r\n1 Retreat\r\n1 Singularity\r\n1 Unchecked Power\r\n1 Fox-Fire\r\n"
+        }
+      },
+      "invalid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire\n"
+        }
+      }
+    },
+    "rune_deck_section": {
+      "valid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\r\n1 Ahri, Nine-Tailed Fox\r\n\r\nChampion:\r\n1 Ahri, Inquisitive\r\n\r\nMainDeck:\r\n3 Defy\r\n3 En Garde\r\n3 Stalwart Poro\r\n3 Discipline\r\n3 Stupefy\r\n3 Ravenbloom Student\r\n3 Sprite Mother\r\n3 Thousand-Tailed Watcher\r\n2 Charm\r\n2 Clockwork Keeper\r\n2 Rune Prison\r\n2 Tasty Faefolk\r\n2 Retreat\r\n1 Find Your Center\r\n2 Wind Wall\r\n1 Sona, Harmonious\r\n1 Ahri, Alluring\r\n\r\nBattlefields:\r\n1 Fortified Position\r\n1 Grove of the God-Willow\r\n1 The Dreaming Tree\r\n\r\nRunes:\r\n7 Calm Rune\r\n5 Mind Rune\r\n\r\nSideboard:\r\n1 Rune Prison\r\n1 Wind Wall\r\n1 Blitzcrank, Impassive\r\n1 Riptide Rex\r\n1 Retreat\r\n1 Singularity\r\n1 Unchecked Power\r\n1 Fox-Fire\r\n"
+        }
+      },
+      "invalid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire\n"
+        }
+      }
+    },
+    "sideboard_section": {
+      "valid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\r\n1 Ahri, Nine-Tailed Fox\r\n\r\nChampion:\r\n1 Ahri, Inquisitive\r\n\r\nMainDeck:\r\n3 Defy\r\n3 En Garde\r\n3 Stalwart Poro\r\n3 Discipline\r\n3 Stupefy\r\n3 Ravenbloom Student\r\n3 Sprite Mother\r\n3 Thousand-Tailed Watcher\r\n2 Charm\r\n2 Clockwork Keeper\r\n2 Rune Prison\r\n2 Tasty Faefolk\r\n2 Retreat\r\n1 Find Your Center\r\n2 Wind Wall\r\n1 Sona, Harmonious\r\n1 Ahri, Alluring\r\n\r\nBattlefields:\r\n1 Fortified Position\r\n1 Grove of the God-Willow\r\n1 The Dreaming Tree\r\n\r\nRunes:\r\n7 Calm Rune\r\n5 Mind Rune\r\n\r\nSideboard:\r\n1 Rune Prison\r\n1 Wind Wall\r\n1 Blitzcrank, Impassive\r\n1 Riptide Rex\r\n1 Retreat\r\n1 Singularity\r\n1 Unchecked Power\r\n1 Fox-Fire\r\n"
+        }
+      },
+      "invalid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Blitzcrank, Impassive\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire\n"
+        }
+      }
+    },
+    "combined_copy_limit": {
+      "valid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\r\n1 Ahri, Nine-Tailed Fox\r\n\r\nChampion:\r\n1 Ahri, Inquisitive\r\n\r\nMainDeck:\r\n3 Defy\r\n3 En Garde\r\n3 Stalwart Poro\r\n3 Discipline\r\n3 Stupefy\r\n3 Ravenbloom Student\r\n3 Sprite Mother\r\n3 Thousand-Tailed Watcher\r\n2 Charm\r\n2 Clockwork Keeper\r\n2 Rune Prison\r\n2 Tasty Faefolk\r\n2 Retreat\r\n1 Find Your Center\r\n2 Wind Wall\r\n1 Sona, Harmonious\r\n1 Ahri, Alluring\r\n\r\nBattlefields:\r\n1 Fortified Position\r\n1 Grove of the God-Willow\r\n1 The Dreaming Tree\r\n\r\nRunes:\r\n7 Calm Rune\r\n5 Mind Rune\r\n\r\nSideboard:\r\n1 Rune Prison\r\n1 Wind Wall\r\n1 Blitzcrank, Impassive\r\n1 Riptide Rex\r\n1 Retreat\r\n1 Singularity\r\n1 Unchecked Power\r\n1 Fox-Fire\r\n"
+        }
+      },
+      "invalid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Defy\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire\n"
+        }
+      }
+    },
+    "resolve_catalog_entries": {
+      "valid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\r\n1 Ahri, Nine-Tailed Fox\r\n\r\nChampion:\r\n1 Ahri, Inquisitive\r\n\r\nMainDeck:\r\n3 Defy\r\n3 En Garde\r\n3 Stalwart Poro\r\n3 Discipline\r\n3 Stupefy\r\n3 Ravenbloom Student\r\n3 Sprite Mother\r\n3 Thousand-Tailed Watcher\r\n2 Charm\r\n2 Clockwork Keeper\r\n2 Rune Prison\r\n2 Tasty Faefolk\r\n2 Retreat\r\n1 Find Your Center\r\n2 Wind Wall\r\n1 Sona, Harmonious\r\n1 Ahri, Alluring\r\n\r\nBattlefields:\r\n1 Fortified Position\r\n1 Grove of the God-Willow\r\n1 The Dreaming Tree\r\n\r\nRunes:\r\n7 Calm Rune\r\n5 Mind Rune\r\n\r\nSideboard:\r\n1 Rune Prison\r\n1 Wind Wall\r\n1 Blitzcrank, Impassive\r\n1 Riptide Rex\r\n1 Retreat\r\n1 Singularity\r\n1 Unchecked Power\r\n1 Fox-Fire\r\n"
+        }
+      },
+      "invalid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Not A Real Card\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire\n"
+        }
+      }
+    },
+    "catalog_card_types": {
+      "valid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\r\n1 Ahri, Nine-Tailed Fox\r\n\r\nChampion:\r\n1 Ahri, Inquisitive\r\n\r\nMainDeck:\r\n3 Defy\r\n3 En Garde\r\n3 Stalwart Poro\r\n3 Discipline\r\n3 Stupefy\r\n3 Ravenbloom Student\r\n3 Sprite Mother\r\n3 Thousand-Tailed Watcher\r\n2 Charm\r\n2 Clockwork Keeper\r\n2 Rune Prison\r\n2 Tasty Faefolk\r\n2 Retreat\r\n1 Find Your Center\r\n2 Wind Wall\r\n1 Sona, Harmonious\r\n1 Ahri, Alluring\r\n\r\nBattlefields:\r\n1 Fortified Position\r\n1 Grove of the God-Willow\r\n1 The Dreaming Tree\r\n\r\nRunes:\r\n7 Calm Rune\r\n5 Mind Rune\r\n\r\nSideboard:\r\n1 Rune Prison\r\n1 Wind Wall\r\n1 Blitzcrank, Impassive\r\n1 Riptide Rex\r\n1 Retreat\r\n1 Singularity\r\n1 Unchecked Power\r\n1 Fox-Fire\r\n"
+        }
+      },
+      "invalid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Discipline\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire\n"
+        }
+      }
+    },
+    "champion_tag_constraint": {
+      "valid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\r\n1 Ahri, Nine-Tailed Fox\r\n\r\nChampion:\r\n1 Ahri, Inquisitive\r\n\r\nMainDeck:\r\n3 Defy\r\n3 En Garde\r\n3 Stalwart Poro\r\n3 Discipline\r\n3 Stupefy\r\n3 Ravenbloom Student\r\n3 Sprite Mother\r\n3 Thousand-Tailed Watcher\r\n2 Charm\r\n2 Clockwork Keeper\r\n2 Rune Prison\r\n2 Tasty Faefolk\r\n2 Retreat\r\n1 Find Your Center\r\n2 Wind Wall\r\n1 Sona, Harmonious\r\n1 Ahri, Alluring\r\n\r\nBattlefields:\r\n1 Fortified Position\r\n1 Grove of the God-Willow\r\n1 The Dreaming Tree\r\n\r\nRunes:\r\n7 Calm Rune\r\n5 Mind Rune\r\n\r\nSideboard:\r\n1 Rune Prison\r\n1 Wind Wall\r\n1 Blitzcrank, Impassive\r\n1 Riptide Rex\r\n1 Retreat\r\n1 Singularity\r\n1 Unchecked Power\r\n1 Fox-Fire\r\n"
+        }
+      },
+      "invalid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Jax, Unmatched\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire\n"
+        }
+      }
+    },
+    "domain_identity_constraint": {
+      "valid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\r\n1 Ahri, Nine-Tailed Fox\r\n\r\nChampion:\r\n1 Ahri, Inquisitive\r\n\r\nMainDeck:\r\n3 Defy\r\n3 En Garde\r\n3 Stalwart Poro\r\n3 Discipline\r\n3 Stupefy\r\n3 Ravenbloom Student\r\n3 Sprite Mother\r\n3 Thousand-Tailed Watcher\r\n2 Charm\r\n2 Clockwork Keeper\r\n2 Rune Prison\r\n2 Tasty Faefolk\r\n2 Retreat\r\n1 Find Your Center\r\n2 Wind Wall\r\n1 Sona, Harmonious\r\n1 Ahri, Alluring\r\n\r\nBattlefields:\r\n1 Fortified Position\r\n1 Grove of the God-Willow\r\n1 The Dreaming Tree\r\n\r\nRunes:\r\n7 Calm Rune\r\n5 Mind Rune\r\n\r\nSideboard:\r\n1 Rune Prison\r\n1 Wind Wall\r\n1 Blitzcrank, Impassive\r\n1 Riptide Rex\r\n1 Retreat\r\n1 Singularity\r\n1 Unchecked Power\r\n1 Fox-Fire\r\n"
+        }
+      },
+      "invalid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Noxus Hopeful\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire\n"
+        }
+      }
+    },
+    "signature_constraint": {
+      "valid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\r\n1 Ahri, Nine-Tailed Fox\r\n\r\nChampion:\r\n1 Ahri, Inquisitive\r\n\r\nMainDeck:\r\n3 Defy\r\n3 En Garde\r\n3 Stalwart Poro\r\n3 Discipline\r\n3 Stupefy\r\n3 Ravenbloom Student\r\n3 Sprite Mother\r\n3 Thousand-Tailed Watcher\r\n2 Charm\r\n2 Clockwork Keeper\r\n2 Rune Prison\r\n2 Tasty Faefolk\r\n2 Retreat\r\n1 Find Your Center\r\n2 Wind Wall\r\n1 Sona, Harmonious\r\n1 Ahri, Alluring\r\n\r\nBattlefields:\r\n1 Fortified Position\r\n1 Grove of the God-Willow\r\n1 The Dreaming Tree\r\n\r\nRunes:\r\n7 Calm Rune\r\n5 Mind Rune\r\n\r\nSideboard:\r\n1 Rune Prison\r\n1 Wind Wall\r\n1 Blitzcrank, Impassive\r\n1 Riptide Rex\r\n1 Retreat\r\n1 Singularity\r\n1 Unchecked Power\r\n1 Fox-Fire\r\n"
+        }
+      },
+      "invalid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nBattlefields:\n1 Fortified Position\n1 Grove of the God-Willow\n1 The Dreaming Tree\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Counter Strike\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire\n"
+        }
+      }
+    },
+    "battlefields_section": {
+      "valid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\r\n1 Ahri, Nine-Tailed Fox\r\n\r\nChampion:\r\n1 Ahri, Inquisitive\r\n\r\nMainDeck:\r\n3 Defy\r\n3 En Garde\r\n3 Stalwart Poro\r\n3 Discipline\r\n3 Stupefy\r\n3 Ravenbloom Student\r\n3 Sprite Mother\r\n3 Thousand-Tailed Watcher\r\n2 Charm\r\n2 Clockwork Keeper\r\n2 Rune Prison\r\n2 Tasty Faefolk\r\n2 Retreat\r\n1 Find Your Center\r\n2 Wind Wall\r\n1 Sona, Harmonious\r\n1 Ahri, Alluring\r\n\r\nBattlefields:\r\n1 Fortified Position\r\n1 Grove of the God-Willow\r\n1 The Dreaming Tree\r\n\r\nRunes:\r\n7 Calm Rune\r\n5 Mind Rune\r\n\r\nSideboard:\r\n1 Rune Prison\r\n1 Wind Wall\r\n1 Blitzcrank, Impassive\r\n1 Riptide Rex\r\n1 Retreat\r\n1 Singularity\r\n1 Unchecked Power\r\n1 Fox-Fire\r\n"
+        }
+      },
+      "invalid": {
+        "sourceDeck": "ahri.dec.txt",
+        "payload": {
+          "deckList": "Legend:\n1 Ahri, Nine-Tailed Fox\n\nChampion:\n1 Ahri, Inquisitive\n\nMainDeck:\n3 Defy\n3 En Garde\n3 Stalwart Poro\n3 Discipline\n3 Stupefy\n3 Ravenbloom Student\n3 Sprite Mother\n3 Thousand-Tailed Watcher\n2 Charm\n2 Clockwork Keeper\n2 Rune Prison\n2 Tasty Faefolk\n2 Retreat\n1 Find Your Center\n2 Wind Wall\n1 Sona, Harmonious\n1 Ahri, Alluring\n\nRunes:\n7 Calm Rune\n5 Mind Rune\n\nSideboard:\n1 Rune Prison\n1 Wind Wall\n1 Blitzcrank, Impassive\n1 Riptide Rex\n1 Retreat\n1 Singularity\n1 Unchecked Power\n1 Fox-Fire\n"
+        }
+      }
+    }
+  }
+}
