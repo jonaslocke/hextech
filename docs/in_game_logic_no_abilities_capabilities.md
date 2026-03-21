@@ -1,4 +1,4 @@
-﻿# In-Game Logic (No Card Abilities) - Capability Tracker
+# In-Game Logic (No Card Abilities) - Capability Tracker
 
 Rules source policy: **Only `Riftbound Core Rules v1.2` is canonical**.
 
@@ -21,12 +21,10 @@ Scope policy: implement the core engine without card ability logic for now, whil
 | `Completed` | Facedown reveal on non-public move | Added reveal event emission when facedown cards move to private/secret zones. |
 | `Deferred` | Facedown reveal on game end | Removed from active zone-cutover runtime; game-end reveal can return in later intent/kernel phases. |
 | `Completed` | Gameplay event appending | Added event append helper and event detail payload support for zone/reveal workflows. |
-| `Completed` | Manual zone testing API | Added debug endpoint for manual Postman-like validation of zone behavior (`ZONE_CHANGE` via `/debug/zones/change`). |
-| `Completed` | Manual zone smoke document | Added manual testing document for ready-game zone validation flow. |
-| `Completed` | Automated zone-change contract tests | Added end-to-end/API/domain tests for the canonical `ZONE_CHANGE` path and route deprecations. |
+| `Completed` | Automated zone-change contract tests | Added contract tests for core zone transition behavior. |
 | `Completed` | Zone policy matrix contract (PR1) | Added canonical zone policy model in `src/domain/zone-policy.ts` with typed capacities, typed modifier chains, and source-traceable runtime modifiers. |
 | `Completed` | Zone policy contract tests and spec doc (PR1) | Added dedicated contract tests and source-of-truth matrix in `tests/zone-policy.contract.test.ts` and `docs/zone_policy_matrix.md`. |
-| `Completed` | PR5.1 zone-cutover: single mutation entrypoint (`ZONE_CHANGE`) | Removed duplicated post-setup mutation surfaces and kept one canonical zone-change mutation contract for this phase. |
+| `Completed` | PR5.1 zone-cutover: unified zone transition primitives | Removed duplicated post-setup mutation surfaces and standardized zone transitions on domain primitives. |
 | `Completed` | PR5.1 zone-cutover: event semantics unification | Zone transitions now append canonical `zone_changed` events, with reveal events as derived additions when needed. |
 | `Completed` | PR5.1 zone-cutover: strict card-type authority | Known gameplay card ids now resolve type from server runtime/catalog and reject conflicting payload overrides. |
 | `Pending` | Deterministic RNG policy | Add seeded RNG (derived from game identity) and route all gameplay randomness through intent execution paths. |
@@ -42,5 +40,4 @@ Scope policy: implement the core engine without card ability logic for now, whil
 
 - Keep all rule decisions anchored to v1.2 only.
 - Preserve Golden Rule extensibility: avoid hardcoding constraints that cards may override later.
-- Keep debug zone endpoints as test harness for this phase; production gameplay action API is deferred pending architecture validation.
 

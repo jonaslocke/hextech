@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Manual Engine Smoke</title>
+    <title>Manual Setup + Result Smoke</title>
     <style>
       body { font-family: sans-serif; margin: 16px; line-height: 1.4; }
       .layout { display: flex; gap: 12px; align-items: flex-start; }
@@ -39,24 +39,18 @@
     </style>
   </head>
   <body>
-    <h1>Manual Engine Smoke</h1>
+    <h1>Manual Setup + Result Smoke</h1>
 
     <div class="layout">
       <div class="main">
         <div class="tabs">
           <button class="tab-button active" data-tab="core">Core Setup + Match Read</button>
-          <button class="tab-button" data-tab="debug">Zone Engine (Debug)</button>
           <button class="tab-button" data-tab="result">Result Lifecycle</button>
         </div>
 
         <div class="tab-panel active" id="tab-core">
           <section><strong>Goal:</strong> create match, complete setup, and verify player-view match read.</section>
           <div id="core-steps"></div>
-        </div>
-
-        <div class="tab-panel" id="tab-debug">
-          <section><strong>Goal:</strong> validate zone engine action path via <code>/debug/zones/change</code>.</section>
-          <div id="debug-steps"></div>
         </div>
 
         <div class="tab-panel" id="tab-result">
@@ -76,18 +70,6 @@
 
           <label for="chooserId">chooser_id</label>
           <input id="chooserId" />
-
-          <label for="p1MainCard01">p1_main_002</label>
-          <input id="p1MainCard01" />
-
-          <label for="p1MainCard02">p1_main_003</label>
-          <input id="p1MainCard02" />
-
-          <label for="p2MainCard01">p2_main_002</label>
-          <input id="p2MainCard01" />
-
-          <label for="p1RuneCard01">p1_rune_001</label>
-          <input id="p1RuneCard01" />
         </section>
 
         <section>
@@ -106,7 +88,6 @@
         <section>
           <h2>Smoke Checklist</h2>
           <ul class="checklist">
-            <li><label><input id="check-debug_allow" type="checkbox" disabled /> Zone engine allow</label></li>
             <li><label><input id="check-result_report" type="checkbox" disabled /> Report result</label></li>
           </ul>
           <div class="summary not-ready" id="smokeSummary">Smoke flow incomplete.</div>
@@ -174,7 +155,6 @@ Sideboard:
       ];
 
       const REQUIRED_SMOKE_STEPS = [
-        "debug_allow",
         "result_report",
       ];
 
@@ -189,40 +169,6 @@ Sideboard:
         { id: "core_get_p1", order: 8, title: "Read Match as p1", method: "GET", endpoint: "/matches/{{match_id}}?viewerPlayerId=p1", expectedStatus: [200] },
         { id: "core_get_p2", order: 9, title: "Read Match as p2", method: "GET", endpoint: "/matches/{{match_id}}?viewerPlayerId=p2", expectedStatus: [200] },
         { id: "core_get_without_viewer", order: 10, title: "Read Match without viewer (blocked)", method: "GET", endpoint: "/matches/{{match_id}}", expectedStatus: [400] },
-      ];
-
-      const debugSteps = [
-        {
-          id: "debug_allow",
-          order: 1,
-          title: "Allowed: runeDeck -> base_runes",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/change",
-          payload: {
-            cardId: "{{p1_rune_001}}",
-            cardControllerId: "p1",
-            cardType: "rune",
-            source: { kind: "player_zone", playerId: "p1", zone: "runeDeck" },
-            destination: { kind: "base_runes", playerId: "p1" }
-          },
-          expectedStatus: [201],
-          requiredSmoke: true,
-        },
-        {
-          id: "debug_block",
-          order: 2,
-          title: "Blocked: rune -> chain",
-          method: "POST",
-          endpoint: "/matches/{{match_id}}/debug/zones/change",
-          payload: {
-            cardId: "{{p1_main_003}}",
-            cardControllerId: "p1",
-            cardType: "rune",
-            source: { kind: "player_zone", playerId: "p1", zone: "mainDeck" },
-            destination: { kind: "chain" }
-          },
-          expectedStatus: [400],
-        },
       ];
 
       const resultSteps = [
@@ -246,7 +192,7 @@ Sideboard:
         },
       ];
 
-      const allSteps = [...coreSteps, ...debugSteps, ...resultSteps];
+      const allSteps = [...coreSteps, ...resultSteps];
       const stepById = Object.fromEntries(allSteps.map((step) => [step.id, step]));
       const elementsByStepId = {};
 
@@ -257,15 +203,10 @@ Sideboard:
 
       const el = {
         coreSteps: document.getElementById("core-steps"),
-        debugSteps: document.getElementById("debug-steps"),
         resultSteps: document.getElementById("result-steps"),
         baseUrl: document.getElementById("baseUrl"),
         matchId: document.getElementById("matchId"),
         chooserId: document.getElementById("chooserId"),
-        p1MainCard01: document.getElementById("p1MainCard01"),
-        p1MainCard02: document.getElementById("p1MainCard02"),
-        p2MainCard01: document.getElementById("p2MainCard01"),
-        p1RuneCard01: document.getElementById("p1RuneCard01"),
         lastResponse: document.getElementById("lastResponse"),
         readySummary: document.getElementById("readySummary"),
         smokeSummary: document.getElementById("smokeSummary"),
@@ -306,21 +247,10 @@ Sideboard:
         });
       }
 
-      function deriveIdFromChampion(championCardId, playerId, source, sequence) {
-        if (!championCardId || typeof championCardId !== "string") return "";
-        const registrationRef = championCardId.split(":")[0];
-        if (!registrationRef) return "";
-        return `${registrationRef}:${playerId}:${source}:${String(sequence).padStart(3, "0")}`;
-      }
-
       function varsMap() {
         return {
           match_id: el.matchId.value.trim(),
           chooser_id: el.chooserId.value.trim(),
-          p1_main_002: el.p1MainCard01.value.trim(),
-          p1_main_003: el.p1MainCard02.value.trim(),
-          p2_main_002: el.p2MainCard01.value.trim(),
-          p1_rune_001: el.p1RuneCard01.value.trim(),
         };
       }
 
@@ -378,14 +308,6 @@ Sideboard:
 
         if (data.id) el.matchId.value = data.id;
         if (data.startingPlayerChooserId) el.chooserId.value = data.startingPlayerChooserId;
-
-        const p1ChampionId = getValue(data, "currentGame.gameplay.zones.players.p1.championZone.0");
-        const p2ChampionId = getValue(data, "currentGame.gameplay.zones.players.p2.championZone.0");
-
-        if (!el.p1MainCard01.value) el.p1MainCard01.value = deriveIdFromChampion(p1ChampionId, "p1", "main_deck", 2);
-        if (!el.p1MainCard02.value) el.p1MainCard02.value = deriveIdFromChampion(p1ChampionId, "p1", "main_deck", 3);
-        if (!el.p2MainCard01.value) el.p2MainCard01.value = deriveIdFromChampion(p2ChampionId, "p2", "main_deck", 2);
-        if (!el.p1RuneCard01.value) el.p1RuneCard01.value = deriveIdFromChampion(p1ChampionId, "p1", "rune_deck", 1);
       }
 
       function evaluateStep(step, response, parsed) {
@@ -488,7 +410,6 @@ Sideboard:
       });
 
       renderSteps(coreSteps, el.coreSteps);
-      renderSteps(debugSteps, el.debugSteps);
       renderSteps(resultSteps, el.resultSteps);
       initTabs();
       updateChecklist();

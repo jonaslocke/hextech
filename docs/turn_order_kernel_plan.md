@@ -1,7 +1,7 @@
 # Turn Order Kernel Plan (Strict 1v1, Showdown Deferred)
 
 ## Summary
-- Current implemented baseline: setup flow, setup hydration into gameplay zones, zone movement policy engine (`ZONE_CHANGE` debug path), kernel scaffold (`phase/timing/turn/priority/chain/execution`) and event appending.
+- Current implemented baseline: setup flow, setup hydration into gameplay zones, zone movement policy engine (domain primitives), kernel scaffold (`phase/timing/turn/priority/chain/execution`) and event appending.
 - Canonical rules anchor for this plan: v1.2 turn order + turn loop + state model + priority/focus + phase flow + cleanup staging (`115`, `304-317`, `310-313`, `322.13-322.14`, `462.7`, `463.7`).
 - Chosen direction: strict 1v1, detailed turn phases, explicit intent-driven control, showdown/combat staged but not opened/resolved yet.
 
@@ -56,7 +56,7 @@
     - `intentType` (`ADVANCE_STEP` | `END_ACTION`)
   - Response: same `MatchView` projection pattern as existing setup endpoints (`viewerPlayerId = actorPlayerId`).
   - On first successful gameplay intent, transition `match.status` from `ready` to `in_progress`.
-  - Keep `ZONE_CHANGE` debug endpoint available for zone harness/testing (no production action engine replacement in this milestone).
+  - No external zone-mutation endpoint in this milestone; zone mutations remain internal domain primitives.
 
 - **Events and observability**
   - Append deterministic envelope (`intent_resolved`) for each accepted gameplay intent.
