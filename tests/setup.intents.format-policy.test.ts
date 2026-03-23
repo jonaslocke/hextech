@@ -213,9 +213,9 @@ describe("Setup intents format policy", () => {
     );
     assert.equal(ready.body.data.currentGame.gameplay.zones.players.p1.legendZone.length, 1);
     assert.equal(ready.body.data.currentGame.gameplay.zones.players.p2.legendZone.length, 1);
-    assert.equal(ready.body.data.currentGame.gameplay.zones.shared.battlefield.length, 2);
+    assert.equal(ready.body.data.currentGame.gameplay.zones.shared.battlefield.cards.length, 2);
     const facedownBattlefieldSlots = Object.values(
-      ready.body.data.currentGame.gameplay.zones.shared.facedownByBattlefield,
+      ready.body.data.currentGame.gameplay.zones.shared.battlefield.hiddenCardsByBattlefield,
     );
     assert.equal(facedownBattlefieldSlots.length, 2);
     assert.ok(facedownBattlefieldSlots.every((cards: string[]) => cards.length === 0));

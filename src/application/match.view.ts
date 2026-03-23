@@ -120,8 +120,8 @@ function projectGameplayForViewer(
     };
   }
 
-  const facedownByBattlefield = Object.fromEntries(
-    Object.entries(gameplay.zones.shared.facedownByBattlefield).map(
+  const hiddenCardsByBattlefield = Object.fromEntries(
+    Object.entries(gameplay.zones.shared.battlefield.hiddenCardsByBattlefield).map(
       ([battlefieldId, cardIds]) => {
         const controllerId = resolveBattlefieldControllerId(battlefieldId);
         const isController = controllerId !== null && controllerId === viewerPlayerId;
@@ -136,18 +136,19 @@ function projectGameplayForViewer(
     zones: {
       players,
       shared: {
-        battlefield: [...gameplay.zones.shared.battlefield],
+        battlefield: {
+          cards: [...gameplay.zones.shared.battlefield.cards],
+          hiddenCardsByBattlefield,
+        },
         chain: [...gameplay.zones.shared.chain],
-        facedownByBattlefield,
       },
     },
-    ruleParameters: {
-      defaultHiddenCapacityPerBattlefield:
-        gameplay.ruleParameters.defaultHiddenCapacityPerBattlefield,
-      hiddenCapacityByBattlefield: {
-        ...gameplay.ruleParameters.hiddenCapacityByBattlefield,
+    policyModifiers: gameplay.policyModifiers.map((entry) => ({
+      ...entry,
+      modifier: {
+        ...entry.modifier,
       },
-    },
+    })),
     events: projectEventsForViewer(gameplay.events, viewerPlayerId),
   };
 }

@@ -17,36 +17,13 @@ describe("Gameplay runtime shape", () => {
     assert.equal(game.gameplay.schemaVersion, 1);
     assert.deepEqual(game.gameplay.events, []);
     assert.deepEqual(game.gameplay.zones.shared, {
-      battlefield: [],
+      battlefield: {
+        cards: [],
+        hiddenCardsByBattlefield: {},
+      },
       chain: [],
-      facedownByBattlefield: {},
     });
-    assert.deepEqual(game.gameplay.kernel, {
-      phase: "setup",
-      timing: "closed",
-      turn: {
-        number: 0,
-        activePlayerId: null,
-      },
-      priority: {
-        playerId: null,
-        passCount: 0,
-      },
-      chain: {
-        state: "idle",
-        depth: 0,
-      },
-      execution: {
-        nextIntentSequence: 1,
-        lastAppliedIntentSequence: 0,
-        lastAppliedIntentType: null,
-        lastAppliedActorPlayerId: null,
-      },
-    });
-    assert.deepEqual(game.gameplay.ruleParameters, {
-      defaultHiddenCapacityPerBattlefield: 1,
-      hiddenCapacityByBattlefield: {},
-    });
+    assert.deepEqual(game.gameplay.policyModifiers, []);
 
     assert.deepEqual(game.gameplay.zones.players.p1, {
       mainDeck: [],
@@ -92,10 +69,7 @@ describe("Gameplay runtime shape", () => {
       cards: [],
       runes: [],
     });
-    assert.equal(serialized.gameplay.kernel.phase, "setup");
-    assert.equal(serialized.gameplay.kernel.execution.nextIntentSequence, 1);
-    assert.equal(serialized.gameplay.ruleParameters.defaultHiddenCapacityPerBattlefield, 1);
+    assert.deepEqual(serialized.gameplay.policyModifiers, []);
     assert.deepEqual(serialized.gameplay.events, []);
   });
 });
-

@@ -1,19 +1,21 @@
 import { ValidationError } from "../shared/errors";
 import type {
   CanonicalCardZone,
+  GameplayPolicyModifier,
   GameplayRuntime,
   PlayerZoneBuckets,
   ZonePrivacy,
 } from "./gameplay";
 import {
   appendGameplayEvent,
-  collectGameplayZoneInvariantViolations,
-  resolveHiddenCapacityForBattlefield,
   ZONE_PRIVACY_BY_ZONE,
 } from "./gameplay";
 import {
   resolveConstraintBounds,
+  type CardStateTag,
   type CardType,
+  type CapacityModifier,
+  type ZoneCapacityConstraint,
   type ZonePolicy,
   type ZonePolicyId,
   ZONE_POLICY_LIST,
@@ -83,33 +85,11 @@ export function moveCardBetweenZones(
 
   sourceBucket.splice(sourceIndex, 1);
   destinationBucket.push(cardId);
-  next = syncKernelScaffoldingAfterZoneChange(next);
+  ensureFacedownSlotForBattlefield(next, input.destination, cardId, input.cardType);
   next = appendZoneChangedEvent(next, input);
   next = appendRevealEventForFacedownToNonPublicMove(next, input);
 
-  const invariantViolations = collectGameplayZoneInvariantViolations(next);
-  if (invariantViolations.length > 0) {
-    throw new ValidationError(invariantViolations[0]?.message ?? "Gameplay zone state invalid.");
-  }
-
   return next;
-}
-
-function syncKernelScaffoldingAfterZoneChange(gameplay: GameplayRuntime): GameplayRuntime {
-  const chainDepth = gameplay.zones.shared.chain.length;
-  const chainState = chainDepth > 0 ? "open" : "idle";
-
-  return {
-    ...gameplay,
-    kernel: {
-      ...gameplay.kernel,
-      chain: {
-        ...gameplay.kernel.chain,
-        state: chainState,
-        depth: chainDepth,
-      },
-    },
-  };
 }
 
 export function placeCardIntoZone(
@@ -137,22 +117,18 @@ export function placeCardIntoZone(
   const destinationRulesInput: MoveCardBetweenZonesInput = {
     cardId,
     cardControllerId,
-    ...(input.cardType ? { cardType: input.cardType } : {}),
     source: input.destination,
     destination: input.destination,
+    ...(input.cardType ? { cardType: input.cardType } : {}),
+    ...(input.battlefieldControllerById
+      ? { battlefieldControllerById: input.battlefieldControllerById }
+      : {}),
   };
-  if (input.battlefieldControllerById) {
-    destinationRulesInput.battlefieldControllerById =
-      input.battlefieldControllerById;
-  }
+
   enforceDestinationRules(next, destinationRulesInput, destinationBucket);
 
   destinationBucket.push(cardId);
-
-  const invariantViolations = collectGameplayZoneInvariantViolations(next);
-  if (invariantViolations.length > 0) {
-    throw new ValidationError(invariantViolations[0]?.message ?? "Gameplay zone state invalid.");
-  }
+  ensureFacedownSlotForBattlefield(next, input.destination, cardId, input.cardType);
 
   return next;
 }
@@ -162,7 +138,7 @@ function enforceDestinationRules(
   input: MoveCardBetweenZonesInput,
   destinationBucket: string[],
 ): void {
-  enforceZonePolicyForDestination(input, destinationBucket);
+  enforceZonePolicyForDestination(gameplay, input, destinationBucket);
 
   const { destination, cardControllerId } = input;
 
@@ -197,16 +173,10 @@ function enforceDestinationRules(
       "Only the controller of a battlefield may place or keep cards in its facedown zone.",
     );
   }
-
-  const maxHiddenCapacity = resolveHiddenCapacityForBattlefield(gameplay, battlefieldId);
-  if (destinationBucket.length + 1 > maxHiddenCapacity) {
-    throw new ValidationError(
-      `Facedown zone capacity exceeded for battlefield (max: ${maxHiddenCapacity}).`,
-    );
-  }
 }
 
 function enforceZonePolicyForDestination(
+  gameplay: GameplayRuntime,
   input: MoveCardBetweenZonesInput,
   destinationBucket: string[],
 ): void {
@@ -216,6 +186,8 @@ function enforceZonePolicyForDestination(
   if (!zonePolicy) {
     throw new ValidationError(`Missing zone policy for destination "${zonePolicyId}".`);
   }
+
+  const stateTags = resolveStateTagsForDestination(input.destination);
 
   if (input.cardType) {
     if (zonePolicy.prohibitedCardTypes.includes(input.cardType)) {
@@ -232,24 +204,143 @@ function enforceZonePolicyForDestination(
   }
 
   for (const constraint of zonePolicy.capacityConstraints) {
-    if (constraint.scope !== "zone") {
+    if (!isConstraintApplicable(constraint, input.cardType, stateTags)) {
       continue;
     }
 
-    if (constraint.appliesToCardTypes || constraint.appliesToStateTags) {
+    if (constraint.scope === "per_location" && input.destination.kind !== "facedown") {
       continue;
     }
 
-    const bounds = resolveConstraintBounds(constraint, []);
-    if (bounds.max === null) {
-      continue;
-    }
+    const modifiers = resolveCapacityModifiersForConstraint(
+      gameplay,
+      zonePolicyId,
+      input.destination,
+      constraint,
+    );
+    const bounds = resolveConstraintBounds(constraint, modifiers);
 
-    if (destinationBucket.length + 1 > bounds.max) {
+    if (bounds.max !== null && destinationBucket.length + 1 > bounds.max) {
       throw new ValidationError(
         `Zone capacity exceeded for "${zonePolicyId}" (constraint: ${constraint.id}, max: ${bounds.max}).`,
       );
     }
+  }
+}
+
+function isConstraintApplicable(
+  constraint: ZoneCapacityConstraint,
+  cardType: CardType | undefined,
+  stateTags: readonly CardStateTag[],
+): boolean {
+  if (constraint.appliesToCardTypes) {
+    if (!cardType) {
+      return false;
+    }
+
+    if (!constraint.appliesToCardTypes.includes(cardType)) {
+      return false;
+    }
+  }
+
+  if (constraint.appliesToStateTags) {
+    for (const requiredTag of constraint.appliesToStateTags) {
+      if (!stateTags.includes(requiredTag)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function resolveCapacityModifiersForConstraint(
+  gameplay: GameplayRuntime,
+  zonePolicyId: ZonePolicyId,
+  destination: GameplayZoneRef,
+  constraint: ZoneCapacityConstraint,
+): CapacityModifier[] {
+  const locationKey = resolveLocationKey(destination);
+  const resolved: CapacityModifier[] = [];
+
+  for (const entry of gameplay.policyModifiers) {
+    if (!isApplicableCapacityPolicyModifier(
+      entry,
+      zonePolicyId,
+      constraint.id,
+      locationKey,
+    )) {
+      continue;
+    }
+
+    resolved.push(entry.modifier);
+  }
+
+  return resolved;
+}
+
+function isApplicableCapacityPolicyModifier(
+  entry: GameplayPolicyModifier,
+  zonePolicyId: ZonePolicyId,
+  constraintId: string,
+  locationKey: string | null,
+): boolean {
+  if (entry.kind !== "capacity") {
+    return false;
+  }
+
+  if (entry.zonePolicyId !== zonePolicyId || entry.constraintId !== constraintId) {
+    return false;
+  }
+
+  if (!entry.locationKey) {
+    return true;
+  }
+
+  return entry.locationKey === locationKey;
+}
+
+function resolveLocationKey(destination: GameplayZoneRef): string | null {
+  if (destination.kind !== "facedown") {
+    return null;
+  }
+
+  const battlefieldId = destination.battlefieldId.trim();
+  if (!battlefieldId) {
+    throw new ValidationError("Battlefield id is required for facedown zone movement.");
+  }
+
+  return battlefieldId;
+}
+
+function resolveStateTagsForDestination(zoneRef: GameplayZoneRef): CardStateTag[] {
+  if (zoneRef.kind === "facedown") {
+    return ["hidden"];
+  }
+
+  return [];
+}
+
+function ensureFacedownSlotForBattlefield(
+  gameplay: GameplayRuntime,
+  destination: GameplayZoneRef,
+  cardId: string,
+  cardType: CardType | undefined,
+): void {
+  if (destination.kind !== "battlefield") {
+    return;
+  }
+
+  const normalizedCardId = cardId.trim();
+  const isBattlefieldCard =
+    cardType === "battlefield" || normalizedCardId.startsWith("setup:battlefield:");
+
+  if (!isBattlefieldCard) {
+    return;
+  }
+
+  if (!gameplay.zones.shared.battlefield.hiddenCardsByBattlefield[normalizedCardId]) {
+    gameplay.zones.shared.battlefield.hiddenCardsByBattlefield[normalizedCardId] = [];
   }
 }
 
@@ -283,7 +374,7 @@ function resolveZoneBucket(
       return playerZones.base.runes;
     }
     case "battlefield":
-      return gameplay.zones.shared.battlefield;
+      return gameplay.zones.shared.battlefield.cards;
     case "chain":
       return gameplay.zones.shared.chain;
     case "facedown": {
@@ -292,7 +383,7 @@ function resolveZoneBucket(
         throw new ValidationError("Battlefield id is required for facedown zones.");
       }
 
-      const current = gameplay.zones.shared.facedownByBattlefield[battlefieldId];
+      const current = gameplay.zones.shared.battlefield.hiddenCardsByBattlefield[battlefieldId];
       if (!current) {
         throw new ValidationError("Facedown zone for battlefield does not exist.");
       }
@@ -473,14 +564,14 @@ function isCardPresentInGameplay(gameplay: GameplayRuntime, cardId: string): boo
     }
   }
 
-  if (gameplay.zones.shared.battlefield.includes(cardId)) {
+  if (gameplay.zones.shared.battlefield.cards.includes(cardId)) {
     return true;
   }
   if (gameplay.zones.shared.chain.includes(cardId)) {
     return true;
   }
 
-  for (const cards of Object.values(gameplay.zones.shared.facedownByBattlefield)) {
+  for (const cards of Object.values(gameplay.zones.shared.battlefield.hiddenCardsByBattlefield)) {
     if (cards.includes(cardId)) {
       return true;
     }

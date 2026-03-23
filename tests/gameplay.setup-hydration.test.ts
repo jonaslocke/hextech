@@ -52,15 +52,15 @@ describe("Gameplay setup hydration", () => {
     assert.ok(!hydrated.zones.players.p2?.mainDeck.includes(p2ChosenChampionCardId));
     assert.equal(hydrated.zones.players.p1?.legendZone.length, 1);
     assert.equal(hydrated.zones.players.p2?.legendZone.length, 1);
-    assert.equal(hydrated.zones.shared.battlefield.length, 2);
-    assert.equal(Object.keys(hydrated.zones.shared.facedownByBattlefield).length, 2);
+    assert.equal(hydrated.zones.shared.battlefield.cards.length, 2);
+    assert.equal(Object.keys(hydrated.zones.shared.battlefield.hiddenCardsByBattlefield).length, 2);
 
-    assert.equal(hydrated.kernel.phase, "neutral");
-    assert.equal(hydrated.kernel.timing, "open");
-    assert.equal(hydrated.kernel.turn.number, 1);
-    assert.equal(hydrated.kernel.turn.activePlayerId, "p1");
-    assert.equal(hydrated.kernel.priority.playerId, "p1");
-    assert.equal(hydrated.kernel.execution.nextIntentSequence, 1);
+    const battlefieldIds = [...hydrated.zones.shared.battlefield.cards];
+    assert.ok(
+      battlefieldIds.every((battlefieldId) =>
+        Array.isArray(hydrated.zones.shared.battlefield.hiddenCardsByBattlefield[battlefieldId]),
+      ),
+    );
   });
 
   test("throws when setup is incomplete for hydration", () => {
@@ -96,4 +96,3 @@ describe("Gameplay setup hydration", () => {
     );
   });
 });
-

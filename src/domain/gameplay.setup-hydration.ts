@@ -2,7 +2,6 @@ import { ValidationError } from "../shared/errors";
 import type { Game } from "./game";
 import type { Match } from "./match";
 import {
-  activateGameplayKernelForReadyState,
   createEmptyGameplayRuntime,
   type GameplayRuntime,
 } from "./gameplay";
@@ -97,13 +96,9 @@ export function hydrateGameplayForReadySetup(match: Match, game: Game): Gameplay
       cardType: "battlefield",
       destination: { kind: "battlefield" },
     });
-
-    if (!gameplay.zones.shared.facedownByBattlefield[battlefieldId]) {
-      gameplay.zones.shared.facedownByBattlefield[battlefieldId] = [];
-    }
   }
 
-  return activateGameplayKernelForReadyState(gameplay, startingPlayerId);
+  return gameplay;
 }
 
 function buildSetupObjectId(

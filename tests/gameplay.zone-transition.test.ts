@@ -68,8 +68,8 @@ describe("Gameplay zone transition primitive", () => {
 
   test("rejects facedown movement when battlefield is not controlled by card controller", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
-    gameplay.zones.shared.battlefield.push("bf_1");
-    gameplay.zones.shared.facedownByBattlefield.bf_1 = [];
+    gameplay.zones.shared.battlefield.cards.push("bf_1");
+    gameplay.zones.shared.battlefield.hiddenCardsByBattlefield.bf_1 = [];
     gameplay.zones.players.p1!.hand.push("card_001");
 
     assert.throws(
@@ -90,9 +90,9 @@ describe("Gameplay zone transition primitive", () => {
 
   test("rejects facedown movement when destination capacity would be exceeded", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
-    gameplay.zones.shared.battlefield.push("bf_1");
+    gameplay.zones.shared.battlefield.cards.push("bf_1");
     gameplay.zones.players.p1!.hand.push("card_002");
-    gameplay.zones.shared.facedownByBattlefield.bf_1 = ["card_001"];
+    gameplay.zones.shared.battlefield.hiddenCardsByBattlefield.bf_1 = ["card_001"];
 
     assert.throws(
       () =>
@@ -105,16 +105,29 @@ describe("Gameplay zone transition primitive", () => {
         }),
       (error: unknown) =>
         error instanceof ValidationError &&
-        error.message === "Facedown zone capacity exceeded for battlefield (max: 1).",
+        error.message === 'Zone capacity exceeded for "battlefield" (constraint: hidden_slot, max: 1).',
     );
   });
 
   test("allows facedown movement when capacity override allows the card", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
-    gameplay.zones.shared.battlefield.push("bf_1");
-    gameplay.ruleParameters.hiddenCapacityByBattlefield.bf_1 = 2;
+    gameplay.zones.shared.battlefield.cards.push("bf_1");
+    gameplay.policyModifiers.push({
+      kind: "capacity",
+      zonePolicyId: "battlefield",
+      constraintId: "hidden_slot",
+      locationKey: "bf_1",
+      modifier: {
+        source: "rule_parameter",
+        sourceId: "game_rule:hiddenCapacityByBattlefield:bf_1",
+        parameter: "hiddenCapacityByBattlefield",
+        target: "max",
+        operation: "set",
+        value: 2,
+      },
+    });
     gameplay.zones.players.p1!.hand.push("card_002");
-    gameplay.zones.shared.facedownByBattlefield.bf_1 = ["card_001"];
+    gameplay.zones.shared.battlefield.hiddenCardsByBattlefield.bf_1 = ["card_001"];
 
     const next = moveCardBetweenZones(gameplay, {
       cardId: "card_002",
@@ -124,7 +137,7 @@ describe("Gameplay zone transition primitive", () => {
       battlefieldControllerById: { bf_1: "p1" },
     });
 
-    assert.deepEqual(next.zones.shared.facedownByBattlefield.bf_1, [
+    assert.deepEqual(next.zones.shared.battlefield.hiddenCardsByBattlefield.bf_1, [
       "card_001",
       "card_002",
     ]);
@@ -162,8 +175,8 @@ describe("Gameplay zone transition primitive", () => {
 
   test("emits reveal event when moving facedown card to private zone", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
-    gameplay.zones.shared.battlefield.push("bf_1");
-    gameplay.zones.shared.facedownByBattlefield.bf_1 = ["card_hidden_001"];
+    gameplay.zones.shared.battlefield.cards.push("bf_1");
+    gameplay.zones.shared.battlefield.hiddenCardsByBattlefield.bf_1 = ["card_hidden_001"];
 
     const next = moveCardBetweenZones(gameplay, {
       cardId: "card_hidden_001",
@@ -173,7 +186,7 @@ describe("Gameplay zone transition primitive", () => {
       destination: { kind: "player_zone", playerId: "p2", zone: "hand" },
     });
 
-    assert.deepEqual(next.zones.shared.facedownByBattlefield.bf_1, []);
+    assert.deepEqual(next.zones.shared.battlefield.hiddenCardsByBattlefield.bf_1, []);
     assert.deepEqual(next.zones.players.p2!.hand, ["card_hidden_001"]);
     assert.equal(next.events.length, 2);
     assert.equal(next.events[0]?.type, "zone_changed");
@@ -196,8 +209,8 @@ describe("Gameplay zone transition primitive", () => {
 
   test("does not emit reveal event when moving facedown card to public zone", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
-    gameplay.zones.shared.battlefield.push("bf_1");
-    gameplay.zones.shared.facedownByBattlefield.bf_1 = ["card_hidden_001"];
+    gameplay.zones.shared.battlefield.cards.push("bf_1");
+    gameplay.zones.shared.battlefield.hiddenCardsByBattlefield.bf_1 = ["card_hidden_001"];
 
     const next = moveCardBetweenZones(gameplay, {
       cardId: "card_hidden_001",
@@ -264,4 +277,5 @@ describe("Gameplay zone transition primitive", () => {
     );
   });
 });
+
 

@@ -29,9 +29,11 @@ describe("Match creation contract", () => {
       runes: [],
     });
     assert.deepEqual(match.currentGame.gameplay.zones.shared, {
-      battlefield: [],
+      battlefield: {
+        cards: [],
+        hiddenCardsByBattlefield: {},
+      },
       chain: [],
-      facedownByBattlefield: {},
     });
   });
 
@@ -54,4 +56,3 @@ describe("Match creation contract", () => {
     assert.equal(response.body?.error?.code, "VALIDATION_ERROR");
   });
 });
-

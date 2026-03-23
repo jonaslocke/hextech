@@ -1,3 +1,5 @@
+import type { CapacityModifier, ZonePolicyId } from "./zone-policy";
+
 export const CANONICAL_CARD_ZONES = [
   "main_deck",
   "hand",
@@ -47,54 +49,19 @@ export interface PlayerZoneBuckets {
 }
 
 export interface SharedZoneBuckets {
-  battlefield: string[];
+  battlefield: {
+    cards: string[];
+    hiddenCardsByBattlefield: Record<string, string[]>;
+  };
   chain: string[];
-  facedownByBattlefield: Record<string, string[]>;
 }
 
-export interface GameplayRuleParameters {
-  defaultHiddenCapacityPerBattlefield: number;
-  hiddenCapacityByBattlefield: Record<string, number>;
-}
-
-export const GAMEPLAY_PHASES = ["setup", "neutral", "showdown"] as const;
-export type GameplayPhase = (typeof GAMEPLAY_PHASES)[number];
-
-export const GAMEPLAY_TIMING_STATES = ["open", "closed"] as const;
-export type GameplayTimingState = (typeof GAMEPLAY_TIMING_STATES)[number];
-
-export const GAMEPLAY_CHAIN_STATES = ["idle", "open", "resolving"] as const;
-export type GameplayChainState = (typeof GAMEPLAY_CHAIN_STATES)[number];
-
-export interface GameplayTurnState {
-  number: number;
-  activePlayerId: string | null;
-}
-
-export interface GameplayPriorityState {
-  playerId: string | null;
-  passCount: number;
-}
-
-export interface GameplayChainRuntime {
-  state: GameplayChainState;
-  depth: number;
-}
-
-export interface GameplayExecutionState {
-  nextIntentSequence: number;
-  lastAppliedIntentSequence: number;
-  lastAppliedIntentType: string | null;
-  lastAppliedActorPlayerId: string | null;
-}
-
-export interface GameplayKernelState {
-  phase: GameplayPhase;
-  timing: GameplayTimingState;
-  turn: GameplayTurnState;
-  priority: GameplayPriorityState;
-  chain: GameplayChainRuntime;
-  execution: GameplayExecutionState;
+export interface GameplayPolicyModifier {
+  kind: "capacity";
+  zonePolicyId: ZonePolicyId;
+  constraintId: string;
+  locationKey?: string;
+  modifier: CapacityModifier;
 }
 
 export interface GameplayZoneState {
@@ -112,24 +79,13 @@ export interface GameplayEvent {
 export interface GameplayRuntime {
   schemaVersion: 1;
   zones: GameplayZoneState;
-  kernel: GameplayKernelState;
-  ruleParameters: GameplayRuleParameters;
+  policyModifiers: GameplayPolicyModifier[];
   events: GameplayEvent[];
 }
 
 interface AppendGameplayEventInput {
   type: string;
   details?: Record<string, string>;
-}
-
-export interface GameplayZoneInvariantViolation {
-  code:
-    | "facedown_zone_capacity_exceeded"
-    | "facedown_zone_invalid_slot"
-    | "facedown_zone_invalid_battlefield_id"
-    | "facedown_zone_invalid_hidden_capacity";
-  battlefieldId: string;
-  message: string;
 }
 
 function createEmptyPlayerZones(): PlayerZoneBuckets {
@@ -163,65 +119,15 @@ export function createEmptyGameplayRuntime(playerIds: string[]): GameplayRuntime
     zones: {
       players,
       shared: {
-        battlefield: [],
+        battlefield: {
+          cards: [],
+          hiddenCardsByBattlefield: {},
+        },
         chain: [],
-        facedownByBattlefield: {},
       },
     },
-    kernel: {
-      phase: "setup",
-      timing: "closed",
-      turn: {
-        number: 0,
-        activePlayerId: null,
-      },
-      priority: {
-        playerId: null,
-        passCount: 0,
-      },
-      chain: {
-        state: "idle",
-        depth: 0,
-      },
-      execution: {
-        nextIntentSequence: 1,
-        lastAppliedIntentSequence: 0,
-        lastAppliedIntentType: null,
-        lastAppliedActorPlayerId: null,
-      },
-    },
-    ruleParameters: {
-      defaultHiddenCapacityPerBattlefield: 1,
-      hiddenCapacityByBattlefield: {},
-    },
+    policyModifiers: [],
     events: [],
-  };
-}
-
-export function activateGameplayKernelForReadyState(
-  gameplay: GameplayRuntime,
-  startingPlayerId: string,
-): GameplayRuntime {
-  return {
-    ...gameplay,
-    kernel: {
-      ...gameplay.kernel,
-      phase: "neutral",
-      timing: "open",
-      turn: {
-        number: 1,
-        activePlayerId: startingPlayerId,
-      },
-      priority: {
-        playerId: startingPlayerId,
-        passCount: 0,
-      },
-      chain: {
-        ...gameplay.kernel.chain,
-        state: gameplay.zones.shared.chain.length > 0 ? "open" : "idle",
-        depth: gameplay.zones.shared.chain.length,
-      },
-    },
   };
 }
 
@@ -241,174 +147,4 @@ export function appendGameplayEvent(
     ...gameplay,
     events: [...gameplay.events, event],
   };
-}
-
-interface CommitDeterministicIntentInput {
-  intentType: string;
-  actorPlayerId: string;
-}
-
-export function commitDeterministicIntent(
-  gameplay: GameplayRuntime,
-  input: CommitDeterministicIntentInput,
-): GameplayRuntime {
-  const sequence = gameplay.kernel.execution.nextIntentSequence;
-
-  const next = {
-    ...gameplay,
-    kernel: {
-      ...gameplay.kernel,
-      execution: {
-        ...gameplay.kernel.execution,
-        nextIntentSequence: sequence + 1,
-        lastAppliedIntentSequence: sequence,
-        lastAppliedIntentType: input.intentType,
-        lastAppliedActorPlayerId: input.actorPlayerId,
-      },
-    },
-  };
-
-  return appendGameplayEvent(next, {
-    type: "intent_resolved",
-    details: {
-      intentType: input.intentType,
-      actorPlayerId: input.actorPlayerId,
-      sequence: String(sequence),
-    },
-  });
-}
-
-export function resolveHiddenCapacityForBattlefield(
-  gameplay: GameplayRuntime,
-  battlefieldId: string,
-): number {
-  const trimmedBattlefieldId = battlefieldId.trim();
-  const defaultCapacity = gameplay.ruleParameters.defaultHiddenCapacityPerBattlefield;
-  const overriddenCapacity =
-    gameplay.ruleParameters.hiddenCapacityByBattlefield[trimmedBattlefieldId];
-
-  if (
-    typeof overriddenCapacity === "number" &&
-    Number.isInteger(overriddenCapacity) &&
-    overriddenCapacity >= 1
-  ) {
-    return overriddenCapacity;
-  }
-
-  return defaultCapacity;
-}
-
-export function collectGameplayZoneInvariantViolations(
-  gameplay: GameplayRuntime,
-): GameplayZoneInvariantViolation[] {
-  const violations: GameplayZoneInvariantViolation[] = [];
-  const defaultCapacity = gameplay.ruleParameters.defaultHiddenCapacityPerBattlefield;
-  const battlefieldIds = new Set(
-    gameplay.zones.shared.battlefield
-      .map((battlefieldId) => battlefieldId.trim())
-      .filter((battlefieldId) => battlefieldId.length > 0),
-  );
-
-  if (!Number.isInteger(defaultCapacity) || defaultCapacity < 1) {
-    violations.push({
-      code: "facedown_zone_invalid_hidden_capacity",
-      battlefieldId: "",
-      message: "Default hidden capacity per battlefield must be a positive integer.",
-    });
-  }
-
-  for (const [battlefieldId, capacity] of Object.entries(
-    gameplay.ruleParameters.hiddenCapacityByBattlefield,
-  )) {
-    const trimmedBattlefieldId = battlefieldId.trim();
-    if (!trimmedBattlefieldId || !battlefieldIds.has(trimmedBattlefieldId)) {
-      violations.push({
-        code: "facedown_zone_invalid_battlefield_id",
-        battlefieldId,
-        message: "Hidden capacity override must reference an existing battlefield id.",
-      });
-    }
-
-    if (!Number.isInteger(capacity) || capacity < 1) {
-      violations.push({
-        code: "facedown_zone_invalid_hidden_capacity",
-        battlefieldId,
-        message: "Hidden capacity override must be a positive integer.",
-      });
-    }
-  }
-
-  const facedownByBattlefield = gameplay.zones.shared.facedownByBattlefield as unknown;
-
-  if (
-    !facedownByBattlefield ||
-    typeof facedownByBattlefield !== "object" ||
-    Array.isArray(facedownByBattlefield)
-  ) {
-    return violations;
-  }
-
-  for (const [battlefieldId, slotValue] of Object.entries(
-    facedownByBattlefield as Record<string, unknown>,
-  )) {
-    const trimmedBattlefieldId = battlefieldId.trim();
-
-    if (!trimmedBattlefieldId) {
-      violations.push({
-        code: "facedown_zone_invalid_battlefield_id",
-        battlefieldId,
-        message: "Facedown zone key must be a non-empty battlefield id.",
-      });
-      continue;
-    }
-
-    if (!battlefieldIds.has(trimmedBattlefieldId)) {
-      violations.push({
-        code: "facedown_zone_invalid_battlefield_id",
-        battlefieldId,
-        message: "Facedown zone key must reference an existing battlefield id.",
-      });
-      continue;
-    }
-
-    if (Array.isArray(slotValue)) {
-      if (slotValue.some((cardId) => typeof cardId !== "string" || !cardId.trim())) {
-        violations.push({
-          code: "facedown_zone_invalid_slot",
-          battlefieldId,
-          message:
-            "Facedown zone must only contain non-empty card id strings when occupied.",
-        });
-        continue;
-      }
-
-      const maxAllowed = resolveHiddenCapacityForBattlefield(gameplay, battlefieldId);
-
-      if (slotValue.length > maxAllowed) {
-        violations.push({
-          code: "facedown_zone_capacity_exceeded",
-          battlefieldId,
-          message: `Facedown zone capacity exceeded for battlefield (max: ${maxAllowed}).`,
-        });
-      }
-      continue;
-    }
-
-    if (slotValue === null) {
-      violations.push({
-        code: "facedown_zone_invalid_slot",
-        battlefieldId,
-        message: "Facedown zone must be represented as an array of card ids.",
-      });
-      continue;
-    }
-
-    violations.push({
-      code: "facedown_zone_invalid_slot",
-      battlefieldId,
-      message: "Facedown slot must be null or a single card id.",
-    });
-  }
-
-  return violations;
 }
