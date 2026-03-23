@@ -14,7 +14,6 @@ describe("Gameplay runtime shape", () => {
       },
     });
 
-    assert.equal(game.gameplay.schemaVersion, 1);
     assert.deepEqual(game.gameplay.zones.shared, {
       battlefield: {
         cards: [],
@@ -63,7 +62,6 @@ describe("Gameplay runtime shape", () => {
     });
     const serialized = JSON.parse(JSON.stringify(game));
 
-    assert.equal(serialized.gameplay.schemaVersion, 1);
     assert.deepEqual(serialized.gameplay.zones.players.p1.base, {
       cards: [],
       runes: [],

@@ -22,7 +22,6 @@ describe("Match creation contract", () => {
     assert.deepEqual(match.score, { p1: 0, p2: 0 });
     assert.equal(match.decksByPlayer, undefined);
     assert.equal(match.currentGame.deckStateByPlayer, undefined);
-    assert.equal(match.currentGame.gameplay.schemaVersion, 1);
     assert.deepEqual(match.currentGame.gameplay.zones.players.p1.base, {
       cards: [],
       runes: [],

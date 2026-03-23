@@ -70,7 +70,6 @@ export interface GameplayZoneState {
 }
 
 export interface GameplayRuntime {
-  schemaVersion: 1;
   zones: GameplayZoneState;
   policyModifiers: GameplayPolicyModifier[];
 }
@@ -102,7 +101,6 @@ export function createEmptyGameplayRuntime(playerIds: string[]): GameplayRuntime
   }
 
   return {
-    schemaVersion: 1,
     zones: {
       players,
       shared: {
