@@ -1,5 +1,5 @@
 import type { Game } from "../domain/game";
-import type { GameplayEvent, GameplayRuntime, PlayerZoneBuckets } from "../domain/gameplay";
+import type { GameplayRuntime, PlayerZoneBuckets } from "../domain/gameplay";
 import type { Match } from "../domain/match";
 import {
   ZONE_POLICY_LIST,
@@ -149,97 +149,7 @@ function projectGameplayForViewer(
         ...entry.modifier,
       },
     })),
-    events: projectEventsForViewer(gameplay.events, viewerPlayerId),
   };
-}
-
-function projectEventsForViewer(
-  events: GameplayEvent[],
-  viewerPlayerId: string,
-): GameplayEvent[] {
-  return events.map((event) => {
-    if (!event.details?.cardId) {
-      return event;
-    }
-
-    const canSeeFromSource = canViewerSeeZoneRef(event.details.source, viewerPlayerId);
-    const canSeeFromDestination = canViewerSeeZoneRef(
-      event.details.destination,
-      viewerPlayerId,
-    );
-
-    if (canSeeFromSource || canSeeFromDestination) {
-      return event;
-    }
-
-    return {
-      ...event,
-      details: {
-        ...event.details,
-        cardId: HIDDEN_CARD_TOKEN,
-        ...(event.details.cardOwnerId ? { cardOwnerId: HIDDEN_CARD_TOKEN } : {}),
-      },
-    };
-  });
-}
-
-function canViewerSeeZoneRef(
-  zoneRef: string | undefined,
-  viewerPlayerId: string,
-): boolean {
-  if (!zoneRef) {
-    return false;
-  }
-
-  if (zoneRef === "battlefield" || zoneRef === "chain") {
-    return true;
-  }
-
-  if (zoneRef.startsWith("base_cards:") || zoneRef.startsWith("base_runes:")) {
-    return true;
-  }
-
-  if (zoneRef.startsWith("facedown:")) {
-    const battlefieldId = zoneRef.slice("facedown:".length);
-    const controllerId = resolveBattlefieldControllerId(battlefieldId);
-    return controllerId !== null && controllerId === viewerPlayerId;
-  }
-
-  if (!zoneRef.startsWith("player_zone:")) {
-    return false;
-  }
-
-  const chunks = zoneRef.split(":");
-  if (chunks.length !== 3) {
-    return false;
-  }
-
-  const playerId = chunks[1];
-  const zone = chunks[2];
-  if (!playerId || !zone) {
-    return false;
-  }
-
-  const visibility = resolvePlayerZoneVisibility(zone);
-
-  if (visibility === "public") {
-    return true;
-  }
-
-  if (visibility === "private_owner") {
-    return viewerPlayerId === playerId;
-  }
-
-  return false;
-}
-
-function resolvePlayerZoneVisibility(zone: string): ZoneVisibility | null {
-  if (zone in PLAYER_ZONE_VISIBILITY_BY_BUCKET) {
-    const key = zone as keyof PlayerZoneBuckets;
-    return PLAYER_ZONE_VISIBILITY_BY_BUCKET[key];
-  }
-
-  return null;
 }
 
 function resolveBattlefieldControllerId(battlefieldId: string): string | null {

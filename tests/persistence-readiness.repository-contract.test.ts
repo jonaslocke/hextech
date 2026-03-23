@@ -42,7 +42,6 @@ describe("Persistence readiness repository contracts", () => {
     const game2 = GameFactory.create({ matchId: "m1", number: 2 });
 
     assert.deepEqual(game1.gameplay.zones.players, {});
-    assert.deepEqual(game1.gameplay.events, []);
 
     await repo.save(game1);
     await repo.save(game2);
@@ -96,4 +95,3 @@ describe("Persistence readiness repository contracts", () => {
     assert.ok(reported.body.data.currentGame.version > ready.currentGame.version);
   });
 });
-

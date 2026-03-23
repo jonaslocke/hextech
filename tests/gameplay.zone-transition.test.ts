@@ -21,14 +21,6 @@ describe("Gameplay zone transition primitive", () => {
 
     assert.deepEqual(next.zones.players.p1!.hand, []);
     assert.deepEqual(next.zones.players.p1!.trash, ["card_001"]);
-    assert.equal(next.events.length, 1);
-    assert.equal(next.events[0]?.type, "zone_changed");
-    assert.deepEqual(next.events[0]?.details, {
-      cardId: "card_001",
-      cardControllerId: "p1",
-      source: "player_zone:p1:hand",
-      destination: "player_zone:p1:trash",
-    });
   });
 
   test("rejects moving a card missing from source zone", () => {
@@ -173,7 +165,7 @@ describe("Gameplay zone transition primitive", () => {
     );
   });
 
-  test("emits reveal event when moving facedown card to private zone", () => {
+  test("moves facedown card to private zone", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
     gameplay.zones.shared.battlefield.cards.push("bf_1");
     gameplay.zones.shared.battlefield.hiddenCardsByBattlefield.bf_1 = ["card_hidden_001"];
@@ -181,33 +173,15 @@ describe("Gameplay zone transition primitive", () => {
     const next = moveCardBetweenZones(gameplay, {
       cardId: "card_hidden_001",
       cardControllerId: "p1",
-      cardOwnerId: "p2",
       source: { kind: "facedown", battlefieldId: "bf_1" },
       destination: { kind: "player_zone", playerId: "p2", zone: "hand" },
     });
 
     assert.deepEqual(next.zones.shared.battlefield.hiddenCardsByBattlefield.bf_1, []);
     assert.deepEqual(next.zones.players.p2!.hand, ["card_hidden_001"]);
-    assert.equal(next.events.length, 2);
-    assert.equal(next.events[0]?.type, "zone_changed");
-    assert.deepEqual(next.events[0]?.details, {
-      cardId: "card_hidden_001",
-      cardControllerId: "p1",
-      cardOwnerId: "p2",
-      source: "facedown:bf_1",
-      destination: "player_zone:p2:hand",
-    });
-    assert.equal(next.events[1]?.type, "facedown_card_revealed");
-    assert.deepEqual(next.events[1]?.details, {
-      reason: "move_to_non_public_zone",
-      cardId: "card_hidden_001",
-      battlefieldId: "bf_1",
-      destination: "player_zone:p2:hand",
-      revealedByPlayerId: "p2",
-    });
   });
 
-  test("does not emit reveal event when moving facedown card to public zone", () => {
+  test("moves facedown card to public zone", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
     gameplay.zones.shared.battlefield.cards.push("bf_1");
     gameplay.zones.shared.battlefield.hiddenCardsByBattlefield.bf_1 = ["card_hidden_001"];
@@ -215,14 +189,11 @@ describe("Gameplay zone transition primitive", () => {
     const next = moveCardBetweenZones(gameplay, {
       cardId: "card_hidden_001",
       cardControllerId: "p1",
-      cardOwnerId: "p1",
       source: { kind: "facedown", battlefieldId: "bf_1" },
       destination: { kind: "player_zone", playerId: "p1", zone: "trash" },
     });
 
     assert.deepEqual(next.zones.players.p1!.trash, ["card_hidden_001"]);
-    assert.equal(next.events.length, 1);
-    assert.equal(next.events[0]?.type, "zone_changed");
   });
 
   test("rejects facedown placement for unknown battlefield id", () => {
@@ -241,6 +212,7 @@ describe("Gameplay zone transition primitive", () => {
         error.message === "Facedown zone for battlefield does not exist.",
     );
   });
+
   test("rejects prohibited card type for destination zone policy", () => {
     const gameplay = createEmptyGameplayRuntime(["p1", "p2"]);
 
@@ -277,5 +249,3 @@ describe("Gameplay zone transition primitive", () => {
     );
   });
 });
-
-

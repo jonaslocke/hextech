@@ -15,7 +15,6 @@ describe("Gameplay runtime shape", () => {
     });
 
     assert.equal(game.gameplay.schemaVersion, 1);
-    assert.deepEqual(game.gameplay.events, []);
     assert.deepEqual(game.gameplay.zones.shared, {
       battlefield: {
         cards: [],
@@ -70,6 +69,5 @@ describe("Gameplay runtime shape", () => {
       runes: [],
     });
     assert.deepEqual(serialized.gameplay.policyModifiers, []);
-    assert.deepEqual(serialized.gameplay.events, []);
   });
 });

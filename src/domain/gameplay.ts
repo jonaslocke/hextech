@@ -69,23 +69,10 @@ export interface GameplayZoneState {
   shared: SharedZoneBuckets;
 }
 
-export interface GameplayEvent {
-  id: string;
-  type: string;
-  createdAt: string;
-  details?: Record<string, string>;
-}
-
 export interface GameplayRuntime {
   schemaVersion: 1;
   zones: GameplayZoneState;
   policyModifiers: GameplayPolicyModifier[];
-  events: GameplayEvent[];
-}
-
-interface AppendGameplayEventInput {
-  type: string;
-  details?: Record<string, string>;
 }
 
 function createEmptyPlayerZones(): PlayerZoneBuckets {
@@ -127,24 +114,5 @@ export function createEmptyGameplayRuntime(playerIds: string[]): GameplayRuntime
       },
     },
     policyModifiers: [],
-    events: [],
-  };
-}
-
-export function appendGameplayEvent(
-  gameplay: GameplayRuntime,
-  input: AppendGameplayEventInput,
-): GameplayRuntime {
-  const sequence = gameplay.events.length + 1;
-  const event: GameplayEvent = {
-    id: `evt_${String(sequence).padStart(6, "0")}`,
-    type: input.type,
-    createdAt: `event_seq_${sequence}`,
-    ...(input.details ? { details: input.details } : {}),
-  };
-
-  return {
-    ...gameplay,
-    events: [...gameplay.events, event],
   };
 }

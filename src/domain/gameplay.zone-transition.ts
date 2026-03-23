@@ -1,14 +1,8 @@
 import { ValidationError } from "../shared/errors";
 import type {
-  CanonicalCardZone,
   GameplayPolicyModifier,
   GameplayRuntime,
   PlayerZoneBuckets,
-  ZonePrivacy,
-} from "./gameplay";
-import {
-  appendGameplayEvent,
-  ZONE_PRIVACY_BY_ZONE,
 } from "./gameplay";
 import {
   resolveConstraintBounds,
@@ -37,7 +31,6 @@ export interface MoveCardBetweenZonesInput {
   destination: GameplayZoneRef;
   cardControllerId: string;
   cardType?: CardType;
-  cardOwnerId?: string;
   battlefieldControllerById?: Record<string, string | null>;
 }
 
@@ -86,8 +79,6 @@ export function moveCardBetweenZones(
   sourceBucket.splice(sourceIndex, 1);
   destinationBucket.push(cardId);
   ensureFacedownSlotForBattlefield(next, input.destination, cardId, input.cardType);
-  next = appendZoneChangedEvent(next, input);
-  next = appendRevealEventForFacedownToNonPublicMove(next, input);
 
   return next;
 }
@@ -408,70 +399,6 @@ function describeZoneRef(zoneRef: GameplayZoneRef): string {
   }
 }
 
-function appendRevealEventForFacedownToNonPublicMove(
-  gameplay: GameplayRuntime,
-  input: MoveCardBetweenZonesInput,
-): GameplayRuntime {
-  if (input.source.kind !== "facedown") {
-    return gameplay;
-  }
-
-  const destinationPrivacy = resolveZoneRefPrivacy(input.destination);
-  if (destinationPrivacy === "public") {
-    return gameplay;
-  }
-
-  const rawOwnerId = input.cardOwnerId?.trim() ?? input.cardControllerId.trim();
-  if (!rawOwnerId) {
-    throw new ValidationError("Card owner id is required for facedown reveal events.");
-  }
-
-  if (!gameplay.zones.players[rawOwnerId]) {
-    throw new ValidationError("Card owner is not part of this gameplay state.");
-  }
-
-  return appendGameplayEvent(gameplay, {
-    type: "facedown_card_revealed",
-    details: {
-      reason: "move_to_non_public_zone",
-      cardId: input.cardId.trim(),
-      battlefieldId: input.source.battlefieldId,
-      destination: describeZoneRef(input.destination),
-      revealedByPlayerId: rawOwnerId,
-    },
-  });
-}
-
-function appendZoneChangedEvent(
-  gameplay: GameplayRuntime,
-  input: MoveCardBetweenZonesInput,
-): GameplayRuntime {
-  const details: Record<string, string> = {
-    cardId: input.cardId.trim(),
-    cardControllerId: input.cardControllerId.trim(),
-    source: describeZoneRef(input.source),
-    destination: describeZoneRef(input.destination),
-  };
-
-  if (input.cardType) {
-    details.cardType = input.cardType;
-  }
-
-  if (input.cardOwnerId?.trim()) {
-    details.cardOwnerId = input.cardOwnerId.trim();
-  }
-
-  return appendGameplayEvent(gameplay, {
-    type: "zone_changed",
-    details,
-  });
-}
-
-function resolveZoneRefPrivacy(zoneRef: GameplayZoneRef): ZonePrivacy {
-  const canonicalZone = toCanonicalZone(zoneRef);
-  return ZONE_PRIVACY_BY_ZONE[canonicalZone];
-}
-
 function toZonePolicyId(zoneRef: GameplayZoneRef): ZonePolicyId {
   switch (zoneRef.kind) {
     case "player_zone":
@@ -499,37 +426,6 @@ function toZonePolicyId(zoneRef: GameplayZoneRef): ZonePolicyId {
       return "battlefield";
     case "chain":
       return "chain";
-  }
-}
-
-function toCanonicalZone(zoneRef: GameplayZoneRef): CanonicalCardZone {
-  switch (zoneRef.kind) {
-    case "player_zone":
-      switch (zoneRef.zone) {
-        case "mainDeck":
-          return "main_deck";
-        case "hand":
-          return "hand";
-        case "trash":
-          return "trash";
-        case "banishment":
-          return "banishment";
-        case "runeDeck":
-          return "rune_deck";
-        case "legendZone":
-          return "legend_zone";
-        case "championZone":
-          return "champion_zone";
-      }
-    case "base_cards":
-    case "base_runes":
-      return "base";
-    case "battlefield":
-      return "battlefield";
-    case "chain":
-      return "chain";
-    case "facedown":
-      return "facedown";
   }
 }
 
