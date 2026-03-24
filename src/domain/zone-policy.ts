@@ -83,6 +83,19 @@ export interface ZonePolicy {
   capacityConstraints: readonly ZoneCapacityConstraint[];
 }
 
+export interface ZoneCapacityCheckInput {
+  cardType?: CardType;
+  stateTags?: readonly CardStateTag[];
+  nextCount: number;
+  resolveModifiers?: (constraint: ZoneCapacityConstraint) => readonly CapacityModifier[];
+  isConstraintInScope?: (constraint: ZoneCapacityConstraint) => boolean;
+}
+
+export interface ZoneCapacityOverflow {
+  constraintId: string;
+  max: number;
+}
+
 export const ZONE_POLICY_LIST: readonly ZonePolicy[] = [
   {
     id: "main_deck",
@@ -383,6 +396,10 @@ export const GAMEPLAY_GLOBAL_ZONE_INVARIANTS = [
   "A card instance can exist in exactly one zone at a time.",
 ] as const;
 
+const ZONE_POLICY_BY_ID = new Map<ZonePolicyId, ZonePolicy>(
+  ZONE_POLICY_LIST.map((policy) => [policy.id, policy]),
+);
+
 interface BaseCapacityModifier {
   sourceId: string;
   target: CapacityModifierTarget;
@@ -423,6 +440,79 @@ export function resolveConstraintBounds(
   }
 
   return next;
+}
+
+export function resolveZonePolicyById(zonePolicyId: ZonePolicyId): ZonePolicy | null {
+  return ZONE_POLICY_BY_ID.get(zonePolicyId) ?? null;
+}
+
+export function isCardTypeProhibitedByPolicy(
+  policy: ZonePolicy,
+  cardType: CardType,
+): boolean {
+  return policy.prohibitedCardTypes.includes(cardType);
+}
+
+export function isCardTypeAllowedByPolicy(
+  policy: ZonePolicy,
+  cardType: CardType,
+): boolean {
+  return policy.allowedCardTypes.includes(cardType);
+}
+
+export function resolveZoneCapacityOverflow(
+  policy: ZonePolicy,
+  input: ZoneCapacityCheckInput,
+): ZoneCapacityOverflow | null {
+  const stateTags = input.stateTags ?? [];
+
+  for (const constraint of policy.capacityConstraints) {
+    if (input.isConstraintInScope && !input.isConstraintInScope(constraint)) {
+      continue;
+    }
+
+    if (!isConstraintApplicable(constraint, input.cardType, stateTags)) {
+      continue;
+    }
+
+    const modifiers = input.resolveModifiers?.(constraint) ?? [];
+    const bounds = resolveConstraintBounds(constraint, modifiers);
+
+    if (bounds.max !== null && input.nextCount > bounds.max) {
+      return {
+        constraintId: constraint.id,
+        max: bounds.max,
+      };
+    }
+  }
+
+  return null;
+}
+
+function isConstraintApplicable(
+  constraint: ZoneCapacityConstraint,
+  cardType: CardType | undefined,
+  stateTags: readonly CardStateTag[],
+): boolean {
+  if (constraint.appliesToCardTypes) {
+    if (!cardType) {
+      return false;
+    }
+
+    if (!constraint.appliesToCardTypes.includes(cardType)) {
+      return false;
+    }
+  }
+
+  if (constraint.appliesToStateTags) {
+    for (const requiredTag of constraint.appliesToStateTags) {
+      if (!stateTags.includes(requiredTag)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 function resolveAllowedModifiers(

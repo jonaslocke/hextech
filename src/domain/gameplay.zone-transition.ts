@@ -5,14 +5,15 @@ import type {
   PlayerZoneBuckets,
 } from "./gameplay";
 import {
-  resolveConstraintBounds,
   type CardStateTag,
   type CardType,
   type CapacityModifier,
-  type ZoneCapacityConstraint,
-  type ZonePolicy,
+  type ZoneCapacityCheckInput,
   type ZonePolicyId,
-  ZONE_POLICY_LIST,
+  resolveZoneCapacityOverflow,
+  resolveZonePolicyById,
+  isCardTypeAllowedByPolicy,
+  isCardTypeProhibitedByPolicy,
 } from "./zone-policy";
 
 type PlayerScopedZone = Exclude<keyof PlayerZoneBuckets, "base">;
@@ -41,10 +42,6 @@ export interface PlaceCardIntoZoneInput {
   cardType?: CardType;
   battlefieldControllerById?: Record<string, string | null>;
 }
-
-const ZONE_POLICY_BY_ID = new Map<ZonePolicyId, ZonePolicy>(
-  ZONE_POLICY_LIST.map((policy) => [policy.id, policy]),
-);
 
 export function moveCardBetweenZones(
   gameplay: GameplayRuntime,
@@ -172,7 +169,7 @@ function enforceZonePolicyForDestination(
   destinationBucket: string[],
 ): void {
   const zonePolicyId = toZonePolicyId(input.destination);
-  const zonePolicy = ZONE_POLICY_BY_ID.get(zonePolicyId);
+  const zonePolicy = resolveZonePolicyById(zonePolicyId);
 
   if (!zonePolicy) {
     throw new ValidationError(`Missing zone policy for destination "${zonePolicyId}".`);
@@ -181,75 +178,48 @@ function enforceZonePolicyForDestination(
   const stateTags = resolveStateTagsForDestination(input.destination);
 
   if (input.cardType) {
-    if (zonePolicy.prohibitedCardTypes.includes(input.cardType)) {
+    if (isCardTypeProhibitedByPolicy(zonePolicy, input.cardType)) {
       throw new ValidationError(
         `Card type "${input.cardType}" cannot be placed in zone "${zonePolicyId}".`,
       );
     }
 
-    if (!zonePolicy.allowedCardTypes.includes(input.cardType)) {
+    if (!isCardTypeAllowedByPolicy(zonePolicy, input.cardType)) {
       throw new ValidationError(
         `Card type "${input.cardType}" is not allowed in zone "${zonePolicyId}".`,
       );
     }
   }
 
-  for (const constraint of zonePolicy.capacityConstraints) {
-    if (!isConstraintApplicable(constraint, input.cardType, stateTags)) {
-      continue;
-    }
+  const overflowCheckInput: ZoneCapacityCheckInput = {
+    stateTags,
+    nextCount: destinationBucket.length + 1,
+    isConstraintInScope: (constraint) =>
+      !(constraint.scope === "per_location" && input.destination.kind !== "facedown"),
+    resolveModifiers: (constraint) =>
+      resolveCapacityModifiersForConstraint(
+        gameplay,
+        zonePolicyId,
+        input.destination,
+        constraint.id,
+      ),
+    ...(input.cardType !== undefined ? { cardType: input.cardType } : {}),
+  };
 
-    if (constraint.scope === "per_location" && input.destination.kind !== "facedown") {
-      continue;
-    }
+  const overflow = resolveZoneCapacityOverflow(zonePolicy, overflowCheckInput);
 
-    const modifiers = resolveCapacityModifiersForConstraint(
-      gameplay,
-      zonePolicyId,
-      input.destination,
-      constraint,
+  if (overflow) {
+    throw new ValidationError(
+      `Zone capacity exceeded for "${zonePolicyId}" (constraint: ${overflow.constraintId}, max: ${overflow.max}).`,
     );
-    const bounds = resolveConstraintBounds(constraint, modifiers);
-
-    if (bounds.max !== null && destinationBucket.length + 1 > bounds.max) {
-      throw new ValidationError(
-        `Zone capacity exceeded for "${zonePolicyId}" (constraint: ${constraint.id}, max: ${bounds.max}).`,
-      );
-    }
   }
-}
-
-function isConstraintApplicable(
-  constraint: ZoneCapacityConstraint,
-  cardType: CardType | undefined,
-  stateTags: readonly CardStateTag[],
-): boolean {
-  if (constraint.appliesToCardTypes) {
-    if (!cardType) {
-      return false;
-    }
-
-    if (!constraint.appliesToCardTypes.includes(cardType)) {
-      return false;
-    }
-  }
-
-  if (constraint.appliesToStateTags) {
-    for (const requiredTag of constraint.appliesToStateTags) {
-      if (!stateTags.includes(requiredTag)) {
-        return false;
-      }
-    }
-  }
-
-  return true;
 }
 
 function resolveCapacityModifiersForConstraint(
   gameplay: GameplayRuntime,
   zonePolicyId: ZonePolicyId,
   destination: GameplayZoneRef,
-  constraint: ZoneCapacityConstraint,
+  constraintId: string,
 ): CapacityModifier[] {
   const locationKey = resolveLocationKey(destination);
   const resolved: CapacityModifier[] = [];
@@ -258,7 +228,7 @@ function resolveCapacityModifiersForConstraint(
     if (!isApplicableCapacityPolicyModifier(
       entry,
       zonePolicyId,
-      constraint.id,
+      constraintId,
       locationKey,
     )) {
       continue;
